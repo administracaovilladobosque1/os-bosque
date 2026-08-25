@@ -3,45 +3,433 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meu Firebase</title>
+    <title>Sistema de OS - Login</title>
+    <!-- Firebase SDKs (versão compatível com script tags) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <style>
+        /* ========== ESTILOS GLOBAIS ========== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 420px;
+            transition: all 0.3s ease;
+        }
+        h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            color: #1a1a2e;
+        }
+        .subtitle {
+            color: #555;
+            margin-bottom: 28px;
+            font-size: 14px;
+        }
+        .form-group {
+            margin-bottom: 18px;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #d0d7de;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: 0.2s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #4a90d9;
+            box-shadow: 0 0 0 3px rgba(74,144,217,0.2);
+        }
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: #4a90d9;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn:hover {
+            background: #3a7bc8;
+        }
+        .btn-secondary {
+            background: transparent;
+            color: #4a90d9;
+            border: 1px solid #4a90d9;
+            margin-top: 10px;
+        }
+        .btn-secondary:hover {
+            background: #eaf3fb;
+        }
+        .btn-danger {
+            background: #dc3545;
+        }
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        .toggle-link {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 14px;
+        }
+        .toggle-link a {
+            color: #4a90d9;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .toggle-link a:hover {
+            text-decoration: underline;
+        }
+        .message {
+            margin-top: 16px;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 14px;
+            display: none;
+        }
+        .message.error {
+            display: block;
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .message.success {
+            display: block;
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        /* Tela do Dashboard (escondida inicialmente) */
+        #dashboard {
+            display: none;
+        }
+        #dashboard .user-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        #dashboard .user-info strong {
+            color: #1a1a2e;
+        }
+        .logout-area {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .logout-area .btn {
+            width: auto;
+            padding: 10px 30px;
+            display: inline-block;
+        }
+        .hidden {
+            display: none !important;
+        }
+    </style>
 </head>
 <body>
-    <h1>🔥 Firebase conectado com sucesso!</h1>
-    <p>Abra o Console do Navegador (F12) para ver a mensagem.</p>
+    <div class="container" id="app">
+        <!-- ======== TELA DE LOGIN ======== -->
+        <div id="loginScreen">
+            <h1>🔐 Bem-vindo</h1>
+            <p class="subtitle">Faça login para acessar o sistema de Ordens de Serviço</p>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>E-mail</label>
+                    <input type="email" id="loginEmail" placeholder="seu@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Senha</label>
+                    <input type="password" id="loginPassword" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn">Entrar</button>
+            </form>
+            
+            <div class="toggle-link">
+                Não tem uma conta? <a id="showRegister">Criar conta agora</a>
+            </div>
+            <div id="loginMessage" class="message"></div>
+        </div>
 
-    <!-- Importando o SDK do Firebase via CDN -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+        <!-- ======== TELA DE CADASTRO ======== -->
+        <div id="registerScreen" class="hidden">
+            <h1>📝 Criar conta</h1>
+            <p class="subtitle">Preencha os dados para se cadastrar</p>
+
+            <form id="registerForm">
+                <div class="form-group">
+                    <label>Nome completo</label>
+                    <input type="text" id="registerName" placeholder="Seu nome" required>
+                </div>
+                <div class="form-group">
+                    <label>E-mail</label>
+                    <input type="email" id="registerEmail" placeholder="seu@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Senha</label>
+                    <input type="password" id="registerPassword" placeholder="Mínimo 6 caracteres" required>
+                </div>
+                <button type="submit" class="btn">Criar conta</button>
+            </form>
+
+            <div class="toggle-link">
+                Já tem uma conta? <a id="showLogin">Fazer login</a>
+            </div>
+            <div id="registerMessage" class="message"></div>
+        </div>
+
+        <!-- ======== DASHBOARD (ÁREA LOGADA) ======== -->
+        <div id="dashboard">
+            <h1>📋 Painel de Controle</h1>
+            <div class="user-info">
+                <p>👋 Olá, <strong id="userName">Usuário</strong>!</p>
+                <p style="font-size:13px; color:#666;" id="userEmail"></p>
+            </div>
+            <p style="text-align:center; color:#333;">Aqui você vai gerenciar suas Ordens de Serviço.</p>
+            
+            <!-- Botões para as próximas funcionalidades (em breve) -->
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 20px;">
+                <button class="btn" onclick="alert('Em breve: Cadastro de Personagens')">👤 Cadastrar Personagem</button>
+                <button class="btn btn-secondary" onclick="alert('Em breve: Nova Ordem de Serviço')">📝 Nova OS</button>
+            </div>
+
+            <div class="logout-area">
+                <button class="btn btn-danger" id="logoutBtn">Sair</button>
+            </div>
+        </div>
+    </div>
 
     <script>
-        // COLE O SEU firebaseConfig AQUI (do projeto criado com administracaovilladobosque@gmail.com)
+        // ================================================================
+        // 1. CONFIGURAÇÃO DO FIREBASE (COM SUAS CREDENCIAIS)
+        // ================================================================
         const firebaseConfig = {
-            apiKey: "AIzaSy...",
-            authDomain: "meu-projeto-bosque.firebaseapp.com",
-            projectId: "meu-projeto-bosque",
-            storageBucket: "meu-projeto-bosque.appspot.com",
-            messagingSenderId: "123456789",
-            appId: "1:123456789:web:abcdef"
+            apiKey: "AIzaSyDx_6oWO30Drh8GkuQA9jk2Oym7H8J3ABg",
+            authDomain: "villa-bosque1.firebaseapp.com",
+            projectId: "villa-bosque1",
+            storageBucket: "villa-bosque1.firebasestorage.app",
+            messagingSenderId: "372474036025",
+            appId: "1:372474036025:web:bbbee10723469d77cbb2e8"
         };
 
-        // Inicializa o Firebase
         firebase.initializeApp(firebaseConfig);
-
-        // Teste rápido: acessar o Firestore
+        const auth = firebase.auth();
         const db = firebase.firestore();
 
-        db.collection("testes").add({
-            mensagem: "Olá do VS Code!",
-            data: new Date()
-        })
-        .then((docRef) => {
-            console.log("Documento escrito com ID: ", docRef.id);
-            document.body.innerHTML += `<p>✅ Documento salvo com ID: ${docRef.id}</p>`;
-        })
-        .catch((error) => {
-            console.error("Erro ao escrever: ", error);
-            document.body.innerHTML += `<p>❌ Erro: ${error.message}</p>`;
+        // ================================================================
+        // 2. REFERÊNCIAS AOS ELEMENTOS DO HTML
+        // ================================================================
+        const loginScreen = document.getElementById('loginScreen');
+        const registerScreen = document.getElementById('registerScreen');
+        const dashboardScreen = document.getElementById('dashboard');
+
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        const loginEmail = document.getElementById('loginEmail');
+        const loginPassword = document.getElementById('loginPassword');
+        const registerName = document.getElementById('registerName');
+        const registerEmail = document.getElementById('registerEmail');
+        const registerPassword = document.getElementById('registerPassword');
+
+        const loginMessage = document.getElementById('loginMessage');
+        const registerMessage = document.getElementById('registerMessage');
+        const userName = document.getElementById('userName');
+        const userEmail = document.getElementById('userEmail');
+
+        const showRegister = document.getElementById('showRegister');
+        const showLogin = document.getElementById('showLogin');
+
+        // ================================================================
+        // 3. FUNÇÕES PARA TROCAR DE TELA
+        // ================================================================
+        function showLoginScreen() {
+            loginScreen.classList.remove('hidden');
+            registerScreen.classList.add('hidden');
+            dashboardScreen.style.display = 'none';
+            loginMessage.className = 'message';
+            loginMessage.textContent = '';
+        }
+
+        function showRegisterScreen() {
+            loginScreen.classList.add('hidden');
+            registerScreen.classList.remove('hidden');
+            dashboardScreen.style.display = 'none';
+            registerMessage.className = 'message';
+            registerMessage.textContent = '';
+        }
+
+        function showDashboard(user) {
+            loginScreen.classList.add('hidden');
+            registerScreen.classList.add('hidden');
+            dashboardScreen.style.display = 'block';
+            userName.textContent = user.displayName || 'Usuário';
+            userEmail.textContent = user.email;
+        }
+
+        // ================================================================
+        // 4. EVENTOS DE NAVEGAÇÃO ENTRE TELAS
+        // ================================================================
+        showRegister.addEventListener('click', showRegisterScreen);
+        showLogin.addEventListener('click', showLoginScreen);
+
+        // ================================================================
+        // 5. FUNÇÃO PARA EXIBIR MENSAGENS
+        // ================================================================
+        function showMessage(element, text, type = 'error') {
+            element.textContent = text;
+            element.className = 'message ' + type;
+        }
+
+        // ================================================================
+        // 6. CADASTRO DE NOVO USUÁRIO
+        // ================================================================
+        registerForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = registerName.value.trim();
+            const email = registerEmail.value.trim();
+            const password = registerPassword.value;
+
+            if (!name || !email || !password) {
+                showMessage(registerMessage, 'Preencha todos os campos.', 'error');
+                return;
+            }
+            if (password.length < 6) {
+                showMessage(registerMessage, 'A senha deve ter pelo menos 6 caracteres.', 'error');
+                return;
+            }
+
+            auth.createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+                    return user.updateProfile({ displayName: name })
+                        .then(() => {
+                            return db.collection('usuarios').doc(user.uid).set({
+                                nome: name,
+                                email: email,
+                                perfil: 'tecnico',
+                                criado_em: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                        });
+                })
+                .then(() => {
+                    showMessage(registerMessage, 'Conta criada com sucesso! Redirecionando...', 'success');
+                })
+                .catch((error) => {
+                    let msg = error.message;
+                    if (error.code === 'auth/email-already-in-use') {
+                        msg = 'Este e-mail já está em uso.';
+                    } else if (error.code === 'auth/invalid-email') {
+                        msg = 'E-mail inválido.';
+                    }
+                    showMessage(registerMessage, msg, 'error');
+                });
         });
+
+        // ================================================================
+        // 7. LOGIN
+        // ================================================================
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = loginEmail.value.trim();
+            const password = loginPassword.value;
+
+            if (!email || !password) {
+                showMessage(loginMessage, 'Preencha todos os campos.', 'error');
+                return;
+            }
+
+            auth.signInWithEmailAndPassword(email, password)
+                .then(() => {
+                    showMessage(loginMessage, 'Login realizado!', 'success');
+                })
+                .catch((error) => {
+                    let msg = 'Erro ao fazer login.';
+                    if (error.code === 'auth/user-not-found') {
+                        msg = 'Usuário não encontrado.';
+                    } else if (error.code === 'auth/wrong-password') {
+                        msg = 'Senha incorreta.';
+                    } else if (error.code === 'auth/invalid-email') {
+                        msg = 'E-mail inválido.';
+                    }
+                    showMessage(loginMessage, msg, 'error');
+                });
+        });
+
+        // ================================================================
+        // 8. LOGOUT
+        // ================================================================
+        logoutBtn.addEventListener('click', () => {
+            auth.signOut();
+        });
+
+        // ================================================================
+        // 9. OBSERVADOR DE AUTENTICAÇÃO
+        // ================================================================
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                db.collection('usuarios').doc(user.uid).get()
+                    .then((doc) => {
+                        if (doc.exists) {
+                            const dados = doc.data();
+                            userName.textContent = dados.nome || user.displayName || 'Usuário';
+                        } else {
+                            userName.textContent = user.displayName || 'Usuário';
+                        }
+                        userEmail.textContent = user.email;
+                        showDashboard(user);
+                    })
+                    .catch(() => {
+                        userName.textContent = user.displayName || 'Usuário';
+                        userEmail.textContent = user.email;
+                        showDashboard(user);
+                    });
+            } else {
+                showLoginScreen();
+                loginForm.reset();
+                registerForm.reset();
+                loginMessage.className = 'message';
+                loginMessage.textContent = '';
+                registerMessage.className = 'message';
+                registerMessage.textContent = '';
+            }
+        });
+
+        // ================================================================
+        // 10. INICIAR COM A TELA DE LOGIN
+        // ================================================================
+        showLoginScreen();
     </script>
 </body>
 </html>
