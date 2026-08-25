@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Firebase</title>
+</head>
+<body>
+    <h1>🔥 Firebase conectado com sucesso!</h1>
+    <p>Abra o Console do Navegador (F12) para ver a mensagem.</p>
+
+    <!-- Importando o SDK do Firebase via CDN -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        // COLE O SEU firebaseConfig AQUI (do projeto criado com administracaovilladobosque@gmail.com)
+        const firebaseConfig = {
+            apiKey: "AIzaSy...",
+            authDomain: "meu-projeto-bosque.firebaseapp.com",
+            projectId: "meu-projeto-bosque",
+            storageBucket: "meu-projeto-bosque.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef"
+        };
+
+        // Inicializa o Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        // Teste rápido: acessar o Firestore
+        const db = firebase.firestore();
+
+        db.collection("testes").add({
+            mensagem: "Olá do VS Code!",
+            data: new Date()
+        })
+        .then((docRef) => {
+            console.log("Documento escrito com ID: ", docRef.id);
+            document.body.innerHTML += `<p>✅ Documento salvo com ID: ${docRef.id}</p>`;
+        })
+        .catch((error) => {
+            console.error("Erro ao escrever: ", error);
+            document.body.innerHTML += `<p>❌ Erro: ${error.message}</p>`;
+        });
+    </script>
+</body>
+</html>

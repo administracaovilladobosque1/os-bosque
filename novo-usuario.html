@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Novo Usuário</title>
+
+<style>
+  body { margin:0; font-family: Arial; background:#f4f4f4; }
+
+  .header {
+    background:#2e7d32;
+    color:white;
+    padding:15px;
+    text-align:center;
+  }
+
+  .logo {
+    max-width:120px;
+    display:block;
+    margin:0 auto 10px;
+  }
+
+  .container { padding:15px; }
+
+  .card {
+    background:white;
+    padding:15px;
+    border-radius:10px;
+    box-shadow:0 2px 5px rgba(0,0,0,0.1);
+  }
+
+  input, select, textarea {
+    width:100%;
+    padding:10px;
+    margin-bottom:10px;
+    border-radius:6px;
+    border:1px solid #ccc;
+    font-family: Arial;
+  }
+
+  select:invalid {
+    color: #999;
+  }
+
+  textarea {
+    min-height: 80px;
+    resize: vertical;
+  }
+
+  button {
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:8px;
+    margin-top:5px;
+    font-size:16px;
+  }
+
+  .primary { background:#2e7d32; color:white; }
+  .secondary { background:#555; color:white; }
+
+</style>
+
+</head>
+
+<body>
+
+<div class="header">
+  <img src="./assets/logo.png" class="logo">
+  <h2>Novo Usuário</h2>
+</div>
+
+<div class="container">
+
+  <div class="card">
+
+    <input id="nome" placeholder="Nome completo">
+    <input id="email" placeholder="Email">
+    <input id="whatsapp" placeholder="WhatsApp">
+
+    <label>Tipo</label>
+    <select id="tipo" required>
+      <option value="" disabled selected hidden>Selecione...</option>
+      <option value="proprietario">Proprietário</option>
+      <option value="inquilino">Inquilino</option>
+    </select>
+
+    <label>Quadra</label>
+    <select id="quadra" required>
+      <option value="" disabled selected hidden>Selecione...</option>
+    </select>
+
+    <label>Lote</label>
+    <select id="lote" required>
+      <option value="" disabled selected hidden>Selecione...</option>
+    </select>
+
+    <label>Observações</label>
+    <textarea id="observacoes" placeholder="Digite aqui..."></textarea>
+
+    <button class="primary" id="salvar">Cadastrar</button>
+    <button class="secondary" id="voltar">Voltar</button>
+
+  </div>
+
+</div>
+
+<script type="module">
+
+import { auth, db } from "./js/firebase-config-bosque.js";
+
+import {
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  query,
+  where,
+  getDocs
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// popula quadras
+for (let i = 65; i <= 80; i++) {
+  quadra.innerHTML += `<option value="${String.fromCharCode(i)}">${String.fromCharCode(i)}</option>`;
+}
+
+// popula lotes
+for (let i = 1; i <= 20; i++) {
+  const num = String(i).padStart(2,'0');
+  lote.innerHTML += `<option value="${num}">${num}</option>`;
+}
+
+// proteção
+onAuthStateChanged(auth, async (user) => {
+
+  if (!user) {
+    location.href = "login.html";
+    return;
+  }
+
+  const snap = await getDoc(doc(db, "users", user.uid));
+  const dados = snap.data();
+
+  if (!dados.roles?.some(r => ["admin","diretor","master"].includes(r))) {
+    alert("Sem permissão");
+    location.href = "dashboard.html";
+  }
+
+});
+
+// salvar
+salvar.onclick = async () => {
+
+  const nomeVal = nome.value.trim();
+  const emailVal = email.value.trim();
+  const whatsappVal = whatsapp.value.trim();
+  const tipoVal = tipo.value;
+  const quadraVal = quadra.value;
+  const loteVal = lote.value;
+  const obsVal = observacoes.value.trim();
+
+  if (!nomeVal || !emailVal || !tipoVal || !quadraVal || !loteVal) {
+    alert("Preencha todos os campos obrigatórios");
+    return;
+  }
+
+  try {
+
+    const q = query(
+      collection(db, "convites"),
+      where("email", "==", emailVal),
+      where("usado", "==", false)
+    );
+
+    const existente = await getDocs(q);
+
+    if (!existente.empty) {
+      alert("Já existe convite pendente para esse email");
+      return;
+    }
+
+    await addDoc(collection(db, "convites"), {
+      nome: nomeVal,
+      email: emailVal,
+      whatsapp: whatsappVal,
+      tipo: tipoVal,
+      quadra: quadraVal,
+      lote: loteVal,
+      observacoes: obsVal,
+      usado: false,
+      createdAt: new Date()
+    });
+
+    alert("Convite criado com sucesso");
+
+    location.href = "usuarios.html";
+
+  } catch (e) {
+    console.error(e);
+    alert("Erro ao salvar");
+  }
+
+};
+
+voltar.onclick = () => {
+  location.href = "usuarios.html";
+};
+
+</script>
+
+</body>
+</html>

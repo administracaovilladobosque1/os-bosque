@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard</title>
+
+<style>
+body { margin:0; font-family: Arial; background:#f4f4f4; }
+.header { background:#2e7d32; color:white; padding:15px; text-align:center; }
+.container { padding:15px; }
+.card { background:white; padding:15px; margin-bottom:10px; border-radius:10px; text-align:center; }
+button { width:100%; padding:12px; margin-top:5px; border:none; border-radius:8px; }
+</style>
+
+</head>
+
+<body>
+
+<div class="header">
+  <h2 id="nome">Carregando...</h2>
+</div>
+
+<div class="container">
+
+  <div class="card" onclick="ir('usuarios.html')">Usuários</div>
+  <div class="card" onclick="ir('novo-usuario.html')">Novo Usuário</div>
+
+  <button id="logout">Sair</button>
+
+</div>
+
+<script type="module">
+
+import { auth, db } from "./js/firebase-config-bosque.js";
+
+import {
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+import {
+  doc,
+  getDoc
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+onAuthStateChanged(auth, async (user) => {
+
+  if (!user) location.href = "login.html";
+
+  const snap = await getDoc(doc(db, "users", user.uid));
+  const dados = snap.data();
+
+  nome.innerText = dados.email;
+
+});
+
+window.ir = (p) => location.href = p;
+
+logout.onclick = async () => {
+  await signOut(auth);
+  location.href = "login.html";
+};
+
+</script>
+
+</body>
+</html>

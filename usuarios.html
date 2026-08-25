@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Usuários</title>
+
+<style>
+body { margin:0; font-family: Arial; background:#f4f4f4; }
+
+.header {
+  background:#2e7d32;
+  color:white;
+  padding:15px;
+  text-align:center;
+}
+
+.container {
+  padding:10px;
+  overflow-x:auto;
+}
+
+.filtros {
+  background:white;
+  padding:10px;
+  margin-bottom:10px;
+  border-radius:10px;
+}
+
+.filtros input, .filtros select {
+  width:100%;
+  padding:8px;
+  margin-bottom:8px;
+}
+
+table {
+  width:100%;
+  border-collapse: collapse;
+  background:white;
+}
+
+th, td {
+  padding:10px;
+  border-bottom:1px solid #ddd;
+}
+
+th {
+  background:#2e7d32;
+  color:white;
+}
+
+.btn {
+  cursor:pointer;
+  font-size:18px;
+  background:none;
+  border:none;
+}
+
+.modal {
+  position:fixed;
+  top:0; left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.5);
+  display:none;
+  justify-content:center;
+  align-items:center;
+}
+
+.modal-content {
+  background:white;
+  padding:20px;
+  border-radius:10px;
+  width:90%;
+  max-width:400px;
+}
+
+button {
+  padding:10px;
+  margin-top:5px;
+  width:100%;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <h2>Usuários</h2>
+</div>
+
+<div class="container">
+
+<!-- FILTROS -->
+<div class="filtros">
+  <input id="f_nome" placeholder="Filtrar por nome">
+
+  <input id="f_quadra" placeholder="Quadra (ex: A)">
+
+  <input id="f_lote" placeholder="Lote (ex: 01)">
+
+  <select id="f_role">
+    <option value="">Todas permissões</option>
+    <option value="morador">Morador</option>
+    <option value="diretor">Diretor</option>
+    <option value="admin">Admin</option>
+    <option value="master">Master</option>
+  </select>
+</div>
+
+<table>
+<thead>
+<tr>
+<th>Nome</th>
+<th>Email</th>
+<th>WhatsApp</th>
+<th>Quadra</th>
+<th>Lote</th>
+<th>Tipo</th>
+<th>Permissões</th>
+<th>Ações</th>
+</tr>
+</thead>
+
+<tbody id="tabela"></tbody>
+</table>
+
+<button onclick="voltar()">Voltar</button>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal" id="modal">
+  <div class="modal-content">
+
+    <h3>Editar Usuário</h3>
+
+    <input id="m_nome">
+    <input id="m_email" disabled>
+    <input id="m_whatsapp">
+
+    <select id="m_tipo">
+      <option value="proprietario">Proprietário</option>
+      <option value="inquilino">Inquilino</option>
+    </select>
+
+    <input id="m_quadra">
+    <input id="m_lote">
+    <textarea id="m_obs"></textarea>
+
+    <select id="m_roles" multiple>
+      <option value="morador">Morador</option>
+      <option value="diretor">Diretor</option>
+      <option value="admin">Admin</option>
+      <option value="master">Master</option>
+    </select>
+
+    <button onclick="salvarEdicao()">Salvar</button>
+    <button onclick="fecharModal()">Cancelar</button>
+
+  </div>
+</div>
+
+<script type="module">
+
+import { auth, db } from "./js/firebase-config-bosque.js";
+
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+import {
+  collection,
+  getDocs,
+  doc,
+  getDoc,
+  updateDoc,
+  deleteDoc
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+let usuarios = [];
+let editId = null;
+
+// 🔒 proteção
+onAuthStateChanged(auth, async (user) => {
+
+  if (!user) location.href = "login.html";
+
+  const snap = await getDoc(doc(db, "users", user.uid));
+  const dados = snap.data();
+
+  if (!dados.roles?.some(r => ["admin","diretor","master"].includes(r))) {
+    alert("Sem permissão");
+    location.href = "dashboard.html";
+    return;
+  }
+
+  await carregar();
+
+});
+
+// 📥 carregar
+async function carregar() {
+
+  const snap = await getDocs(collection(db, "users"));
+  usuarios = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  render();
+
+}
+
+// 🔍 render com filtros
+function render() {
+
+  const nome = f_nome.value.toLowerCase();
+  const quadra = f_quadra.value.toLowerCase();
+  const lote = f_lote.value.toLowerCase();
+  const role = f_role.value;
+
+  tabela.innerHTML = "";
+
+  usuarios
+    .filter(u =>
+      (!nome || (u.nome || "").toLowerCase().includes(nome)) &&
+      (!quadra || (u.quadra || "").toLowerCase().includes(quadra)) &&
+      (!lote || (u.lote || "").toLowerCase().includes(lote)) &&
+      (!role || (u.roles || []).includes(role))
+    )
+    .forEach(u => {
+
+      tabela.innerHTML += `
+        <tr>
+          <td>${u.nome || "-"}</td>
+          <td>${u.email || "-"}</td>
+          <td>${u.whatsapp || "-"}</td>
+          <td>${u.quadra || "-"}</td>
+          <td>${u.lote || "-"}</td>
+          <td>${u.tipo || "-"}</td>
+          <td>${(u.roles || []).join(", ")}</td>
+          <td>
+            <button class="btn" onclick="abrirModal('${u.id}')">✏️</button>
+            <button class="btn" onclick="excluir('${u.id}')">🗑️</button>
+          </td>
+        </tr>
+      `;
+    });
+
+}
+
+// eventos filtros
+f_nome.oninput = render;
+f_quadra.oninput = render;
+f_lote.oninput = render;
+f_role.onchange = render;
+
+// ✏️ editar
+window.abrirModal = async (id) => {
+
+  editId = id;
+
+  const u = usuarios.find(x => x.id === id);
+
+  m_nome.value = u.nome || "";
+  m_email.value = u.email || "";
+  m_whatsapp.value = u.whatsapp || "";
+  m_tipo.value = u.tipo || "proprietario";
+  m_quadra.value = u.quadra || "";
+  m_lote.value = u.lote || "";
+  m_obs.value = u.observacoes || "";
+
+  Array.from(m_roles.options).forEach(o => {
+    o.selected = u.roles?.includes(o.value);
+  });
+
+  modal.style.display = "flex";
+};
+
+// salvar
+window.salvarEdicao = async () => {
+
+  const roles = Array.from(m_roles.selectedOptions).map(o => o.value);
+
+  await updateDoc(doc(db, "users", editId), {
+    nome: m_nome.value,
+    whatsapp: m_whatsapp.value,
+    tipo: m_tipo.value,
+    quadra: m_quadra.value,
+    lote: m_lote.value,
+    observacoes: m_obs.value,
+    roles
+  });
+
+  fecharModal();
+  await carregar();
+};
+
+// excluir
+window.excluir = async (id) => {
+
+  if (!confirm("Excluir usuário?")) return;
+
+  await deleteDoc(doc(db, "users", id));
+  await carregar();
+
+};
+
+window.fecharModal = () => modal.style.display = "none";
+window.voltar = () => location.href = "dashboard.html";
+
+</script>
+
+</body>
+</html>
