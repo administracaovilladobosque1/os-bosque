@@ -43,7 +43,6 @@
         .badge-diretor { background: #a5d6a7; color: #1b5e20; }
         .badge-ativo { background: #c8e6c9; color: #1b5e20; }
         .badge-inativo { background: #ffcdd2; color: #b71c1c; }
-        .hidden { display: none; }
         @media (max-width: 600px) { .container { padding: 20px 15px; } .form-row { grid-template-columns: 1fr; gap: 0; } .logo-area h1 { font-size: 22px; } }
     </style>
 </head>
@@ -88,6 +87,11 @@
                 <option value="inativo">Inativo</option>
             </select>
         </div>
+        <!-- NOVO CAMPO: Senha do Master para confirmar -->
+        <div class="form-group">
+            <label>🔑 Sua senha de Master (para confirmar a criação)</label>
+            <input type="password" id="masterPassword" placeholder="Digite sua senha" required>
+        </div>
         <button type="submit" class="btn btn-success">Cadastrar Personagem</button>
         <div id="formMessage" class="message"></div>
     </form>
@@ -115,11 +119,10 @@
     const funcaoSelect = document.getElementById('funcao');
     const senhaInput = document.getElementById('senha');
     const statusSelect = document.getElementById('status');
+    const masterPasswordInput = document.getElementById('masterPassword');
     const formMsg = document.getElementById('formMessage');
     const listaDiv = document.getElementById('listaContainer');
     const MASTER_EMAIL = 'administracaovilladobosque@gmail.com';
-
-    let currentMasterUser = null; // Guarda o usuário Master atual
 
     function carregarLista() {
         listaDiv.innerHTML = '<p>Carregando...</p>';
@@ -179,35 +182,32 @@
         const funcao = funcaoSelect.value;
         const senha = senhaInput.value;
         const status = statusSelect.value;
+        const masterPass = masterPasswordInput.value;
 
-        if (!nome || !email || !senha) { showMessage(formMsg, 'Preencha todos os campos.', 'error'); return; }
-        if (senha.length < 6) { showMessage(formMsg, 'A senha deve ter pelo menos 6 caracteres.', 'error'); return; }
+        if (!nome || !email || !senha || !masterPass) {
+            showMessage(formMsg, 'Preencha todos os campos, inclusive sua senha de Master.', 'error');
+            return;
+        }
+        if (senha.length < 6) {
+            showMessage(formMsg, 'A senha do novo personagem deve ter pelo menos 6 caracteres.', 'error');
+            return;
+        }
 
-        // Verifica se o usuário atual é Master
         const masterUser = auth.currentUser;
         if (!masterUser || masterUser.email !== MASTER_EMAIL) {
             showMessage(formMsg, 'Apenas o Master pode cadastrar personagens.', 'error');
             return;
         }
 
-        // Armazena a senha do Master para reautenticação
-        const masterPassword = senhaInput.value; // A senha que o master digitou no campo de senha do novo usuário? Isso está errado. O campo de senha é do novo usuário, não do master.
-        // Precisamos de um campo separado para a senha do Master. Vou adicionar.
-        // Mas como o formulário não tem campo de senha do Master, vou pedir para o usuário digitar a senha do Master no campo de senha do novo usuário (temporário).
-        // Na versão final, adicione um campo específico.
-
-        // Vou criar um prompt para a senha do Master (solução rápida)
-        const masterPass = prompt('Digite sua senha de Master para confirmar a criação:');
-        if (!masterPass) { showMessage(formMsg, 'Operação cancelada.', 'error'); return; }
-
-        // Reautentica o Master
+        // 1. Reautenticar o Master com a senha fornecida
         auth.signInWithEmailAndPassword(masterUser.email, masterPass)
             .then(() => {
-                // Agora cria o novo usuário
+                // 2. Criar o novo usuário
                 return auth.createUserWithEmailAndPassword(email, senha);
             })
             .then((userCredential) => {
                 const newUser = userCredential.user;
+                // 3. Atualizar perfil e salvar no Firestore
                 return newUser.updateProfile({ displayName: nome })
                     .then(() => {
                         return db.collection('usuarios').doc(newUser.uid).set({
@@ -217,7 +217,7 @@
                         });
                     })
                     .then(() => {
-                        // Reautentica o Master novamente (porque o createUser mudou o usuário atual)
+                        // 4. Reautenticar o Master novamente (para restaurar a sessão)
                         return auth.signInWithEmailAndPassword(masterUser.email, masterPass);
                     });
             })
@@ -231,15 +231,15 @@
                 if (error.code === 'auth/email-already-in-use') {
                     msg = 'Este e-mail já está em uso.';
                 } else if (error.code === 'auth/wrong-password') {
-                    msg = 'Senha do Master incorreta.';
+                    msg = 'Senha do Master incorreta. Verifique e tente novamente.';
                 } else if (error.code === 'auth/too-many-requests') {
                     msg = 'Muitas tentativas. Aguarde um momento.';
                 }
                 showMessage(formMsg, msg, 'error');
-                // Se falhou, tenta reautenticar o Master com a senha que ele usou antes
-                // mas como pode ter perdido a sessão, redireciona para login
+                // Se a reautenticação falhou, tenta reautenticar com a senha que o Master já tinha (para não deslogar)
+                // mas se perdeu a sessão, redireciona para login
                 if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
-                    alert('Sessão do Master expirada. Faça login novamente.');
+                    alert('Sua senha de Master está incorreta. Faça login novamente.');
                     window.location.href = 'index.html';
                 }
             });
@@ -249,7 +249,6 @@
 
     auth.onAuthStateChanged((user) => {
         if (user && user.email === MASTER_EMAIL) {
-            currentMasterUser = user;
             carregarLista();
         } else if (user) {
             alert('Apenas o Master pode acessar esta página.');
