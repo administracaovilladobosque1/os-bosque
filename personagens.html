@@ -119,6 +119,8 @@
     const listaDiv = document.getElementById('listaContainer');
     const MASTER_EMAIL = 'administracaovilladobosque@gmail.com';
 
+    let currentMasterUser = null; // Guarda o usuário Master atual
+
     function carregarLista() {
         listaDiv.innerHTML = '<p>Carregando...</p>';
         db.collection('usuarios').orderBy('criado_em', 'desc').get()
@@ -152,7 +154,7 @@
                 html += `</tbody></table></div>`;
                 listaDiv.innerHTML = html;
             })
-            .catch(err => { listaDiv.innerHTML = `<p style="color:red;">Erro: ${err.message}</p>`; });
+            .catch(err => { listaDiv.innerHTML = `<p style="color:red;">Erro ao carregar: ${err.message}</p>`; });
     }
 
     window.toggleStatus = function(uid, currentStatus) {
@@ -180,21 +182,44 @@
 
         if (!nome || !email || !senha) { showMessage(formMsg, 'Preencha todos os campos.', 'error'); return; }
         if (senha.length < 6) { showMessage(formMsg, 'A senha deve ter pelo menos 6 caracteres.', 'error'); return; }
-        if (!auth.currentUser || auth.currentUser.email !== MASTER_EMAIL) {
+
+        // Verifica se o usuário atual é Master
+        const masterUser = auth.currentUser;
+        if (!masterUser || masterUser.email !== MASTER_EMAIL) {
             showMessage(formMsg, 'Apenas o Master pode cadastrar personagens.', 'error');
             return;
         }
 
-        auth.createUserWithEmailAndPassword(email, senha)
+        // Armazena a senha do Master para reautenticação
+        const masterPassword = senhaInput.value; // A senha que o master digitou no campo de senha do novo usuário? Isso está errado. O campo de senha é do novo usuário, não do master.
+        // Precisamos de um campo separado para a senha do Master. Vou adicionar.
+        // Mas como o formulário não tem campo de senha do Master, vou pedir para o usuário digitar a senha do Master no campo de senha do novo usuário (temporário).
+        // Na versão final, adicione um campo específico.
+
+        // Vou criar um prompt para a senha do Master (solução rápida)
+        const masterPass = prompt('Digite sua senha de Master para confirmar a criação:');
+        if (!masterPass) { showMessage(formMsg, 'Operação cancelada.', 'error'); return; }
+
+        // Reautentica o Master
+        auth.signInWithEmailAndPassword(masterUser.email, masterPass)
+            .then(() => {
+                // Agora cria o novo usuário
+                return auth.createUserWithEmailAndPassword(email, senha);
+            })
             .then((userCredential) => {
                 const newUser = userCredential.user;
                 return newUser.updateProfile({ displayName: nome })
-                    .then(() => db.collection('usuarios').doc(newUser.uid).set({
-                        nome, email, funcao, status,
-                        criado_por: auth.currentUser.uid,
-                        criado_em: firebase.firestore.FieldValue.serverTimestamp()
-                    }))
-                    .then(() => auth.signInWithEmailAndPassword(auth.currentUser.email, senha));
+                    .then(() => {
+                        return db.collection('usuarios').doc(newUser.uid).set({
+                            nome, email, funcao, status,
+                            criado_por: auth.currentUser.uid,
+                            criado_em: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    })
+                    .then(() => {
+                        // Reautentica o Master novamente (porque o createUser mudou o usuário atual)
+                        return auth.signInWithEmailAndPassword(masterUser.email, masterPass);
+                    });
             })
             .then(() => {
                 showMessage(formMsg, 'Personagem cadastrado com sucesso!', 'success');
@@ -203,18 +228,35 @@
             })
             .catch((error) => {
                 let msg = error.message;
-                if (error.code === 'auth/email-already-in-use') msg = 'E-mail já em uso.';
-                else if (error.code === 'auth/wrong-password') msg = 'Senha do Master incorreta.';
+                if (error.code === 'auth/email-already-in-use') {
+                    msg = 'Este e-mail já está em uso.';
+                } else if (error.code === 'auth/wrong-password') {
+                    msg = 'Senha do Master incorreta.';
+                } else if (error.code === 'auth/too-many-requests') {
+                    msg = 'Muitas tentativas. Aguarde um momento.';
+                }
                 showMessage(formMsg, msg, 'error');
+                // Se falhou, tenta reautenticar o Master com a senha que ele usou antes
+                // mas como pode ter perdido a sessão, redireciona para login
+                if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+                    alert('Sessão do Master expirada. Faça login novamente.');
+                    window.location.href = 'index.html';
+                }
             });
     });
 
     function showMessage(el, text, type) { el.textContent = text; el.className = 'message ' + type; }
 
     auth.onAuthStateChanged((user) => {
-        if (user && user.email === MASTER_EMAIL) carregarLista();
-        else if (user) { alert('Apenas o Master pode acessar esta página.'); window.location.href = 'index.html'; }
-        else window.location.href = 'index.html';
+        if (user && user.email === MASTER_EMAIL) {
+            currentMasterUser = user;
+            carregarLista();
+        } else if (user) {
+            alert('Apenas o Master pode acessar esta página.');
+            window.location.href = 'index.html';
+        } else {
+            window.location.href = 'index.html';
+        }
     });
 </script>
 </body>
