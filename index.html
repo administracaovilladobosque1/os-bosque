@@ -4,717 +4,247 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <title>Sistema de OS - Villa do Bosque</title>
-    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
-        /* ========== RESET E TEMA VERDE ========== */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Calibri', 'Segoe UI', Tahoma, sans-serif;
-        }
-        body {
-            background: #e8f5e9;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px 15px;
-        }
-        .container {
-            background: #ffffff;
-            padding: 30px 25px;
-            border-radius: 20px;
-            box-shadow: 0 8px 30px rgba(0, 80, 0, 0.15);
-            width: 100%;
-            max-width: 450px;
-            transition: all 0.3s ease;
-            border: 1px solid #a5d6a7;
-        }
-        /* Logo e cabeçalho */
-        .logo-area {
-            text-align: center;
-            margin-bottom: 25px;
-        }
-        .logo-area img {
-            max-width: 180px;
-            height: auto;
-            display: block;
-            margin: 0 auto 10px;
-        }
-        .logo-area .main-title {
-            font-size: 28px;
-            font-weight: 700;
-            color: #1b5e20;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.05);
-            line-height: 1.2;
-            margin-top: 5px;
-        }
-        .logo-area .main-title span {
-            background: #c8e6c9;
-            padding: 6px 18px;
-            border-radius: 30px;
-            display: inline-block;
-        }
-        /* Formulário de login */
-        .form-group {
-            margin-bottom: 18px;
-        }
-        label {
-            display: block;
-            font-weight: 600;
-            font-size: 14px;
-            margin-bottom: 5px;
-            color: #1b5e20;
-        }
-        input {
-            width: 100%;
-            padding: 14px 15px;
-            border: 1px solid #a5d6a7;
-            border-radius: 10px;
-            font-size: 16px; /* Evita zoom no iOS */
-            transition: 0.2s;
-            background: #fafffe;
-        }
-        input:focus {
-            outline: none;
-            border-color: #2e7d32;
-            box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.2);
-        }
-        .btn {
-            width: 100%;
-            padding: 14px;
-            background: #2e7d32;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s;
-            touch-action: manipulation;
-        }
-        .btn:hover {
-            background: #1b5e20;
-        }
-        .btn-danger {
-            background: #c62828;
-        }
-        .btn-danger:hover {
-            background: #b71c1c;
-        }
-        .message {
-            margin-top: 16px;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 14px;
-            display: none;
-        }
-        .message.error {
-            display: block;
-            background: #ffebee;
-            color: #b71c1c;
-            border: 1px solid #ef9a9a;
-        }
-        .message.success {
-            display: block;
-            background: #e8f5e9;
-            color: #1b5e20;
-            border: 1px solid #a5d6a7;
-        }
-        .hidden {
-            display: none !important;
-        }
+        * { margin:0; padding:0; box-sizing:border-box; font-family: 'Calibri', 'Segoe UI', Tahoma, sans-serif; }
+        body { background: #e8f5e9; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px 15px; }
+        .container { background: #fff; padding: 30px 25px; border-radius: 20px; box-shadow: 0 8px 30px rgba(0,80,0,0.15); width: 100%; max-width: 450px; border: 1px solid #a5d6a7; }
+        .logo-area { text-align: center; margin-bottom: 25px; }
+        .logo-area img { max-width: 180px; height: auto; display: block; margin: 0 auto 10px; }
+        .logo-area .main-title { font-size: 28px; font-weight: 700; color: #1b5e20; line-height: 1.2; margin-top: 5px; }
+        .logo-area .main-title span { background: #c8e6c9; padding: 6px 18px; border-radius: 30px; display: inline-block; }
+        .form-group { margin-bottom: 18px; }
+        label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 5px; color: #1b5e20; }
+        input { width: 100%; padding: 14px 15px; border: 1px solid #a5d6a7; border-radius: 10px; font-size: 16px; background: #fafffe; }
+        input:focus { outline: none; border-color: #2e7d32; box-shadow: 0 0 0 3px rgba(46,125,50,0.2); }
+        .btn { width: 100%; padding: 14px; background: #2e7d32; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .btn:hover { background: #1b5e20; }
+        .btn-danger { background: #c62828; }
+        .btn-danger:hover { background: #b71c1c; }
+        .btn-success { background: #388e3c; }
+        .btn-success:hover { background: #2e7d32; }
+        .btn-secondary { background: #6c757d; }
+        .btn-secondary:hover { background: #5a6268; }
+        .btn-sm { padding: 6px 12px; font-size: 13px; width: auto; }
+        .message { margin-top: 16px; padding: 12px; border-radius: 8px; display: none; }
+        .message.error { display: block; background: #ffebee; color: #b71c1c; border: 1px solid #ef9a9a; }
+        .message.success { display: block; background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
+        .hidden { display: none !important; }
 
-        /* ========== DASHBOARD ========== */
-        #dashboard {
-            display: none;
-        }
-        .user-info {
-            background: #e8f5e9;
-            padding: 15px;
-            border-radius: 12px;
-            margin: 20px 0;
-            text-align: center;
-            border: 1px solid #a5d6a7;
-        }
-        .user-info strong {
-            color: #1b5e20;
-        }
-        .logout-area {
-            text-align: center;
-            margin-top: 20px;
-        }
-        .logout-area .btn {
-            width: auto;
-            padding: 12px 40px;
-            display: inline-block;
-        }
-        .timeout-warning {
-            font-size: 13px;
-            color: #558b2f;
-            text-align: right;
-            margin-top: 10px;
-        }
+        #dashboard { display: none; }
+        .user-info { background: #e8f5e9; padding: 15px; border-radius: 12px; margin: 20px 0; text-align: center; border: 1px solid #a5d6a7; }
+        .user-info strong { color: #1b5e20; }
+        .logout-area { text-align: center; margin-top: 20px; }
+        .logout-area .btn { width: auto; padding: 12px 40px; display: inline-block; }
+        .timeout-warning { font-size: 13px; color: #558b2f; text-align: right; margin-top: 10px; }
 
-        /* Painel Master */
-        .master-panel {
-            background: #f1f8e9;
-            border-radius: 16px;
-            padding: 20px;
-            margin-top: 20px;
-            border: 1px solid #a5d6a7;
-        }
-        h2 {
-            font-size: 20px;
-            margin: 25px 0 15px;
-            color: #2e7d32;
-            border-bottom: 2px solid #c8e6c9;
-            padding-bottom: 10px;
-        }
-        h3 {
-            font-size: 18px;
-            color: #2e7d32;
-            margin: 15px 0 10px;
-        }
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-        select {
-            width: 100%;
-            padding: 14px 15px;
-            border: 1px solid #a5d6a7;
-            border-radius: 10px;
-            font-size: 16px;
-            background: #fafffe;
-        }
-        .btn-success {
-            background: #388e3c;
-        }
-        .btn-success:hover {
-            background: #2e7d32;
-        }
-        .btn-sm {
-            padding: 10px 16px;
-            font-size: 14px;
-            width: auto;
-        }
-        .table-responsive {
-            overflow-x: auto;
-            margin-top: 15px;
-            -webkit-overflow-scrolling: touch;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 14px;
-            min-width: 400px;
-        }
-        th {
-            background: #c8e6c9;
-            text-align: left;
-            padding: 12px;
-            border-bottom: 2px solid #81c784;
-            color: #1b5e20;
-        }
-        td {
-            padding: 12px;
-            border-bottom: 1px solid #c8e6c9;
-            vertical-align: middle;
-        }
-        .badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            white-space: nowrap;
-        }
-        .badge-admin {
-            background: #c8e6c9;
-            color: #1b5e20;
-        }
-        .badge-diretor {
-            background: #a5d6a7;
-            color: #1b5e20;
-        }
-        .badge-master {
-            background: #ffcc80;
-            color: #4e342e;
-        }
+        .master-panel { background: #f1f8e9; border-radius: 16px; padding: 20px; margin-top: 20px; border: 1px solid #a5d6a7; }
+        h2 { font-size: 20px; margin: 25px 0 15px; color: #2e7d32; border-bottom: 2px solid #c8e6c9; padding-bottom: 10px; }
+        h3 { font-size: 18px; color: #2e7d32; margin: 15px 0 10px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        select { width: 100%; padding: 14px 15px; border: 1px solid #a5d6a7; border-radius: 10px; font-size: 16px; background: #fafffe; }
+        .table-responsive { overflow-x: auto; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 400px; }
+        th { background: #c8e6c9; text-align: left; padding: 12px; border-bottom: 2px solid #81c784; color: #1b5e20; }
+        td { padding: 12px; border-bottom: 1px solid #c8e6c9; vertical-align: middle; }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+        .badge-admin { background: #c8e6c9; color: #1b5e20; }
+        .badge-diretor { background: #a5d6a7; color: #1b5e20; }
+        .badge-master { background: #ffcc80; color: #4e342e; }
 
-        /* ========== RESPONSIVO ========== */
         @media (max-width: 600px) {
-            body {
-                padding: 10px 8px;
-            }
-            .container {
-                padding: 20px 15px;
-                max-width: 100%;
-            }
-            .logo-area img {
-                max-width: 120px;
-            }
-            .logo-area .main-title {
-                font-size: 22px;
-            }
-            .logo-area .main-title span {
-                padding: 4px 12px;
-            }
-            .form-row {
-                grid-template-columns: 1fr;
-                gap: 0;
-            }
-            input, select {
-                font-size: 16px;
-                padding: 14px;
-            }
-            .btn {
-                font-size: 16px;
-                padding: 14px;
-            }
-            .logout-area .btn {
-                width: 100%;
-                padding: 14px;
-            }
-            .table-responsive table {
-                min-width: 300px;
-            }
-            th, td {
-                padding: 8px 10px;
-            }
-            .btn-sm {
-                padding: 8px 12px;
-                font-size: 13px;
-                width: auto;
-            }
-            .master-panel {
-                padding: 15px;
-            }
-            .timeout-warning {
-                text-align: center;
-                font-size: 12px;
-            }
+            body { padding: 10px 8px; }
+            .container { padding: 20px 15px; max-width: 100%; }
+            .logo-area img { max-width: 120px; }
+            .logo-area .main-title { font-size: 22px; }
+            .form-row { grid-template-columns: 1fr; gap: 0; }
+            input, select { font-size: 16px; padding: 14px; }
+            .btn { font-size: 16px; padding: 14px; }
+            .logout-area .btn { width: 100%; padding: 14px; }
         }
     </style>
 </head>
 <body>
-    <div class="container" id="app">
-
-        <!-- ======== TELA DE LOGIN ======== -->
-        <div id="loginScreen">
-            <div class="logo-area">
-                <!-- Substitua "logo.png" pelo nome do seu arquivo de imagem -->
-                <img src="logo.png" alt="Logo Villa do Bosque">
-                <div class="main-title">
-                    <span>SISTEMA<br>ORDEM DE SERVIÇO</span>
-                </div>
-            </div>
-
-            <form id="loginForm">
-                <div class="form-group">
-                    <label>E-mail</label>
-                    <input type="email" id="loginEmail" placeholder="seu@email.com" required>
-                </div>
-                <div class="form-group">
-                    <label>Senha</label>
-                    <input type="password" id="loginPassword" placeholder="••••••••" required>
-                </div>
-                <button type="submit" class="btn">Entrar</button>
-            </form>
-            <div id="loginMessage" class="message"></div>
+<div class="container" id="app">
+    <!-- TELA DE LOGIN -->
+    <div id="loginScreen">
+        <div class="logo-area">
+            <img src="logo.png" alt="Logo Villa do Bosque">
+            <div class="main-title"><span>SISTEMA<br>ORDEM DE SERVIÇO</span></div>
         </div>
-
-        <!-- ======== DASHBOARD (ÁREA LOGADA) ======== -->
-        <div id="dashboard">
-            <div class="logo-area" style="margin-bottom:10px;">
-                <img src="logo.png" alt="Logo Villa do Bosque" style="max-width:100px;">
-                <div class="main-title" style="font-size:22px;">
-                    <span>SISTEMA<br>ORDEM DE SERVIÇO</span>
-                </div>
+        <form id="loginForm">
+            <div class="form-group">
+                <label>E-mail</label>
+                <input type="email" id="loginEmail" placeholder="seu@email.com" required>
             </div>
-            <h1 style="font-size:26px; color:#1b5e20; text-align:center;">📋 Painel de Controle</h1>
-            <div class="user-info">
-                <p>👋 Olá, <strong id="userName">Usuário</strong>!</p>
-                <p style="font-size:13px; color:#2e7d32;" id="userEmail"></p>
-                <p style="font-size:13px; color:#2e7d32;" id="userRoleDisplay"></p>
-                <p style="font-size:12px; color:#558b2f; margin-top:5px;">⏳ Sessão ativa por <span id="timerDisplay">4h00</span></p>
+            <div class="form-group">
+                <label>Senha</label>
+                <input type="password" id="loginPassword" placeholder="••••••••" required>
             </div>
-            
-            <!-- ÁREA DO MASTER -->
-            <div id="masterArea" class="hidden">
-                <div class="master-panel">
-                    <h2>👑 Painel do Master - Gerenciar Usuários</h2>
-                    
-                    <h3>➕ Cadastrar novo Admin ou Diretor</h3>
-                    <form id="createUserForm">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Nome completo</label>
-                                <input type="text" id="newUserName" placeholder="Nome" required>
-                            </div>
-                            <div class="form-group">
-                                <label>E-mail</label>
-                                <input type="email" id="newUserEmail" placeholder="email@dominio.com" required>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Função</label>
-                                <select id="newUserRole" required>
-                                    <option value="admin">Administrador</option>
-                                    <option value="diretor">Diretor</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Senha (mínimo 6 caracteres)</label>
-                                <input type="password" id="newUserPassword" placeholder="••••••••" required>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Sua senha de Master (para confirmar a criação)</label>
-                            <input type="password" id="masterPasswordConfirm" placeholder="Digite sua senha" required>
-                        </div>
-                        <button type="submit" class="btn btn-success">Criar usuário</button>
-                        <div id="createUserMessage" class="message"></div>
-                    </form>
-
-                    <h3 style="margin-top: 30px;">📋 Usuários cadastrados</h3>
-                    <div id="userListContainer">
-                        <p>Carregando usuários...</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="logout-area">
-                <button class="btn btn-danger" id="logoutBtn">Sair</button>
-            </div>
-            <div class="timeout-warning">⏱️ Sessão expira após 4 horas de inatividade.</div>
-        </div>
+            <button type="submit" class="btn">Entrar</button>
+        </form>
+        <div id="loginMessage" class="message"></div>
     </div>
 
-    <script>
-        // ================================================================
-        // CONFIGURAÇÃO DO FIREBASE (SUAS CREDENCIAIS)
-        // ================================================================
-        const firebaseConfig = {
-            apiKey: "AIzaSyDx_6oWO30Drh8GkuQA9jk2Oym7H8J3ABg",
-            authDomain: "villa-bosque1.firebaseapp.com",
-            projectId: "villa-bosque1",
-            storageBucket: "villa-bosque1.firebasestorage.app",
-            messagingSenderId: "372474036025",
-            appId: "1:372474036025:web:bbbee10723469d77cbb2e8"
-        };
+    <!-- DASHBOARD -->
+    <div id="dashboard">
+        <div class="logo-area" style="margin-bottom:10px;">
+            <img src="logo.png" alt="Logo Villa do Bosque" style="max-width:100px;">
+            <div class="main-title" style="font-size:22px;"><span>SISTEMA<br>ORDEM DE SERVIÇO</span></div>
+        </div>
+        <h1 style="font-size:26px; color:#1b5e20; text-align:center;">📋 Painel de Controle</h1>
+        <div class="user-info">
+            <p>👋 Olá, <strong id="userName">Usuário</strong>!</p>
+            <p style="font-size:13px; color:#2e7d32;" id="userEmail"></p>
+            <p style="font-size:13px; color:#2e7d32;" id="userRoleDisplay"></p>
+            <p style="font-size:12px; color:#558b2f; margin-top:5px;">⏳ Sessão ativa por <span id="timerDisplay">4h00</span></p>
+        </div>
 
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+        <!-- ÁREA DO MASTER -->
+        <div id="masterArea" class="hidden">
+            <div class="master-panel">
+                <h2>👑 Painel do Master</h2>
+                <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
+                    <a href="personagens.html" class="btn btn-success" style="text-decoration:none; text-align:center;">👥 Gerenciar Personagens</a>
+                    <a href="os-list.html" class="btn btn-secondary" style="text-decoration:none; text-align:center;">📋 Listar Ordens de Serviço</a>
+                </div>
+            </div>
+        </div>
 
-        // ================================================================
-        // CONFIGURAÇÕES DO MASTER E TIMEOUT
-        // ================================================================
-        const MASTER_EMAIL = 'administracaovilladobosque@gmail.com';
-        const TIMEOUT_MS = 4 * 60 * 60 * 1000;
-        let timeoutId = null;
-        let timerInterval = null;
+        <div class="logout-area">
+            <button class="btn btn-danger" id="logoutBtn">Sair</button>
+        </div>
+        <div class="timeout-warning">⏱️ Sessão expira após 4 horas de inatividade.</div>
+    </div>
+</div>
 
-        // ================================================================
-        // ELEMENTOS HTML
-        // ================================================================
-        const loginScreen = document.getElementById('loginScreen');
-        const dashboardScreen = document.getElementById('dashboard');
-        const masterArea = document.getElementById('masterArea');
-        const userRoleDisplay = document.getElementById('userRoleDisplay');
-        const timerDisplay = document.getElementById('timerDisplay');
+<script>
+    // Firebase Config
+    const firebaseConfig = {
+        apiKey: "AIzaSyDx_6oWO30Drh8GkuQA9jk2Oym7H8J3ABg",
+        authDomain: "villa-bosque1.firebaseapp.com",
+        projectId: "villa-bosque1",
+        storageBucket: "villa-bosque1.firebasestorage.app",
+        messagingSenderId: "372474036025",
+        appId: "1:372474036025:web:bbbee10723469d77cbb2e8"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
-        const loginForm = document.getElementById('loginForm');
-        const logoutBtn = document.getElementById('logoutBtn');
-        const loginEmail = document.getElementById('loginEmail');
-        const loginPassword = document.getElementById('loginPassword');
-        const loginMessage = document.getElementById('loginMessage');
-        const userName = document.getElementById('userName');
-        const userEmail = document.getElementById('userEmail');
+    const MASTER_EMAIL = 'administracaovilladobosque@gmail.com';
+    const TIMEOUT_MS = 4 * 60 * 60 * 1000;
+    let timeoutId = null, timerInterval = null;
 
-        const createUserForm = document.getElementById('createUserForm');
-        const newUserName = document.getElementById('newUserName');
-        const newUserEmail = document.getElementById('newUserEmail');
-        const newUserRole = document.getElementById('newUserRole');
-        const newUserPassword = document.getElementById('newUserPassword');
-        const masterPasswordConfirm = document.getElementById('masterPasswordConfirm');
-        const createUserMessage = document.getElementById('createUserMessage');
-        const userListContainer = document.getElementById('userListContainer');
+    const loginScreen = document.getElementById('loginScreen');
+    const dashboardScreen = document.getElementById('dashboard');
+    const masterArea = document.getElementById('masterArea');
+    const userRoleDisplay = document.getElementById('userRoleDisplay');
+    const timerDisplay = document.getElementById('timerDisplay');
+    const loginForm = document.getElementById('loginForm');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const loginEmail = document.getElementById('loginEmail');
+    const loginPassword = document.getElementById('loginPassword');
+    const loginMessage = document.getElementById('loginMessage');
+    const userName = document.getElementById('userName');
+    const userEmail = document.getElementById('userEmail');
 
-        // ================================================================
-        // FUNÇÕES DE TIMEOUT
-        // ================================================================
-        function resetTimeout() {
-            if (timeoutId) clearTimeout(timeoutId);
-            if (timerInterval) clearInterval(timerInterval);
-            
-            timeoutId = setTimeout(() => {
-                auth.signOut().then(() => {
-                    alert('Sessão expirada por inatividade (4 horas). Faça login novamente.');
-                }).catch(() => {});
-            }, TIMEOUT_MS);
+    function resetTimeout() {
+        if (timeoutId) clearTimeout(timeoutId);
+        if (timerInterval) clearInterval(timerInterval);
+        timeoutId = setTimeout(() => auth.signOut().then(() => alert('Sessão expirada por inatividade.')), TIMEOUT_MS);
+        let remaining = TIMEOUT_MS;
+        timerInterval = setInterval(() => {
+            remaining = Math.max(0, remaining - 1000);
+            const h = String(Math.floor(remaining/3600000)).padStart(2,'0');
+            const m = String(Math.floor((remaining%3600000)/60000)).padStart(2,'0');
+            const s = String(Math.floor((remaining%60000)/1000)).padStart(2,'0');
+            timerDisplay.textContent = `${h}h${m}m${s}s`;
+            if (remaining <= 0) clearInterval(timerInterval);
+        }, 1000);
+    }
+    function setupActivityListeners() {
+        ['click','mousemove','keydown','scroll','touchstart'].forEach(ev => document.addEventListener(ev, resetTimeout));
+    }
 
-            let remaining = TIMEOUT_MS;
-            timerInterval = setInterval(() => {
-                remaining = Math.max(0, remaining - 1000);
-                const hours = Math.floor(remaining / 3600000);
-                const mins = Math.floor((remaining % 3600000) / 60000);
-                const secs = Math.floor((remaining % 60000) / 1000);
-                timerDisplay.textContent = `${String(hours).padStart(2, '0')}h${String(mins).padStart(2, '0')}m${String(secs).padStart(2, '0')}s`;
-                if (remaining <= 0) clearInterval(timerInterval);
-            }, 1000);
+    function showLoginScreen() {
+        loginScreen.classList.remove('hidden');
+        dashboardScreen.style.display = 'none';
+        loginMessage.className = 'message';
+        loginMessage.textContent = '';
+        if (timerInterval) clearInterval(timerInterval);
+        if (timeoutId) clearTimeout(timeoutId);
+    }
+
+    function showDashboard(user) {
+        loginScreen.classList.add('hidden');
+        dashboardScreen.style.display = 'block';
+        userName.textContent = user.displayName || 'Usuário';
+        userEmail.textContent = user.email;
+
+        if (user.email === MASTER_EMAIL) {
+            masterArea.classList.remove('hidden');
+            userRoleDisplay.textContent = '👑 Função: Master (Controle Total)';
+        } else {
+            masterArea.classList.add('hidden');
+            db.collection('usuarios').doc(user.uid).get().then(doc => {
+                if (doc.exists) {
+                    const role = doc.data().funcao || 'tecnico';
+                    const map = { 'admin':'Administrador', 'diretor':'Diretor', 'master':'Master' };
+                    userRoleDisplay.textContent = `🔹 Função: ${map[role] || role}`;
+                }
+            }).catch(() => {});
         }
+        resetTimeout();
+        setupActivityListeners();
+    }
 
-        function setupActivityListeners() {
-            const events = ['click', 'mousemove', 'keydown', 'scroll', 'touchstart'];
-            events.forEach(ev => {
-                document.addEventListener(ev, resetTimeout);
+    function showMessage(el, text, type) { el.textContent = text; el.className = 'message ' + type; }
+
+    loginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const email = loginEmail.value.trim();
+        const password = loginPassword.value;
+        if (!email || !password) { showMessage(loginMessage, 'Preencha todos os campos.', 'error'); return; }
+        auth.signInWithEmailAndPassword(email, password)
+            .then(() => showMessage(loginMessage, 'Login realizado!', 'success'))
+            .catch((error) => {
+                let msg = 'Erro ao fazer login.';
+                if (error.code === 'auth/user-not-found') msg = 'Usuário não encontrado.';
+                else if (error.code === 'auth/wrong-password') msg = 'Senha incorreta.';
+                else if (error.code === 'auth/invalid-email') msg = 'E-mail inválido.';
+                showMessage(loginMessage, msg, 'error');
             });
-        }
+    });
 
-        // ================================================================
-        // FUNÇÕES DE TELA
-        // ================================================================
-        function showLoginScreen() {
-            loginScreen.classList.remove('hidden');
-            dashboardScreen.style.display = 'none';
+    logoutBtn.addEventListener('click', () => { if (timerInterval) clearInterval(timerInterval); if (timeoutId) clearTimeout(timeoutId); auth.signOut(); });
+
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            db.collection('usuarios').doc(user.uid).get().then(doc => {
+                if (doc.exists) userName.textContent = doc.data().nome || user.displayName || 'Usuário';
+                else userName.textContent = user.displayName || 'Usuário';
+                userEmail.textContent = user.email;
+                showDashboard(user);
+            }).catch(() => {
+                userName.textContent = user.displayName || 'Usuário';
+                userEmail.textContent = user.email;
+                showDashboard(user);
+            });
+        } else {
+            showLoginScreen();
+            loginForm.reset();
             loginMessage.className = 'message';
             loginMessage.textContent = '';
+            masterArea.classList.add('hidden');
             if (timerInterval) clearInterval(timerInterval);
             if (timeoutId) clearTimeout(timeoutId);
         }
+    });
 
-        function showDashboard(user) {
-            loginScreen.classList.add('hidden');
-            dashboardScreen.style.display = 'block';
-            userName.textContent = user.displayName || 'Usuário';
-            userEmail.textContent = user.email;
-
-            if (user.email === MASTER_EMAIL) {
-                masterArea.classList.remove('hidden');
-                userRoleDisplay.textContent = '👑 Função: Master (Controle Total)';
-                loadUserList();
-            } else {
-                masterArea.classList.add('hidden');
-                db.collection('usuarios').doc(user.uid).get()
-                    .then(doc => {
-                        if (doc.exists) {
-                            const role = doc.data().funcao || 'tecnico';
-                            const roleMap = { 'admin': 'Administrador', 'diretor': 'Diretor', 'tecnico': 'Técnico' };
-                            userRoleDisplay.textContent = `🔹 Função: ${roleMap[role] || role}`;
-                        }
-                    })
-                    .catch(() => userRoleDisplay.textContent = '');
-            }
-
-            resetTimeout();
-            setupActivityListeners();
-        }
-
-        function showMessage(element, text, type = 'error') {
-            element.textContent = text;
-            element.className = 'message ' + type;
-        }
-
-        // ================================================================
-        // LOGIN
-        // ================================================================
-        loginForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const email = loginEmail.value.trim();
-            const password = loginPassword.value;
-
-            if (!email || !password) {
-                showMessage(loginMessage, 'Preencha todos os campos.', 'error');
-                return;
-            }
-
-            auth.signInWithEmailAndPassword(email, password)
-                .then(() => {
-                    showMessage(loginMessage, 'Login realizado!', 'success');
-                })
-                .catch((error) => {
-                    let msg = 'Erro ao fazer login.';
-                    if (error.code === 'auth/user-not-found') msg = 'Usuário não encontrado.';
-                    else if (error.code === 'auth/wrong-password') msg = 'Senha incorreta.';
-                    else if (error.code === 'auth/invalid-email') msg = 'E-mail inválido.';
-                    showMessage(loginMessage, msg, 'error');
-                });
-        });
-
-        logoutBtn.addEventListener('click', () => {
-            if (timerInterval) clearInterval(timerInterval);
-            if (timeoutId) clearTimeout(timeoutId);
-            auth.signOut();
-        });
-
-        // ================================================================
-        // OBSERVADOR DE AUTENTICAÇÃO
-        // ================================================================
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                db.collection('usuarios').doc(user.uid).get()
-                    .then((doc) => {
-                        if (doc.exists) {
-                            const dados = doc.data();
-                            userName.textContent = dados.nome || user.displayName || 'Usuário';
-                        } else {
-                            userName.textContent = user.displayName || 'Usuário';
-                        }
-                        userEmail.textContent = user.email;
-                        showDashboard(user);
-                    })
-                    .catch(() => {
-                        userName.textContent = user.displayName || 'Usuário';
-                        userEmail.textContent = user.email;
-                        showDashboard(user);
-                    });
-            } else {
-                showLoginScreen();
-                loginForm.reset();
-                loginMessage.className = 'message';
-                loginMessage.textContent = '';
-                createUserMessage.className = 'message';
-                createUserMessage.textContent = '';
-                masterArea.classList.add('hidden');
-                if (timerInterval) clearInterval(timerInterval);
-                if (timeoutId) clearTimeout(timeoutId);
-            }
-        });
-
-        // ================================================================
-        // FUNÇÕES DO MASTER
-        // ================================================================
-        function loadUserList() {
-            userListContainer.innerHTML = '<p>Carregando usuários...</p>';
-            db.collection('usuarios')
-                .orderBy('criado_em', 'desc')
-                .get()
-                .then((snapshot) => {
-                    if (snapshot.empty) {
-                        userListContainer.innerHTML = '<p>Nenhum usuário cadastrado ainda.</p>';
-                        return;
-                    }
-                    let html = `
-                        <div class="table-responsive">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Nome</th>
-                                        <th>E-mail</th>
-                                        <th>Função</th>
-                                        <th>Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                    `;
-                    snapshot.forEach((doc) => {
-                        const data = doc.data();
-                        const uid = doc.id;
-                        const isMaster = (data.email === MASTER_EMAIL);
-                        const roleClass = data.funcao === 'admin' ? 'badge-admin' : (data.funcao === 'diretor' ? 'badge-diretor' : '');
-                        const roleLabel = data.funcao === 'admin' ? 'Admin' : (data.funcao === 'diretor' ? 'Diretor' : 'Técnico');
-                        
-                        html += `
-                            <tr>
-                                <td><strong>${data.nome || 'Sem nome'}</strong></td>
-                                <td>${data.email}</td>
-                                <td><span class="badge ${roleClass}">${isMaster ? '👑 Master' : roleLabel}</span></td>
-                                <td>
-                                    ${!isMaster ? `<button class="btn btn-danger btn-sm" onclick="deleteUser('${uid}')">Excluir</button>` : '<span style="color:#6c757d;">Protegido</span>'}
-                                </td>
-                            </tr>
-                        `;
-                    });
-                    html += `</tbody></table></div>`;
-                    userListContainer.innerHTML = html;
-                })
-                .catch((error) => {
-                    userListContainer.innerHTML = `<p style="color:red;">Erro ao carregar: ${error.message}</p>`;
-                });
-        }
-
-        window.deleteUser = function(uid) {
-            if (!confirm('Tem certeza que deseja excluir este usuário? Isso remove a conta e os dados.')) return;
-            db.collection('usuarios').doc(uid).delete()
-                .then(() => {
-                    alert('Usuário removido do Firestore. Para remover completamente a conta de autenticação, use o Console do Firebase.');
-                    loadUserList();
-                })
-                .catch((error) => {
-                    alert('Erro ao excluir: ' + error.message);
-                });
-        };
-
-        createUserForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const name = newUserName.value.trim();
-            const email = newUserEmail.value.trim();
-            const password = newUserPassword.value;
-            const role = newUserRole.value;
-            const masterPass = masterPasswordConfirm.value;
-
-            if (!name || !email || !password || !masterPass) {
-                showMessage(createUserMessage, 'Preencha todos os campos.', 'error');
-                return;
-            }
-            if (password.length < 6) {
-                showMessage(createUserMessage, 'A senha do novo usuário deve ter pelo menos 6 caracteres.', 'error');
-                return;
-            }
-
-            const masterEmail = auth.currentUser.email;
-            auth.signInWithEmailAndPassword(masterEmail, masterPass)
-                .then(() => {
-                    return auth.createUserWithEmailAndPassword(email, password);
-                })
-                .then((userCredential) => {
-                    const newUser = userCredential.user;
-                    return newUser.updateProfile({ displayName: name })
-                        .then(() => {
-                            return db.collection('usuarios').doc(newUser.uid).set({
-                                nome: name,
-                                email: email,
-                                funcao: role,
-                                criado_por: auth.currentUser.uid,
-                                criado_em: firebase.firestore.FieldValue.serverTimestamp()
-                            });
-                        })
-                        .then(() => {
-                            return auth.signInWithEmailAndPassword(masterEmail, masterPass);
-                        });
-                })
-                .then(() => {
-                    showMessage(createUserMessage, 'Usuário criado com sucesso!', 'success');
-                    createUserForm.reset();
-                    loadUserList();
-                    userName.textContent = auth.currentUser.displayName || 'Master';
-                })
-                .catch((error) => {
-                    let msg = error.message;
-                    if (error.code === 'auth/email-already-in-use') {
-                        msg = 'Este e-mail já está em uso.';
-                    } else if (error.code === 'auth/wrong-password') {
-                        msg = 'Sua senha de Master está incorreta.';
-                    } else if (error.code === 'auth/too-many-requests') {
-                        msg = 'Muitas tentativas. Aguarde um momento.';
-                    }
-                    showMessage(createUserMessage, msg, 'error');
-                });
-        });
-
-        // ================================================================
-        // INICIAR COM A TELA DE LOGIN
-        // ================================================================
-        showLoginScreen();
-    </script>
+    showLoginScreen();
+</script>
 </body>
 </html>

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Gerenciar Personagens - Villa do Bosque</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family: 'Calibri', 'Segoe UI', Tahoma, sans-serif; }
+        body { background: #e8f5e9; padding: 20px 15px; display: flex; justify-content: center; min-height: 100vh; }
+        .container { background: #fff; max-width: 1000px; width: 100%; padding: 30px 25px; border-radius: 20px; box-shadow: 0 8px 30px rgba(0,80,0,0.15); border: 1px solid #a5d6a7; }
+        .logo-area { text-align: center; margin-bottom: 20px; }
+        .logo-area img { max-width: 120px; height: auto; }
+        .logo-area h1 { font-size: 28px; color: #1b5e20; background: #c8e6c9; display: inline-block; padding: 6px 20px; border-radius: 30px; }
+        .btn { padding: 12px 20px; background: #2e7d32; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .btn:hover { background: #1b5e20; }
+        .btn-success { background: #388e3c; }
+        .btn-success:hover { background: #2e7d32; }
+        .btn-danger { background: #c62828; }
+        .btn-danger:hover { background: #b71c1c; }
+        .btn-secondary { background: #6c757d; }
+        .btn-secondary:hover { background: #5a6268; }
+        .btn-sm { padding: 6px 12px; font-size: 13px; }
+        .btn-voltar { background: #558b2f; margin-bottom: 20px; }
+        .btn-voltar:hover { background: #33691e; }
+        .form-group { margin-bottom: 16px; }
+        label { display: block; font-weight: 600; font-size: 14px; color: #1b5e20; margin-bottom: 4px; }
+        input, select { width: 100%; padding: 12px 15px; border: 1px solid #a5d6a7; border-radius: 10px; font-size: 16px; background: #fafffe; }
+        input:focus, select:focus { outline: none; border-color: #2e7d32; box-shadow: 0 0 0 3px rgba(46,125,50,0.2); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .message { margin-top: 16px; padding: 12px; border-radius: 8px; display: none; }
+        .message.error { display: block; background: #ffebee; color: #b71c1c; border: 1px solid #ef9a9a; }
+        .message.success { display: block; background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
+        .table-responsive { overflow-x: auto; margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 500px; }
+        th { background: #c8e6c9; padding: 12px; text-align: left; color: #1b5e20; border-bottom: 2px solid #81c784; }
+        td { padding: 12px; border-bottom: 1px solid #c8e6c9; vertical-align: middle; }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+        .badge-master { background: #ffcc80; color: #4e342e; }
+        .badge-admin { background: #c8e6c9; color: #1b5e20; }
+        .badge-diretor { background: #a5d6a7; color: #1b5e20; }
+        .badge-ativo { background: #c8e6c9; color: #1b5e20; }
+        .badge-inativo { background: #ffcdd2; color: #b71c1c; }
+        .hidden { display: none; }
+        @media (max-width: 600px) { .container { padding: 20px 15px; } .form-row { grid-template-columns: 1fr; gap: 0; } .logo-area h1 { font-size: 22px; } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="logo-area">
+        <img src="logo.png" alt="Logo Villa do Bosque" style="max-width:100px;">
+        <h1>👥 Gerenciar Personagens</h1>
+        <a href="index.html" class="btn btn-voltar" style="display:inline-block; margin-top:10px; text-decoration:none;">← Voltar ao Painel</a>
+    </div>
+
+    <h2 style="color:#2e7d32; margin-bottom:15px;">➕ Novo Personagem</h2>
+    <form id="personagemForm">
+        <div class="form-row">
+            <div class="form-group">
+                <label>Nome completo</label>
+                <input type="text" id="nome" placeholder="Nome" required>
+            </div>
+            <div class="form-group">
+                <label>E-mail</label>
+                <input type="email" id="email" placeholder="email@dominio.com" required>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Posição</label>
+                <select id="funcao" required>
+                    <option value="admin">Administrador</option>
+                    <option value="diretor">Diretor</option>
+                    <option value="master">Master</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Senha (mínimo 6 caracteres)</label>
+                <input type="password" id="senha" placeholder="••••••••" required>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Status</label>
+            <select id="status" required>
+                <option value="ativo">Ativo</option>
+                <option value="inativo">Inativo</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-success">Cadastrar Personagem</button>
+        <div id="formMessage" class="message"></div>
+    </form>
+
+    <h2 style="color:#2e7d32; margin-top:40px;">📋 Personagens Cadastrados</h2>
+    <div id="listaContainer"><p>Carregando...</p></div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyDx_6oWO30Drh8GkuQA9jk2Oym7H8J3ABg",
+        authDomain: "villa-bosque1.firebaseapp.com",
+        projectId: "villa-bosque1",
+        storageBucket: "villa-bosque1.firebasestorage.app",
+        messagingSenderId: "372474036025",
+        appId: "1:372474036025:web:bbbee10723469d77cbb2e8"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    const form = document.getElementById('personagemForm');
+    const nomeInput = document.getElementById('nome');
+    const emailInput = document.getElementById('email');
+    const funcaoSelect = document.getElementById('funcao');
+    const senhaInput = document.getElementById('senha');
+    const statusSelect = document.getElementById('status');
+    const formMsg = document.getElementById('formMessage');
+    const listaDiv = document.getElementById('listaContainer');
+    const MASTER_EMAIL = 'administracaovilladobosque@gmail.com';
+
+    function carregarLista() {
+        listaDiv.innerHTML = '<p>Carregando...</p>';
+        db.collection('usuarios').orderBy('criado_em', 'desc').get()
+            .then(snapshot => {
+                if (snapshot.empty) { listaDiv.innerHTML = '<p>Nenhum personagem cadastrado.</p>'; return; }
+                let html = `<div class="table-responsive"><table>
+                    <thead><tr><th>Nome</th><th>E-mail</th><th>Função</th><th>Status</th><th>Ações</th></tr></thead><tbody>`;
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const uid = doc.id;
+                    const isMaster = (data.email === MASTER_EMAIL);
+                    const roleClass = data.funcao === 'master' ? 'badge-master' : (data.funcao === 'admin' ? 'badge-admin' : 'badge-diretor');
+                    const statusClass = data.status === 'ativo' ? 'badge-ativo' : 'badge-inativo';
+                    html += `
+                        <tr>
+                            <td><strong>${data.nome || 'Sem nome'}</strong></td>
+                            <td>${data.email}</td>
+                            <td><span class="badge ${roleClass}">${data.funcao || 'tecnico'}</span></td>
+                            <td><span class="badge ${statusClass}">${data.status || 'ativo'}</span></td>
+                            <td>
+                                ${!isMaster ? `
+                                    <button class="btn btn-sm btn-secondary" onclick="toggleStatus('${uid}','${data.status}')">
+                                        ${data.status === 'ativo' ? 'Inativar' : 'Ativar'}
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" onclick="excluir('${uid}')">Excluir</button>
+                                ` : '<span style="color:#6c757d;">Protegido</span>'}
+                            </td>
+                        </tr>
+                    `;
+                });
+                html += `</tbody></table></div>`;
+                listaDiv.innerHTML = html;
+            })
+            .catch(err => { listaDiv.innerHTML = `<p style="color:red;">Erro: ${err.message}</p>`; });
+    }
+
+    window.toggleStatus = function(uid, currentStatus) {
+        const novoStatus = currentStatus === 'ativo' ? 'inativo' : 'ativo';
+        if (!confirm(`Deseja ${novoStatus === 'ativo' ? 'ativar' : 'inativar'} este usuário?`)) return;
+        db.collection('usuarios').doc(uid).update({ status: novoStatus })
+            .then(() => { alert(`Status alterado para ${novoStatus}.`); carregarLista(); })
+            .catch(err => alert('Erro: ' + err.message));
+    };
+
+    window.excluir = function(uid) {
+        if (!confirm('Excluir este personagem do sistema? (A conta de autenticação continuará, mas o vínculo será removido)')) return;
+        db.collection('usuarios').doc(uid).delete()
+            .then(() => { alert('Personagem removido do Firestore.'); carregarLista(); })
+            .catch(err => alert('Erro: ' + err.message));
+    };
+
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const nome = nomeInput.value.trim();
+        const email = emailInput.value.trim();
+        const funcao = funcaoSelect.value;
+        const senha = senhaInput.value;
+        const status = statusSelect.value;
+
+        if (!nome || !email || !senha) { showMessage(formMsg, 'Preencha todos os campos.', 'error'); return; }
+        if (senha.length < 6) { showMessage(formMsg, 'A senha deve ter pelo menos 6 caracteres.', 'error'); return; }
+        if (!auth.currentUser || auth.currentUser.email !== MASTER_EMAIL) {
+            showMessage(formMsg, 'Apenas o Master pode cadastrar personagens.', 'error');
+            return;
+        }
+
+        auth.createUserWithEmailAndPassword(email, senha)
+            .then((userCredential) => {
+                const newUser = userCredential.user;
+                return newUser.updateProfile({ displayName: nome })
+                    .then(() => db.collection('usuarios').doc(newUser.uid).set({
+                        nome, email, funcao, status,
+                        criado_por: auth.currentUser.uid,
+                        criado_em: firebase.firestore.FieldValue.serverTimestamp()
+                    }))
+                    .then(() => auth.signInWithEmailAndPassword(auth.currentUser.email, senha));
+            })
+            .then(() => {
+                showMessage(formMsg, 'Personagem cadastrado com sucesso!', 'success');
+                form.reset();
+                carregarLista();
+            })
+            .catch((error) => {
+                let msg = error.message;
+                if (error.code === 'auth/email-already-in-use') msg = 'E-mail já em uso.';
+                else if (error.code === 'auth/wrong-password') msg = 'Senha do Master incorreta.';
+                showMessage(formMsg, msg, 'error');
+            });
+    });
+
+    function showMessage(el, text, type) { el.textContent = text; el.className = 'message ' + type; }
+
+    auth.onAuthStateChanged((user) => {
+        if (user && user.email === MASTER_EMAIL) carregarLista();
+        else if (user) { alert('Apenas o Master pode acessar esta página.'); window.location.href = 'index.html'; }
+        else window.location.href = 'index.html';
+    });
+</script>
+</body>
+</html>

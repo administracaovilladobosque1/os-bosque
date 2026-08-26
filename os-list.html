@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Ordens de Serviço - Villa do Bosque</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family: 'Calibri', 'Segoe UI', Tahoma, sans-serif; }
+        body { background: #e8f5e9; padding: 20px 15px; display: flex; justify-content: center; min-height: 100vh; }
+        .container { background: #fff; max-width: 1100px; width: 100%; padding: 30px 25px; border-radius: 20px; box-shadow: 0 8px 30px rgba(0,80,0,0.15); border: 1px solid #a5d6a7; }
+        .logo-area { text-align: center; margin-bottom: 20px; }
+        .logo-area img { max-width: 120px; height: auto; }
+        .logo-area h1 { font-size: 28px; color: #1b5e20; background: #c8e6c9; display: inline-block; padding: 6px 20px; border-radius: 30px; }
+        .btn-voltar { background: #558b2f; color: white; padding: 10px 20px; border: none; border-radius: 10px; text-decoration: none; display: inline-block; margin-bottom: 20px; }
+        .btn-voltar:hover { background: #33691e; }
+        .filtros { display: flex; flex-wrap: wrap; gap: 15px; margin: 20px 0; align-items: center; }
+        .filtros select, .filtros input { padding: 10px; border: 1px solid #a5d6a7; border-radius: 10px; font-size: 15px; flex: 1 1 200px; }
+        .table-responsive { overflow-x: auto; margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 600px; }
+        th { background: #c8e6c9; padding: 12px; text-align: left; color: #1b5e20; border-bottom: 2px solid #81c784; }
+        td { padding: 12px; border-bottom: 1px solid #c8e6c9; vertical-align: middle; }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+        .badge-aberta { background: #ffcdd2; color: #b71c1c; }
+        .badge-em_andamento { background: #fff9c4; color: #f57f17; }
+        .badge-concluida { background: #c8e6c9; color: #1b5e20; }
+        .badge-cancelada { background: #e0e0e0; color: #424242; }
+        @media (max-width: 600px) { .container { padding: 20px 15px; } .logo-area h1 { font-size: 22px; } .filtros { flex-direction: column; } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="logo-area">
+        <img src="logo.png" alt="Logo Villa do Bosque" style="max-width:100px;">
+        <h1>📋 Ordens de Serviço</h1>
+        <a href="index.html" class="btn-voltar">← Voltar ao Painel</a>
+    </div>
+
+    <div class="filtros">
+        <select id="filtroStatus">
+            <option value="todas">Todas</option>
+            <option value="aberta">Aberta</option>
+            <option value="em_andamento">Em andamento</option>
+            <option value="concluida">Concluída</option>
+            <option value="cancelada">Cancelada</option>
+        </select>
+        <input type="text" id="filtroBusca" placeholder="Buscar por número, título ou responsável...">
+        <button class="btn" id="btnFiltrar" style="background:#2e7d32; color:white; border:none; padding:10px 20px; border-radius:10px; cursor:pointer;">Filtrar</button>
+    </div>
+
+    <div id="listaContainer"><p>Carregando ordens de serviço...</p></div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyDx_6oWO30Drh8GkuQA9jk2Oym7H8J3ABg",
+        authDomain: "villa-bosque1.firebaseapp.com",
+        projectId: "villa-bosque1",
+        storageBucket: "villa-bosque1.firebasestorage.app",
+        messagingSenderId: "372474036025",
+        appId: "1:372474036025:web:bbbee10723469d77cbb2e8"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    const listaDiv = document.getElementById('listaContainer');
+    const filtroStatus = document.getElementById('filtroStatus');
+    const filtroBusca = document.getElementById('filtroBusca');
+    const btnFiltrar = document.getElementById('btnFiltrar');
+
+    // Inicialmente carrega apenas OS com status diferente de "concluida"
+    function carregarOS(statusFiltro = 'não_concluidas', busca = '') {
+        listaDiv.innerHTML = '<p>Carregando...</p>';
+        let query = db.collection('ordens_servico');
+
+        // Se não for "todas", filtra pelo status
+        if (statusFiltro === 'não_concluidas') {
+            query = query.where('status', 'in', ['aberta', 'em_andamento']);
+        } else if (statusFiltro !== 'todas') {
+            query = query.where('status', '==', statusFiltro);
+        }
+
+        query.orderBy('criado_em', 'desc').get()
+            .then(snapshot => {
+                if (snapshot.empty) {
+                    listaDiv.innerHTML = '<p style="text-align:center; color:#555;">Nenhuma ordem de serviço encontrada.</p>';
+                    return;
+                }
+                let html = `<div class="table-responsive"><table>
+                    <thead><tr><th>Nº</th><th>Título</th><th>Aberto por</th><th>Direcionado a</th><th>Status</th><th>Data/Hora</th></tr></thead><tbody>`;
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const id = doc.id;
+                    const statusClass = `badge-${data.status || 'aberta'}`;
+                    const statusLabel = data.status || 'aberta';
+                    html += `
+                        <tr onclick="window.location.href='os-detalhe.html?id=${id}'" style="cursor:pointer;">
+                            <td><strong>${data.numero || 'N/A'}</strong></td>
+                            <td>${data.titulo || 'Sem título'}</td>
+                            <td>${data.aberto_por_nome || '—'}</td>
+                            <td>${data.direcionado_para || '—'}</td>
+                            <td><span class="badge ${statusClass}">${statusLabel.replace('_',' ').toUpperCase()}</span></td>
+                            <td>${data.criado_em ? new Date(data.criado_em.seconds * 1000).toLocaleString('pt-BR') : '—'}</td>
+                        </tr>
+                    `;
+                });
+                html += `</tbody></table></div>`;
+                listaDiv.innerHTML = html;
+            })
+            .catch(err => {
+                listaDiv.innerHTML = `<p style="color:red;">Erro ao carregar: ${err.message}</p>`;
+            });
+    }
+
+    // Filtro manual
+    btnFiltrar.addEventListener('click', () => {
+        const status = filtroStatus.value;
+        const busca = filtroBusca.value.trim().toLowerCase();
+        carregarOS(status, busca);
+    });
+
+    // Carregar inicial com não concluídas
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            carregarOS('não_concluidas', '');
+        } else {
+            window.location.href = 'index.html';
+        }
+    });
+</script>
+</body>
+</html>
