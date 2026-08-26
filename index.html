@@ -20,7 +20,7 @@
             background: #e8f5e9;
             display: flex;
             justify-content: center;
-            align-items: flex-start;
+            align-items: center;
             min-height: 100vh;
             padding: 20px 15px;
         }
@@ -30,14 +30,14 @@
             border-radius: 20px;
             box-shadow: 0 8px 30px rgba(0, 80, 0, 0.15);
             width: 100%;
-            max-width: 950px;
+            max-width: 450px;
             transition: all 0.3s ease;
             border: 1px solid #a5d6a7;
         }
         /* Logo e cabeçalho */
         .logo-area {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
         .logo-area img {
             max-width: 180px;
@@ -46,41 +46,20 @@
             margin: 0 auto 10px;
         }
         .logo-area .main-title {
-            font-size: 32px;
+            font-size: 28px;
             font-weight: 700;
             color: #1b5e20;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.05);
+            line-height: 1.2;
             margin-top: 5px;
         }
         .logo-area .main-title span {
             background: #c8e6c9;
-            padding: 0 15px;
+            padding: 6px 18px;
             border-radius: 30px;
             display: inline-block;
         }
-        h1 {
-            font-size: 26px;
-            margin-bottom: 8px;
-            color: #1b5e20;
-        }
-        h2 {
-            font-size: 20px;
-            margin: 25px 0 15px;
-            color: #2e7d32;
-            border-bottom: 2px solid #c8e6c9;
-            padding-bottom: 10px;
-        }
-        h3 {
-            font-size: 18px;
-            color: #2e7d32;
-            margin: 15px 0 10px;
-        }
-        .subtitle {
-            color: #388e3c;
-            margin-bottom: 25px;
-            font-size: 15px;
-            font-weight: 500;
-        }
+        /* Formulário de login */
         .form-group {
             margin-bottom: 18px;
         }
@@ -91,7 +70,7 @@
             margin-bottom: 5px;
             color: #1b5e20;
         }
-        input, select {
+        input {
             width: 100%;
             padding: 14px 15px;
             border: 1px solid #a5d6a7;
@@ -100,13 +79,14 @@
             transition: 0.2s;
             background: #fafffe;
         }
-        input:focus, select:focus {
+        input:focus {
             outline: none;
             border-color: #2e7d32;
             box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.2);
         }
         .btn {
-            padding: 14px 20px;
+            width: 100%;
+            padding: 14px;
             background: #2e7d32;
             color: white;
             border: none;
@@ -115,48 +95,16 @@
             font-weight: 600;
             cursor: pointer;
             transition: background 0.2s;
-            width: 100%;
             touch-action: manipulation;
         }
         .btn:hover {
             background: #1b5e20;
-        }
-        .btn-success {
-            background: #388e3c;
-        }
-        .btn-success:hover {
-            background: #2e7d32;
         }
         .btn-danger {
             background: #c62828;
         }
         .btn-danger:hover {
             background: #b71c1c;
-        }
-        .btn-secondary {
-            background: #6c757d;
-        }
-        .btn-secondary:hover {
-            background: #5a6268;
-        }
-        .btn-sm {
-            padding: 10px 16px;
-            font-size: 14px;
-            width: auto;
-        }
-        .toggle-link {
-            text-align: center;
-            margin-top: 16px;
-            font-size: 15px;
-        }
-        .toggle-link a {
-            color: #2e7d32;
-            cursor: pointer;
-            font-weight: 600;
-            text-decoration: none;
-        }
-        .toggle-link a:hover {
-            text-decoration: underline;
         }
         .message {
             margin-top: 16px;
@@ -177,17 +125,11 @@
             color: #1b5e20;
             border: 1px solid #a5d6a7;
         }
-        .message.info {
-            display: block;
-            background: #e3f2fd;
-            color: #0d47a1;
-            border: 1px solid #90caf9;
-        }
         .hidden {
             display: none !important;
         }
-        
-        /* Dashboard */
+
+        /* ========== DASHBOARD ========== */
         #dashboard {
             display: none;
         }
@@ -211,8 +153,57 @@
             padding: 12px 40px;
             display: inline-block;
         }
-        
-        /* Tabela de usuários */
+        .timeout-warning {
+            font-size: 13px;
+            color: #558b2f;
+            text-align: right;
+            margin-top: 10px;
+        }
+
+        /* Painel Master */
+        .master-panel {
+            background: #f1f8e9;
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid #a5d6a7;
+        }
+        h2 {
+            font-size: 20px;
+            margin: 25px 0 15px;
+            color: #2e7d32;
+            border-bottom: 2px solid #c8e6c9;
+            padding-bottom: 10px;
+        }
+        h3 {
+            font-size: 18px;
+            color: #2e7d32;
+            margin: 15px 0 10px;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        select {
+            width: 100%;
+            padding: 14px 15px;
+            border: 1px solid #a5d6a7;
+            border-radius: 10px;
+            font-size: 16px;
+            background: #fafffe;
+        }
+        .btn-success {
+            background: #388e3c;
+        }
+        .btn-success:hover {
+            background: #2e7d32;
+        }
+        .btn-sm {
+            padding: 10px 16px;
+            font-size: 14px;
+            width: auto;
+        }
         .table-responsive {
             overflow-x: auto;
             margin-top: 15px;
@@ -257,37 +248,14 @@
             color: #4e342e;
         }
 
-        /* Grid para formulários */
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-
-        /* Painel Master */
-        .master-panel {
-            background: #f1f8e9;
-            border-radius: 16px;
-            padding: 20px;
-            margin-top: 20px;
-            border: 1px solid #a5d6a7;
-        }
-
-        .timeout-warning {
-            font-size: 13px;
-            color: #558b2f;
-            text-align: right;
-            margin-top: 10px;
-        }
-
-        /* ========== RESPONSIVO PARA CELULAR ========== */
+        /* ========== RESPONSIVO ========== */
         @media (max-width: 600px) {
             body {
                 padding: 10px 8px;
             }
             .container {
                 padding: 20px 15px;
-                border-radius: 16px;
+                max-width: 100%;
             }
             .logo-area img {
                 max-width: 120px;
@@ -296,13 +264,7 @@
                 font-size: 22px;
             }
             .logo-area .main-title span {
-                padding: 0 12px;
-            }
-            h1 {
-                font-size: 22px;
-            }
-            h2 {
-                font-size: 18px;
+                padding: 4px 12px;
             }
             .form-row {
                 grid-template-columns: 1fr;
@@ -320,11 +282,7 @@
                 width: 100%;
                 padding: 14px;
             }
-            .user-info {
-                padding: 12px;
-            }
-            table {
-                font-size: 13px;
+            .table-responsive table {
                 min-width: 300px;
             }
             th, td {
@@ -351,12 +309,13 @@
         <!-- ======== TELA DE LOGIN ======== -->
         <div id="loginScreen">
             <div class="logo-area">
-                <!-- Substitua o src abaixo pelo caminho da sua logo -->
+                <!-- Substitua "logo.png" pelo nome do seu arquivo de imagem -->
                 <img src="logo.png" alt="Logo Villa do Bosque">
-                <div class="main-title"><span>SISTEMA DE O.S.</span></div>
+                <div class="main-title">
+                    <span>SISTEMA<br>ORDEM DE SERVIÇO</span>
+                </div>
             </div>
-            <h1>🔐 Bem-vindo</h1>
-            <p class="subtitle">Faça login para acessar o sistema de Ordens de Serviço</p>
+
             <form id="loginForm">
                 <div class="form-group">
                     <label>E-mail</label>
@@ -368,47 +327,18 @@
                 </div>
                 <button type="submit" class="btn">Entrar</button>
             </form>
-            <div class="toggle-link">
-                Não tem uma conta? <a id="showRegister">Criar conta agora</a>
-            </div>
             <div id="loginMessage" class="message"></div>
-        </div>
-
-        <!-- ======== TELA DE CADASTRO ======== -->
-        <div id="registerScreen" class="hidden">
-            <div class="logo-area">
-                <img src="logo.png" alt="Logo Villa do Bosque" style="max-width:120px;">
-            </div>
-            <h1>📝 Criar conta</h1>
-            <p class="subtitle">Preencha os dados para se cadastrar</p>
-            <form id="registerForm">
-                <div class="form-group">
-                    <label>Nome completo</label>
-                    <input type="text" id="registerName" placeholder="Seu nome" required>
-                </div>
-                <div class="form-group">
-                    <label>E-mail</label>
-                    <input type="email" id="registerEmail" placeholder="seu@email.com" required>
-                </div>
-                <div class="form-group">
-                    <label>Senha</label>
-                    <input type="password" id="registerPassword" placeholder="Mínimo 6 caracteres" required>
-                </div>
-                <button type="submit" class="btn btn-success">Criar conta</button>
-            </form>
-            <div class="toggle-link">
-                Já tem uma conta? <a id="showLogin">Fazer login</a>
-            </div>
-            <div id="registerMessage" class="message"></div>
         </div>
 
         <!-- ======== DASHBOARD (ÁREA LOGADA) ======== -->
         <div id="dashboard">
             <div class="logo-area" style="margin-bottom:10px;">
                 <img src="logo.png" alt="Logo Villa do Bosque" style="max-width:100px;">
-                <div class="main-title" style="font-size:24px;"><span>SISTEMA DE O.S.</span></div>
+                <div class="main-title" style="font-size:22px;">
+                    <span>SISTEMA<br>ORDEM DE SERVIÇO</span>
+                </div>
             </div>
-            <h1>📋 Painel de Controle</h1>
+            <h1 style="font-size:26px; color:#1b5e20; text-align:center;">📋 Painel de Controle</h1>
             <div class="user-info">
                 <p>👋 Olá, <strong id="userName">Usuário</strong>!</p>
                 <p style="font-size:13px; color:#2e7d32;" id="userEmail"></p>
@@ -416,7 +346,7 @@
                 <p style="font-size:12px; color:#558b2f; margin-top:5px;">⏳ Sessão ativa por <span id="timerDisplay">4h00</span></p>
             </div>
             
-            <!-- ÁREA DO MASTER (SÓ APARECE PARA O MASTER) -->
+            <!-- ÁREA DO MASTER -->
             <div id="masterArea" class="hidden">
                 <div class="master-panel">
                     <h2>👑 Painel do Master - Gerenciar Usuários</h2>
@@ -489,37 +419,26 @@
         // CONFIGURAÇÕES DO MASTER E TIMEOUT
         // ================================================================
         const MASTER_EMAIL = 'administracaovilladobosque@gmail.com';
-        const TIMEOUT_MS = 4 * 60 * 60 * 1000; // 4 horas
+        const TIMEOUT_MS = 4 * 60 * 60 * 1000;
         let timeoutId = null;
         let timerInterval = null;
 
         // ================================================================
-        // REFERÊNCIAS AOS ELEMENTOS HTML
+        // ELEMENTOS HTML
         // ================================================================
         const loginScreen = document.getElementById('loginScreen');
-        const registerScreen = document.getElementById('registerScreen');
         const dashboardScreen = document.getElementById('dashboard');
         const masterArea = document.getElementById('masterArea');
         const userRoleDisplay = document.getElementById('userRoleDisplay');
         const timerDisplay = document.getElementById('timerDisplay');
 
         const loginForm = document.getElementById('loginForm');
-        const registerForm = document.getElementById('registerForm');
         const logoutBtn = document.getElementById('logoutBtn');
-
         const loginEmail = document.getElementById('loginEmail');
         const loginPassword = document.getElementById('loginPassword');
-        const registerName = document.getElementById('registerName');
-        const registerEmail = document.getElementById('registerEmail');
-        const registerPassword = document.getElementById('registerPassword');
-
         const loginMessage = document.getElementById('loginMessage');
-        const registerMessage = document.getElementById('registerMessage');
         const userName = document.getElementById('userName');
         const userEmail = document.getElementById('userEmail');
-
-        const showRegister = document.getElementById('showRegister');
-        const showLogin = document.getElementById('showLogin');
 
         const createUserForm = document.getElementById('createUserForm');
         const newUserName = document.getElementById('newUserName');
@@ -566,7 +485,6 @@
         // ================================================================
         function showLoginScreen() {
             loginScreen.classList.remove('hidden');
-            registerScreen.classList.add('hidden');
             dashboardScreen.style.display = 'none';
             loginMessage.className = 'message';
             loginMessage.textContent = '';
@@ -574,19 +492,8 @@
             if (timeoutId) clearTimeout(timeoutId);
         }
 
-        function showRegisterScreen() {
-            loginScreen.classList.add('hidden');
-            registerScreen.classList.remove('hidden');
-            dashboardScreen.style.display = 'none';
-            registerMessage.className = 'message';
-            registerMessage.textContent = '';
-            if (timerInterval) clearInterval(timerInterval);
-            if (timeoutId) clearTimeout(timeoutId);
-        }
-
         function showDashboard(user) {
             loginScreen.classList.add('hidden');
-            registerScreen.classList.add('hidden');
             dashboardScreen.style.display = 'block';
             userName.textContent = user.displayName || 'Usuário';
             userEmail.textContent = user.email;
@@ -618,53 +525,8 @@
         }
 
         // ================================================================
-        // NAVEGAÇÃO
+        // LOGIN
         // ================================================================
-        showRegister.addEventListener('click', showRegisterScreen);
-        showLogin.addEventListener('click', showLoginScreen);
-
-        // ================================================================
-        // LOGIN E CADASTRO
-        // ================================================================
-        registerForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const name = registerName.value.trim();
-            const email = registerEmail.value.trim();
-            const password = registerPassword.value;
-
-            if (!name || !email || !password) {
-                showMessage(registerMessage, 'Preencha todos os campos.', 'error');
-                return;
-            }
-            if (password.length < 6) {
-                showMessage(registerMessage, 'A senha deve ter pelo menos 6 caracteres.', 'error');
-                return;
-            }
-
-            auth.createUserWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    const user = userCredential.user;
-                    return user.updateProfile({ displayName: name })
-                        .then(() => {
-                            return db.collection('usuarios').doc(user.uid).set({
-                                nome: name,
-                                email: email,
-                                funcao: 'tecnico',
-                                criado_em: firebase.firestore.FieldValue.serverTimestamp()
-                            });
-                        });
-                })
-                .then(() => {
-                    showMessage(registerMessage, 'Conta criada com sucesso!', 'success');
-                })
-                .catch((error) => {
-                    let msg = error.message;
-                    if (error.code === 'auth/email-already-in-use') msg = 'E-mail já cadastrado.';
-                    else if (error.code === 'auth/invalid-email') msg = 'E-mail inválido.';
-                    showMessage(registerMessage, msg, 'error');
-                });
-        });
-
         loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const email = loginEmail.value.trim();
@@ -718,11 +580,8 @@
             } else {
                 showLoginScreen();
                 loginForm.reset();
-                registerForm.reset();
                 loginMessage.className = 'message';
                 loginMessage.textContent = '';
-                registerMessage.className = 'message';
-                registerMessage.textContent = '';
                 createUserMessage.className = 'message';
                 createUserMessage.textContent = '';
                 masterArea.classList.add('hidden');
