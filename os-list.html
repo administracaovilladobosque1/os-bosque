@@ -16,24 +16,31 @@
         .logo-area h1 { font-size: 28px; color: #1b5e20; background: #c8e6c9; display: inline-block; padding: 6px 20px; border-radius: 30px; }
         .btn-voltar { background: #558b2f; color: white; padding: 10px 20px; border: none; border-radius: 10px; text-decoration: none; display: inline-block; margin-bottom: 20px; }
         .btn-voltar:hover { background: #33691e; }
+        .btn-nova-os { background: #2e7d32; color: white; padding: 10px 20px; border: none; border-radius: 10px; text-decoration: none; display: inline-block; margin-left: 10px; }
+        .btn-nova-os:hover { background: #1b5e20; }
         .filtros { display: flex; flex-wrap: wrap; gap: 15px; margin: 20px 0; align-items: center; }
         .filtros select, .filtros input { padding: 10px; border: 1px solid #a5d6a7; border-radius: 10px; font-size: 15px; flex: 1 1 200px; }
-        .btn { padding: 10px 20px; background: #2e7d32; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; }
-        .btn:hover { background: #1b5e20; }
-        .btn-sm { padding: 6px 12px; font-size: 13px; }
         .table-responsive { overflow-x: auto; margin-top: 20px; }
         table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 600px; }
         th { background: #c8e6c9; padding: 12px; text-align: left; color: #1b5e20; border-bottom: 2px solid #81c784; }
         td { padding: 12px; border-bottom: 1px solid #c8e6c9; vertical-align: middle; }
-        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; }
-        .badge-aberta { background: #ffcdd2; color: #b71c1c; }
-        .badge-em_andamento { background: #fff9c4; color: #f57f17; }
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .badge-aberta { background: #e3f2fd; color: #0d47a1; }
+        .badge-em_andamento { background: #fff3e0; color: #e65100; }
         .badge-concluida { background: #c8e6c9; color: #1b5e20; }
         .badge-cancelada { background: #e0e0e0; color: #424242; }
-        .badge-baixa { background: #e8f5e9; color: #1b5e20; }
-        .badge-media { background: #fff9c4; color: #f57f17; }
-        .badge-alta { background: #ffccbc; color: #bf360c; }
-        .badge-urgente { background: #ffcdd2; color: #b71c1c; }
+        /* Prioridades com bolinhas */
+        .badge-emergencial { background: #ffcdd2; color: #b71c1c; font-weight: bold; }
+        .badge-urgente { background: #fff9c4; color: #f57f17; font-weight: bold; }
+        .badge-normal { background: #c8e6c9; color: #1b5e20; font-weight: bold; }
+        .badge .icone { margin-right: 4px; }
         @media (max-width: 600px) { .container { padding: 20px 15px; } .logo-area h1 { font-size: 22px; } .filtros { flex-direction: column; } }
     </style>
 </head>
@@ -42,28 +49,22 @@
     <div class="logo-area">
         <img src="logo.png" alt="Logo Villa do Bosque" style="max-width:100px;">
         <h1>📋 Ordens de Serviço</h1>
-        <a href="index.html" class="btn-voltar">← Voltar ao Painel</a>
+        <div>
+            <a href="index.html" class="btn-voltar">← Voltar ao Painel</a>
+            <a href="os-abrir.html" class="btn-nova-os">📝 Nova OS</a>
+        </div>
     </div>
 
     <div class="filtros">
         <select id="filtroStatus">
-            <option value="não_concluidas">Abertas (não concluídas)</option>
             <option value="todas">Todas</option>
             <option value="aberta">Aberta</option>
             <option value="em_andamento">Em andamento</option>
             <option value="concluida">Concluída</option>
             <option value="cancelada">Cancelada</option>
         </select>
-        <select id="filtroPrioridade">
-            <option value="todas">Todas prioridades</option>
-            <option value="baixa">Baixa</option>
-            <option value="media">Média</option>
-            <option value="alta">Alta</option>
-            <option value="urgente">Urgente</option>
-        </select>
-        <input type="text" id="filtroBusca" placeholder="Buscar por número ou título...">
-        <button class="btn" id="btnFiltrar">Filtrar</button>
-        <button class="btn btn-sm" id="btnLimparFiltros" style="background:#6c757d;">Limpar</button>
+        <input type="text" id="filtroBusca" placeholder="Buscar por número, título ou responsável...">
+        <button class="btn" id="btnFiltrar" style="background:#2e7d32; color:white; border:none; padding:10px 20px; border-radius:10px; cursor:pointer;">Filtrar</button>
     </div>
 
     <div id="listaContainer"><p>Carregando ordens de serviço...</p></div>
@@ -84,14 +85,17 @@
 
     const listaDiv = document.getElementById('listaContainer');
     const filtroStatus = document.getElementById('filtroStatus');
-    const filtroPrioridade = document.getElementById('filtroPrioridade');
     const filtroBusca = document.getElementById('filtroBusca');
     const btnFiltrar = document.getElementById('btnFiltrar');
-    const btnLimpar = document.getElementById('btnLimparFiltros');
 
-    let todasOS = [];
+    // Mapeamento de prioridades
+    const priorityMap = {
+        'emergencial': { label: 'Emergencial', class: 'badge-emergencial', icon: '🔴' },
+        'urgente': { label: 'Urgente', class: 'badge-urgente', icon: '🟡' },
+        'normal': { label: 'Normal', class: 'badge-normal', icon: '🟢' }
+    };
 
-    function carregarOS(statusFiltro = 'não_concluidas', prioridadeFiltro = 'todas', busca = '') {
+    function carregarOS(statusFiltro = 'não_concluidas', busca = '') {
         listaDiv.innerHTML = '<p>Carregando...</p>';
         let query = db.collection('ordens_servico');
 
@@ -103,92 +107,56 @@
 
         query.orderBy('criado_em', 'desc').get()
             .then(snapshot => {
-                todasOS = [];
+                if (snapshot.empty) {
+                    listaDiv.innerHTML = '<p style="text-align:center; color:#555;">Nenhuma ordem de serviço encontrada.</p>';
+                    return;
+                }
+                let html = `<div class="table-responsive"><table>
+                    <thead><tr><th>Nº</th><th>Título</th><th>Aberto por</th><th>Direcionado a</th><th>Prioridade</th><th>Status</th><th>Data/Hora</th></tr></thead><tbody>`;
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    data.id = doc.id;
-                    todasOS.push(data);
+                    const id = doc.id;
+                    const statusClass = `badge-${data.status || 'aberta'}`;
+                    const statusLabel = data.status || 'aberta';
+                    
+                    // Prioridade
+                    const p = data.prioridade || 'normal';
+                    const pData = priorityMap[p] || priorityMap['normal'];
+                    const prioridadeHtml = `<span class="badge ${pData.class}"><span class="icone">${pData.icon}</span> ${pData.label}</span>`;
+
+                    html += `
+                        <tr onclick="window.location.href='os-detalhe.html?id=${id}'" style="cursor:pointer;">
+                            <td><strong>${data.numero || 'N/A'}</strong></td>
+                            <td>${data.titulo || 'Sem título'}</td>
+                            <td>${data.aberto_por_nome || '—'}</td>
+                            <td>${data.direcionado_para_nome || '—'}</td>
+                            <td>${prioridadeHtml}</td>
+                            <td><span class="badge ${statusClass}">${statusLabel.replace('_',' ').toUpperCase()}</span></td>
+                            <td>${data.criado_em ? new Date(data.criado_em).toLocaleString('pt-BR') : '—'}</td>
+                        </tr>
+                    `;
                 });
-                aplicarFiltros(prioridadeFiltro, busca);
+                html += `</tbody></table></div>`;
+                listaDiv.innerHTML = html;
             })
             .catch(err => {
                 listaDiv.innerHTML = `<p style="color:red;">Erro ao carregar: ${err.message}</p>`;
             });
     }
 
-    function aplicarFiltros(prioridadeFiltro, busca) {
-        let filtradas = todasOS;
-
-        if (prioridadeFiltro !== 'todas') {
-            filtradas = filtradas.filter(os => os.prioridade === prioridadeFiltro);
-        }
-
-        if (busca.trim() !== '') {
-            const termo = busca.trim().toLowerCase();
-            filtradas = filtradas.filter(os => 
-                String(os.numero).includes(termo) || 
-                (os.titulo && os.titulo.toLowerCase().includes(termo))
-            );
-        }
-
-        if (filtradas.length === 0) {
-            listaDiv.innerHTML = '<p style="text-align:center; color:#555;">Nenhuma ordem de serviço encontrada.</p>';
-            return;
-        }
-
-        let html = `<div class="table-responsive"><table>
-            <thead><tr>
-                <th>Nº</th>
-                <th>Título</th>
-                <th>Aberto por</th>
-                <th>Direcionado a</th>
-                <th>Prioridade</th>
-                <th>Status</th>
-                <th>Data/Hora</th>
-            </tr></thead><tbody>`;
-        filtradas.forEach(os => {
-            const statusClass = `badge-${os.status || 'aberta'}`;
-            const statusLabel = (os.status || 'aberta').replace('_', ' ').toUpperCase();
-            const prioridadeClass = `badge-${os.prioridade || 'media'}`;
-            const prioridadeLabel = (os.prioridade || 'media').toUpperCase();
-            html += `
-                <tr onclick="window.location.href='os-detalhe.html?id=${os.id}'" style="cursor:pointer;">
-                    <td><strong>#${os.numero || 'N/A'}</strong></td>
-                    <td>${os.titulo || 'Sem título'}</td>
-                    <td>${os.aberto_por_nome || '—'}</td>
-                    <td>${os.direcionado_para || '—'}</td>
-                    <td><span class="badge ${prioridadeClass}">${prioridadeLabel}</span></td>
-                    <td><span class="badge ${statusClass}">${statusLabel}</span></td>
-                    <td>${os.criado_em ? new Date(os.criado_em.seconds * 1000).toLocaleString('pt-BR') : '—'}</td>
-                </tr>
-            `;
-        });
-        html += `</tbody></table></div>`;
-        listaDiv.innerHTML = html;
-    }
-
-    function aplicarFiltrosAtuais() {
+    btnFiltrar.addEventListener('click', () => {
         const status = filtroStatus.value;
-        const prioridade = filtroPrioridade.value;
-        const busca = filtroBusca.value;
-        carregarOS(status, prioridade, busca);
-    }
-
-    btnFiltrar.addEventListener('click', aplicarFiltrosAtuais);
-    btnLimpar.addEventListener('click', () => {
-        filtroStatus.value = 'não_concluidas';
-        filtroPrioridade.value = 'todas';
-        filtroBusca.value = '';
-        aplicarFiltrosAtuais();
+        const busca = filtroBusca.value.trim().toLowerCase();
+        carregarOS(status, busca);
     });
 
     auth.onAuthStateChanged((user) => {
         if (user) {
-            carregarOS('não_concluidas', 'todas', '');
+            carregarOS('não_concluidas', '');
         } else {
             window.location.href = 'index.html';
         }
     });
 </script>
 </body>
-</html> 
+</html>
