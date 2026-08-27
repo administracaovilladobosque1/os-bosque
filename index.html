@@ -33,22 +33,9 @@
         .hidden { display: none !important; }
 
         #dashboard { display: none; }
-        .dashboard-logo {
-            text-align: center;
-            margin-bottom: 10px;
-        }
-        .dashboard-logo .main-title {
-            font-size: 22px;
-            font-weight: 700;
-            color: #1b5e20;
-            line-height: 1.2;
-        }
-        .dashboard-logo .main-title span {
-            background: #c8e6c9;
-            padding: 4px 16px;
-            border-radius: 30px;
-            display: inline-block;
-        }
+        .dashboard-logo { text-align: center; margin-bottom: 10px; }
+        .dashboard-logo .main-title { font-size: 22px; font-weight: 700; color: #1b5e20; line-height: 1.2; }
+        .dashboard-logo .main-title span { background: #c8e6c9; padding: 4px 16px; border-radius: 30px; display: inline-block; }
         .user-info { background: #e8f5e9; padding: 15px; border-radius: 12px; margin: 20px 0; text-align: center; border: 1px solid #a5d6a7; }
         .user-info strong { color: #1b5e20; }
         .logout-area { text-align: center; margin-top: 20px; }
@@ -127,10 +114,16 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
+    // ============================================================
+    // CONFIGURAÇÃO DO MASTER (por e-mail)
+    // ============================================================
     const MASTER_EMAIL = 'administracaovilladobosque@gmail.com';
     const TIMEOUT_MS = 4 * 60 * 60 * 1000;
     let timeoutId = null, timerInterval = null;
 
+    // ============================================================
+    // ELEMENTOS
+    // ============================================================
     const loginScreen = document.getElementById('loginScreen');
     const dashboardScreen = document.getElementById('dashboard');
     const userRoleDisplay = document.getElementById('userRoleDisplay');
@@ -145,11 +138,15 @@
     const menuButtons = document.getElementById('menuButtons');
     const menuTitle = document.getElementById('menuTitle');
 
+    // Prevenir flash
     if (sessionStorage.getItem('userLoggedIn') === 'true') {
         loginScreen.classList.add('hidden');
         dashboardScreen.style.display = 'block';
     }
 
+    // ============================================================
+    // TIMEOUT
+    // ============================================================
     function resetTimeout() {
         if (timeoutId) clearTimeout(timeoutId);
         if (timerInterval) clearInterval(timerInterval);
@@ -173,6 +170,9 @@
         ['click','mousemove','keydown','scroll','touchstart'].forEach(ev => document.addEventListener(ev, resetTimeout));
     }
 
+    // ============================================================
+    // FUNÇÕES DE TELA
+    // ============================================================
     function showLoginScreen() {
         loginScreen.classList.remove('hidden');
         dashboardScreen.style.display = 'none';
@@ -186,12 +186,22 @@
     function showDashboard(user, userData) {
         loginScreen.classList.add('hidden');
         dashboardScreen.style.display = 'block';
+
+        // Nome do usuário: prioriza o Firestore, depois displayName
         const nomeExibicao = userData?.nome || user.displayName || 'Usuário';
         userName.textContent = nomeExibicao;
         userEmail.textContent = user.email;
         sessionStorage.setItem('userLoggedIn', 'true');
 
+        // ============================================================
+        // DETERMINA A FUNÇÃO – FORÇA MASTER PELO E-MAIL
+        // ============================================================
         let funcao = userData?.funcao || 'tecnico';
+        // Se o e-mail for o MASTER_EMAIL, SOBRESCREVE para 'master'
+        if (user.email === MASTER_EMAIL) {
+            funcao = 'master';
+        }
+
         const roleMap = {
             'master': 'Master (Controle Total)',
             'admin': 'Administrador',
@@ -200,6 +210,9 @@
         };
         userRoleDisplay.textContent = `🔹 Função: ${roleMap[funcao] || funcao}`;
 
+        // ============================================================
+        // MONTA O MENU DE ACORDO COM A FUNÇÃO
+        // ============================================================
         let html = '';
         if (funcao === 'master') {
             html += `<a href="personagens.html" class="btn btn-success">👥 Gerenciar Personagens</a>`;
@@ -222,6 +235,9 @@
 
     function showMessage(el, text, type) { el.textContent = text; el.className = 'message ' + type; }
 
+    // ============================================================
+    // LOGIN / LOGOUT
+    // ============================================================
     loginForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const email = loginEmail.value.trim();
@@ -245,6 +261,9 @@
         auth.signOut();
     });
 
+    // ============================================================
+    // OBSERVADOR DE AUTENTICAÇÃO
+    // ============================================================
     auth.onAuthStateChanged((user) => {
         if (user) {
             db.collection('usuarios').doc(user.uid).get()
@@ -252,6 +271,7 @@
                     if (doc.exists) {
                         showDashboard(user, doc.data());
                     } else {
+                        // Se não existe, cria um registro básico
                         const defaultData = { nome: user.displayName || 'Usuário', funcao: 'tecnico', status: 'ativo' };
                         db.collection('usuarios').doc(user.uid).set(defaultData)
                             .then(() => showDashboard(user, defaultData))
@@ -259,6 +279,7 @@
                     }
                 })
                 .catch(() => {
+                    // Fallback
                     const defaultData = { nome: user.displayName || 'Usuário', funcao: 'tecnico' };
                     showDashboard(user, defaultData);
                 });
