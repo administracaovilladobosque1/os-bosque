@@ -10,7 +10,7 @@
     <style>
         * { margin:0; padding:0; box-sizing:border-box; font-family: 'Calibri', 'Segoe UI', Tahoma, sans-serif; }
         body { background: #e8f5e9; padding: 16px 12px; display: flex; justify-content: center; min-height: 100vh; }
-        .container { background: #fff; max-width: 1100px; width: 100%; padding: 18px 18px; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,80,0,0.12); border: 1px solid #a5d6a7; }
+        .container { background: #fff; max-width: 1200px; width: 100%; padding: 18px 18px; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,80,0,0.12); border: 1px solid #a5d6a7; }
         .logo-area { text-align: center; margin-bottom: 12px; }
         .logo-area img { max-width: 80px; height: auto; }
         .logo-area h1 { font-size: 24px; color: #1b5e20; background: #c8e6c9; display: inline-block; padding: 4px 18px; border-radius: 30px; }
@@ -26,8 +26,8 @@
         .filtros { display: flex; flex-wrap: wrap; gap: 12px; margin: 12px 0 16px; align-items: center; }
         .filtros select, .filtros input { padding: 6px 10px; border: 1px solid #a5d6a7; border-radius: 6px; font-size: 14px; flex: 1 1 180px; background: #fafffe; }
         .table-responsive { overflow-x: auto; margin-top: 12px; }
-        table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 600px; }
-        th { background: #c8e6c9; padding: 10px; text-align: left; color: #1b5e20; border-bottom: 2px solid #81c784; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 700px; }
+        th { background: #c8e6c9; padding: 10px; text-align: left; color: #1b5e20; border-bottom: 2px solid #81c784; white-space: nowrap; }
         td { padding: 10px; border-bottom: 1px solid #c8e6c9; vertical-align: middle; }
         .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; }
         .badge-aberta { background: #e3f2fd; color: #0d47a1; }
@@ -40,13 +40,15 @@
         .badge-grupo { background: #e3f2fd; color: #0d47a1; font-weight: bold; }
         .badge-personagem { background: #e8f5e9; color: #1b5e20; font-weight: bold; }
         .badge .icone { margin-right: 4px; }
+        .dias-numero { font-weight: 700; color: #1b5e20; }
+        .dias-hoje { color: #558b2f; }
         .empty-message { text-align: center; color: #555; padding: 30px 0; }
         @media (max-width: 600px) {
             .container { padding: 14px; }
             .logo-area h1 { font-size: 20px; }
             .filtros { flex-direction: column; align-items: stretch; }
             .filtros select, .filtros input { flex: 1 1 auto; }
-            table { font-size: 13px; min-width: 400px; }
+            table { font-size: 13px; min-width: 500px; }
             th, td { padding: 6px 8px; }
         }
     </style>
@@ -102,18 +104,28 @@
         'normal': { label: 'Normal', class: 'badge-normal', icon: '🟢' }
     };
 
+    // Função para calcular dias entre duas datas
+    function calcularDias(dataISO) {
+        if (!dataISO) return '—';
+        const data = new Date(dataISO);
+        const agora = new Date();
+        const diffMs = agora - data;
+        const diffDias = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        if (diffDias === 0) return '<span class="dias-hoje">Hoje</span>';
+        if (diffDias === 1) return '1 dia';
+        return `${diffDias} dias`;
+    }
+
     function carregarOS(statusFiltro = 'não_concluidas', busca = '') {
         listaDiv.innerHTML = '<p class="empty-message">Carregando...</p>';
         let query = db.collection('ordens_servico');
 
-        // Aplica filtro de status, mas NÃO usa orderBy() para evitar índices compostos
         if (statusFiltro === 'não_concluidas') {
             query = query.where('status', 'in', ['aberta', 'em_andamento']);
         } else if (statusFiltro !== 'todas') {
             query = query.where('status', '==', statusFiltro);
         }
 
-        // Busca todos os documentos que atendem ao filtro (sem orderBy)
         query.get()
             .then(snapshot => {
                 if (snapshot.empty) {
@@ -121,13 +133,11 @@
                     return;
                 }
 
-                // Converte para array e ordena por data (criado_em) decrescente no front-end
                 let docs = [];
                 snapshot.forEach(doc => {
                     docs.push({ id: doc.id, ...doc.data() });
                 });
 
-                // Filtro por busca (se houver)
                 if (busca) {
                     const lowerBusca = busca.toLowerCase();
                     docs = docs.filter(doc => {
@@ -138,7 +148,7 @@
                     });
                 }
 
-                // Ordena por data decrescente (mais recente primeiro)
+                // Ordena por data decrescente
                 docs.sort((a, b) => {
                     const dateA = a.criado_em ? new Date(a.criado_em) : new Date(0);
                     const dateB = b.criado_em ? new Date(b.criado_em) : new Date(0);
@@ -151,35 +161,65 @@
                 }
 
                 let html = `<div class="table-responsive"><table>
-                    <thead><tr><th>Nº</th><th>Título</th><th>Aberto por</th><th>Direcionado a</th><th>Prioridade</th><th>Status</th><th>Data/Hora</th></tr></thead><tbody>`;
+                    <thead><tr>
+                        <th>Nº</th>
+                        <th>Título</th>
+                        <th>Aberto por</th>
+                        <th>Prioridade</th>
+                        <th>Status</th>
+                        <th>Data/Hora</th>
+                        <th>Pendente em</th>
+                        <th>Dias pendente</th>
+                        <th>Dias aberto</th>
+                    </tr></thead><tbody>`;
                 
                 docs.forEach(data => {
                     const id = data.id;
                     const statusClass = `badge-${data.status || 'aberta'}`;
                     const statusLabel = data.status || 'aberta';
 
+                    // Prioridade
                     const p = data.prioridade || 'normal';
                     const pData = priorityMap[p] || priorityMap['normal'];
                     const prioridadeHtml = `<span class="badge ${pData.class}"><span class="icone">${pData.icon}</span> ${pData.label}</span>`;
 
-                    let targetHtml = '';
+                    // Pendente em (destino atual)
+                    let pendenteHtml = '';
                     if (data.direcionado_para && data.direcionado_para.startsWith('group:')) {
-                        targetHtml = `<span class="badge badge-grupo"><span class="icone">👥</span> ${data.direcionado_para_nome || 'Grupo'}</span>`;
+                        pendenteHtml = `<span class="badge badge-grupo"><span class="icone">👥</span> ${data.direcionado_para_nome || 'Grupo'}</span>`;
                     } else {
-                        targetHtml = `<span class="badge badge-personagem"><span class="icone">👤</span> ${data.direcionado_para_nome || '—'}</span>`;
+                        pendenteHtml = `<span class="badge badge-personagem"><span class="icone">👤</span> ${data.direcionado_para_nome || '—'}</span>`;
                     }
 
+                    // Data de criação
                     const dataHora = data.criado_em ? new Date(data.criado_em).toLocaleString('pt-BR') : '—';
+
+                    // Dias aberto (desde a criação)
+                    const diasAberto = data.criado_em ? calcularDias(data.criado_em) : '—';
+
+                    // Dias pendente (desde a última ação do histórico)
+                    let diasPendente = '—';
+                    if (data.historico && data.historico.length > 0) {
+                        const ultimoEvento = data.historico[data.historico.length - 1];
+                        if (ultimoEvento.data) {
+                            diasPendente = calcularDias(ultimoEvento.data);
+                        }
+                    } else if (data.criado_em) {
+                        // Se não houver histórico, usa a data de criação
+                        diasPendente = calcularDias(data.criado_em);
+                    }
 
                     html += `
                         <tr onclick="window.location.href='os-detalhe.html?id=${id}'" style="cursor:pointer;">
                             <td><strong>${data.numero || 'N/A'}</strong></td>
                             <td>${data.titulo || 'Sem título'}</td>
                             <td>${data.aberto_por_nome || '—'}</td>
-                            <td>${targetHtml}</td>
                             <td>${prioridadeHtml}</td>
                             <td><span class="badge ${statusClass}">${statusLabel.replace('_',' ').toUpperCase()}</span></td>
                             <td>${dataHora}</td>
+                            <td>${pendenteHtml}</td>
+                            <td><span class="dias-numero">${diasPendente}</span></td>
+                            <td><span class="dias-numero">${diasAberto}</span></td>
                         </tr>
                     `;
                 });
