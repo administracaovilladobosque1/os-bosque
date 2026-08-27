@@ -87,7 +87,6 @@
                 <option value="inativo">Inativo</option>
             </select>
         </div>
-        <!-- NOVO CAMPO: Senha do Master para confirmar -->
         <div class="form-group">
             <label>🔑 Sua senha de Master (para confirmar a criação)</label>
             <input type="password" id="masterPassword" placeholder="Digite sua senha" required>
@@ -124,6 +123,34 @@
     const listaDiv = document.getElementById('listaContainer');
     const MASTER_EMAIL = 'administracaovilladobosque@gmail.com';
 
+    // ============================================================
+    // FUNÇÃO PARA CRIAR USUÁRIO VIA API REST (NÃO LOGAR AUTOMATICAMENTE)
+    // ============================================================
+    async function createUserViaRest(email, password, displayName) {
+        const apiKey = firebaseConfig.apiKey;
+        const url = `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`;
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                email: email,
+                password: password,
+                displayName: displayName,
+                returnSecureToken: false // Não queremos token, apenas criar a conta
+            })
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error.message || 'Erro ao criar usuário.');
+        }
+        return data; // Retorna os dados do usuário criado (localId, email, etc.)
+    }
+
+    // ============================================================
+    // CARREGAR LISTA DE PERSONAGENS
+    // ============================================================
     function carregarLista() {
         listaDiv.innerHTML = '<p>Carregando...</p>';
         db.collection('usuarios').orderBy('criado_em', 'desc').get()
@@ -175,7 +202,10 @@
             .catch(err => alert('Erro: ' + err.message));
     };
 
-    form.addEventListener('submit', (e) => {
+    // ============================================================
+    // CADASTRAR PERSONAGEM (VIA API REST)
+    // ============================================================
+    form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const nome = nomeInput.value.trim();
         const email = emailInput.value.trim();
@@ -199,54 +229,54 @@
             return;
         }
 
-        // 1. Reautenticar o Master com a senha fornecida
-        auth.signInWithEmailAndPassword(masterUser.email, masterPass)
-            .then(() => {
-                // 2. Criar o novo usuário
-                return auth.createUserWithEmailAndPassword(email, senha);
-            })
-            .then((userCredential) => {
-                const newUser = userCredential.user;
-                // 3. Atualizar perfil e salvar no Firestore
-                return newUser.updateProfile({ displayName: nome })
-                    .then(() => {
-                        return db.collection('usuarios').doc(newUser.uid).set({
-                            nome, email, funcao, status,
-                            criado_por: auth.currentUser.uid,
-                            criado_em: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                    })
-                    .then(() => {
-                        // 4. Reautenticar o Master novamente (para restaurar a sessão)
-                        return auth.signInWithEmailAndPassword(masterUser.email, masterPass);
-                    });
-            })
-            .then(() => {
-                showMessage(formMsg, 'Personagem cadastrado com sucesso!', 'success');
-                form.reset();
-                carregarLista();
-            })
-            .catch((error) => {
-                let msg = error.message;
-                if (error.code === 'auth/email-already-in-use') {
-                    msg = 'Este e-mail já está em uso.';
-                } else if (error.code === 'auth/wrong-password') {
-                    msg = 'Senha do Master incorreta. Verifique e tente novamente.';
-                } else if (error.code === 'auth/too-many-requests') {
-                    msg = 'Muitas tentativas. Aguarde um momento.';
-                }
-                showMessage(formMsg, msg, 'error');
-                // Se a reautenticação falhou, tenta reautenticar com a senha que o Master já tinha (para não deslogar)
-                // mas se perdeu a sessão, redireciona para login
-                if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
-                    alert('Sua senha de Master está incorreta. Faça login novamente.');
-                    window.location.href = 'index.html';
-                }
+        // Verifica se a senha do Master está correta (reautentica)
+        try {
+            await auth.signInWithEmailAndPassword(masterUser.email, masterPass);
+        } catch (error) {
+            showMessage(formMsg, 'Senha do Master incorreta. Verifique e tente novamente.', 'error');
+            return;
+        }
+
+        // Agora cria o novo usuário via API REST (NÃO LOGAR)
+        try {
+            const newUser = await createUserViaRest(email, senha, nome);
+            const uid = newUser.localId;
+
+            // Salva no Firestore
+            await db.collection('usuarios').doc(uid).set({
+                nome, email, funcao, status,
+                criado_por: masterUser.uid,
+                criado_em: firebase.firestore.FieldValue.serverTimestamp()
             });
+
+            // Reautentica o Master novamente (para restaurar a sessão, caso tenha sido alterada)
+            await auth.signInWithEmailAndPassword(masterUser.email, masterPass);
+
+            showMessage(formMsg, 'Personagem cadastrado com sucesso!', 'success');
+            form.reset();
+            carregarLista();
+
+        } catch (error) {
+            let msg = error.message;
+            if (error.code === 'auth/email-already-in-use') {
+                msg = 'Este e-mail já está em uso.';
+            } else if (error.code === 'auth/too-many-requests') {
+                msg = 'Muitas tentativas. Aguarde um momento.';
+            }
+            showMessage(formMsg, msg, 'error');
+            // Se a reautenticação falhou, redireciona para login
+            if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+                alert('Sua senha de Master está incorreta. Faça login novamente.');
+                window.location.href = 'index.html';
+            }
+        }
     });
 
     function showMessage(el, text, type) { el.textContent = text; el.className = 'message ' + type; }
 
+    // ============================================================
+    // OBSERVADOR DE AUTENTICAÇÃO
+    // ============================================================
     auth.onAuthStateChanged((user) => {
         if (user && user.email === MASTER_EMAIL) {
             carregarLista();
