@@ -9,12 +9,10 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; font-family: 'Calibri', 'Segoe UI', Tahoma, sans-serif; }
-        body { background: #e8f5e9; padding: 20px 15px; display: flex; justify-content: center; min-height: 100vh; }
-        .container { background: #fff; max-width: 1000px; width: 100%; padding: 30px 25px; border-radius: 20px; box-shadow: 0 8px 30px rgba(0,80,0,0.15); border: 1px solid #a5d6a7; }
-        .logo-area { text-align: center; margin-bottom: 20px; }
-        .logo-area img { max-width: 120px; height: auto; }
-        .logo-area h1 { font-size: 28px; color: #1b5e20; background: #c8e6c9; display: inline-block; padding: 6px 20px; border-radius: 30px; }
-        .btn { padding: 12px 20px; background: #2e7d32; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        body { background: #e8f5e9; padding: 16px 12px; display: flex; justify-content: center; min-height: 100vh; }
+        .container { background: #fff; max-width: 1000px; width: 100%; padding: 18px; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,80,0,0.12); border: 1px solid #a5d6a7; }
+        .page-title { font-size: 24px; color: #1b5e20; background: #c8e6c9; display: inline-block; padding: 4px 18px; border-radius: 30px; margin-bottom: 12px; }
+        .btn { padding: 8px 16px; background: #2e7d32; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s; text-decoration: none; display: inline-block; }
         .btn:hover { background: #1b5e20; }
         .btn-success { background: #388e3c; }
         .btn-success:hover { background: #2e7d32; }
@@ -22,39 +20,42 @@
         .btn-danger:hover { background: #b71c1c; }
         .btn-secondary { background: #6c757d; }
         .btn-secondary:hover { background: #5a6268; }
-        .btn-sm { padding: 6px 12px; font-size: 13px; }
-        .btn-voltar { background: #558b2f; margin-bottom: 20px; }
+        .btn-sm { padding: 4px 10px; font-size: 12px; }
+        .btn-voltar { background: #558b2f; }
         .btn-voltar:hover { background: #33691e; }
-        .form-group { margin-bottom: 16px; }
-        label { display: block; font-weight: 600; font-size: 14px; color: #1b5e20; margin-bottom: 4px; }
-        input, select { width: 100%; padding: 12px 15px; border: 1px solid #a5d6a7; border-radius: 10px; font-size: 16px; background: #fafffe; }
-        input:focus, select:focus { outline: none; border-color: #2e7d32; box-shadow: 0 0 0 3px rgba(46,125,50,0.2); }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .message { margin-top: 16px; padding: 12px; border-radius: 8px; display: none; }
+        .form-group { margin-bottom: 12px; }
+        label { display: block; font-weight: 600; font-size: 13px; color: #1b5e20; margin-bottom: 2px; }
+        input, select { width: 100%; padding: 6px 10px; border: 1px solid #a5d6a7; border-radius: 6px; font-size: 14px; background: #fafffe; }
+        input:focus, select:focus { outline: none; border-color: #2e7d32; box-shadow: 0 0 0 2px rgba(46,125,50,0.15); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .message { margin-top: 12px; padding: 8px; border-radius: 6px; display: none; font-size: 13px; }
         .message.error { display: block; background: #ffebee; color: #b71c1c; border: 1px solid #ef9a9a; }
         .message.success { display: block; background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
-        .table-responsive { overflow-x: auto; margin-top: 20px; }
+        .table-responsive { overflow-x: auto; margin-top: 16px; }
         table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 500px; }
-        th { background: #c8e6c9; padding: 12px; text-align: left; color: #1b5e20; border-bottom: 2px solid #81c784; }
-        td { padding: 12px; border-bottom: 1px solid #c8e6c9; vertical-align: middle; }
-        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+        th { background: #c8e6c9; padding: 8px; text-align: left; color: #1b5e20; border-bottom: 2px solid #81c784; }
+        td { padding: 8px; border-bottom: 1px solid #c8e6c9; vertical-align: middle; }
+        .badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; }
         .badge-master { background: #ffcc80; color: #4e342e; }
         .badge-admin { background: #c8e6c9; color: #1b5e20; }
         .badge-diretor { background: #a5d6a7; color: #1b5e20; }
         .badge-ativo { background: #c8e6c9; color: #1b5e20; }
         .badge-inativo { background: #ffcdd2; color: #b71c1c; }
-        @media (max-width: 600px) { .container { padding: 20px 15px; } .form-row { grid-template-columns: 1fr; gap: 0; } .logo-area h1 { font-size: 22px; } }
+        @media (max-width: 600px) {
+            .container { padding: 14px; }
+            .form-row { grid-template-columns: 1fr; gap: 0; }
+            .page-title { font-size: 20px; }
+            table { font-size: 13px; min-width: 400px; }
+            th, td { padding: 6px; }
+        }
     </style>
 </head>
 <body>
 <div class="container">
-    <div class="logo-area">
-        <img src="logo.png" alt="Logo Villa do Bosque" style="max-width:100px;">
-        <h1>👥 Gerenciar Personagens</h1>
-        <a href="index.html" class="btn btn-voltar" style="display:inline-block; margin-top:10px; text-decoration:none;">← Voltar ao Painel</a>
-    </div>
+    <h1 class="page-title">👥 Gerenciar Personagens</h1>
+    <a href="index.html" class="btn btn-voltar" style="margin-bottom:12px;">← Voltar ao Painel</a>
 
-    <h2 style="color:#2e7d32; margin-bottom:15px;">➕ Novo Personagem</h2>
+    <h2 style="color:#2e7d32; margin:12px 0 10px;">➕ Novo Personagem</h2>
     <form id="personagemForm">
         <div class="form-row">
             <div class="form-group">
@@ -95,7 +96,7 @@
         <div id="formMessage" class="message"></div>
     </form>
 
-    <h2 style="color:#2e7d32; margin-top:40px;">📋 Personagens Cadastrados</h2>
+    <h2 style="color:#2e7d32; margin-top:30px;">📋 Personagens Cadastrados</h2>
     <div id="listaContainer"><p>Carregando...</p></div>
 </div>
 
@@ -123,34 +124,6 @@
     const listaDiv = document.getElementById('listaContainer');
     const MASTER_EMAIL = 'administracaovilladobosque@gmail.com';
 
-    // ============================================================
-    // FUNÇÃO PARA CRIAR USUÁRIO VIA API REST (NÃO LOGAR AUTOMATICAMENTE)
-    // ============================================================
-    async function createUserViaRest(email, password, displayName) {
-        const apiKey = firebaseConfig.apiKey;
-        const url = `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`;
-        
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                email: email,
-                password: password,
-                displayName: displayName,
-                returnSecureToken: false // Não queremos token, apenas criar a conta
-            })
-        });
-
-        const data = await response.json();
-        if (!response.ok) {
-            throw new Error(data.error.message || 'Erro ao criar usuário.');
-        }
-        return data; // Retorna os dados do usuário criado (localId, email, etc.)
-    }
-
-    // ============================================================
-    // CARREGAR LISTA DE PERSONAGENS
-    // ============================================================
     function carregarLista() {
         listaDiv.innerHTML = '<p>Carregando...</p>';
         db.collection('usuarios').orderBy('criado_em', 'desc').get()
@@ -202,10 +175,7 @@
             .catch(err => alert('Erro: ' + err.message));
     };
 
-    // ============================================================
-    // CADASTRAR PERSONAGEM (VIA API REST)
-    // ============================================================
-    form.addEventListener('submit', async (e) => {
+    form.addEventListener('submit', (e) => {
         e.preventDefault();
         const nome = nomeInput.value.trim();
         const email = emailInput.value.trim();
@@ -229,54 +199,51 @@
             return;
         }
 
-        // Verifica se a senha do Master está correta (reautentica)
-        try {
-            await auth.signInWithEmailAndPassword(masterUser.email, masterPass);
-        } catch (error) {
-            showMessage(formMsg, 'Senha do Master incorreta. Verifique e tente novamente.', 'error');
-            return;
-        }
-
-        // Agora cria o novo usuário via API REST (NÃO LOGAR)
-        try {
-            const newUser = await createUserViaRest(email, senha, nome);
-            const uid = newUser.localId;
-
-            // Salva no Firestore
-            await db.collection('usuarios').doc(uid).set({
-                nome, email, funcao, status,
-                criado_por: masterUser.uid,
-                criado_em: firebase.firestore.FieldValue.serverTimestamp()
+        auth.signInWithEmailAndPassword(masterUser.email, masterPass)
+            .then(() => {
+                return auth.createUserWithEmailAndPassword(email, senha);
+            })
+            .then((userCredential) => {
+                const newUser = userCredential.user;
+                return newUser.updateProfile({ displayName: nome })
+                    .then(() => {
+                        return db.collection('usuarios').doc(newUser.uid).set({
+                            nome, email, funcao, status,
+                            criado_por: auth.currentUser.uid,
+                            criado_em: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    })
+                    .then(() => {
+                        return auth.signInWithEmailAndPassword(masterUser.email, masterPass);
+                    });
+            })
+            .then(() => {
+                showMessage(formMsg, 'Personagem cadastrado com sucesso!', 'success');
+                form.reset();
+                carregarLista();
+            })
+            .catch((error) => {
+                let msg = error.message;
+                if (error.code === 'auth/email-already-in-use') {
+                    msg = 'Este e-mail já está em uso.';
+                } else if (error.code === 'auth/wrong-password') {
+                    msg = 'Senha do Master incorreta. Verifique e tente novamente.';
+                } else if (error.code === 'auth/too-many-requests') {
+                    msg = 'Muitas tentativas. Aguarde um momento.';
+                }
+                showMessage(formMsg, msg, 'error');
+                if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+                    alert('Sua senha de Master está incorreta. Faça login novamente.');
+                    window.location.href = 'index.html';
+                }
             });
-
-            // Reautentica o Master novamente (para restaurar a sessão, caso tenha sido alterada)
-            await auth.signInWithEmailAndPassword(masterUser.email, masterPass);
-
-            showMessage(formMsg, 'Personagem cadastrado com sucesso!', 'success');
-            form.reset();
-            carregarLista();
-
-        } catch (error) {
-            let msg = error.message;
-            if (error.code === 'auth/email-already-in-use') {
-                msg = 'Este e-mail já está em uso.';
-            } else if (error.code === 'auth/too-many-requests') {
-                msg = 'Muitas tentativas. Aguarde um momento.';
-            }
-            showMessage(formMsg, msg, 'error');
-            // Se a reautenticação falhou, redireciona para login
-            if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
-                alert('Sua senha de Master está incorreta. Faça login novamente.');
-                window.location.href = 'index.html';
-            }
-        }
     });
 
-    function showMessage(el, text, type) { el.textContent = text; el.className = 'message ' + type; }
+    function showMessage(el, text, type) {
+        el.textContent = text;
+        el.className = 'message ' + type;
+    }
 
-    // ============================================================
-    // OBSERVADOR DE AUTENTICAÇÃO
-    // ============================================================
     auth.onAuthStateChanged((user) => {
         if (user && user.email === MASTER_EMAIL) {
             carregarLista();

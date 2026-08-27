@@ -10,19 +10,15 @@
     <style>
         * { margin:0; padding:0; box-sizing:border-box; font-family: 'Calibri', 'Segoe UI', Tahoma, sans-serif; }
         body { background: #e8f5e9; padding: 16px 12px; display: flex; justify-content: center; min-height: 100vh; }
-        .container { background: #fff; max-width: 1300px; width: 100%; padding: 18px; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,80,0,0.12); border: 1px solid #a5d6a7; }
-        .logo-area { text-align: center; margin-bottom: 12px; }
-        .logo-area img { max-width: 80px; height: auto; }
-        .logo-area h1 { font-size: 24px; color: #1b5e20; background: #c8e6c9; display: inline-block; padding: 4px 18px; border-radius: 30px; }
+        .container { background: #fff; max-width: 1400px; width: 100%; padding: 18px; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,80,0,0.12); border: 1px solid #a5d6a7; }
+        .page-title { font-size: 24px; color: #1b5e20; background: #c8e6c9; display: inline-block; padding: 4px 18px; border-radius: 30px; margin-bottom: 12px; }
+        .header-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; align-items: center; }
         .btn { padding: 8px 16px; background: #2e7d32; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s; text-decoration: none; display: inline-block; }
         .btn:hover { background: #1b5e20; }
         .btn-success { background: #388e3c; }
         .btn-success:hover { background: #2e7d32; }
-        .btn-secondary { background: #6c757d; }
-        .btn-secondary:hover { background: #5a6268; }
         .btn-voltar { background: #558b2f; }
         .btn-voltar:hover { background: #33691e; }
-        .header-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; align-items: center; }
         .filtros {
             display: flex;
             flex-wrap: wrap;
@@ -40,8 +36,8 @@
             min-width: 120px;
         }
         .filtros input[type="text"] {
-            flex: 1 1 180px;
-            min-width: 120px;
+            flex: 1 1 150px;
+            min-width: 100px;
         }
         .filtros .btn-filtrar {
             background: #2e7d32;
@@ -52,19 +48,25 @@
             cursor: pointer;
             font-size: 14px;
         }
-        .table-responsive { overflow-x: auto; margin-top: 12px; }
-        table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 900px; }
-        th {
-            background: #c8e6c9;
-            padding: 10px 8px;
-            text-align: left;
-            color: #1b5e20;
-            border-bottom: 2px solid #81c784;
-            white-space: nowrap;
-            cursor: pointer;
-            user-select: none;
-            position: relative;
+        .filtros .grupo-filtro {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-wrap: wrap;
         }
+        .filtros .grupo-filtro label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #1b5e20;
+            margin-right: 2px;
+        }
+        .filtros .grupo-filtro input {
+            min-width: 70px;
+            flex: 0 1 80px;
+        }
+        .table-responsive { overflow-x: auto; margin-top: 12px; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 1000px; }
+        th { background: #c8e6c9; padding: 10px 8px; text-align: left; color: #1b5e20; border-bottom: 2px solid #81c784; white-space: nowrap; cursor: pointer; user-select: none; position: relative; }
         th:hover { background: #b8d9b9; }
         th .sorter { display: inline-block; margin-left: 4px; font-size: 12px; }
         td { padding: 10px 8px; border-bottom: 1px solid #c8e6c9; vertical-align: middle; }
@@ -84,45 +86,26 @@
         .empty-message { text-align: center; color: #555; padding: 30px 0; }
         @media (max-width: 600px) {
             .container { padding: 14px; }
-            .logo-area h1 { font-size: 20px; }
-            .filtros {
-                flex-wrap: nowrap;
-                overflow-x: auto;
-                gap: 6px;
-                padding-bottom: 4px;
-            }
-            .filtros select, .filtros input {
-                flex: 0 0 auto;
-                min-width: 100px;
-                font-size: 13px;
-                padding: 5px 8px;
-            }
-            .filtros input[type="text"] {
-                flex: 1 1 120px;
-                min-width: 80px;
-            }
-            .filtros .btn-filtrar {
-                padding: 5px 12px;
-                font-size: 13px;
-                flex-shrink: 0;
-            }
-            table { font-size: 13px; min-width: 600px; }
+            .filtros { flex-wrap: nowrap; overflow-x: auto; gap: 6px; padding-bottom: 4px; }
+            .filtros select, .filtros input { flex: 0 0 auto; min-width: 100px; font-size: 13px; padding: 5px 8px; }
+            .filtros input[type="text"] { flex: 1 1 120px; min-width: 80px; }
+            .filtros .grupo-filtro input { min-width: 60px; flex: 0 1 70px; }
+            .filtros .btn-filtrar { padding: 5px 12px; font-size: 13px; flex-shrink: 0; }
+            table { font-size: 13px; min-width: 700px; }
             th, td { padding: 6px 6px; }
         }
     </style>
 </head>
 <body>
 <div class="container">
-    <div class="logo-area">
-        <img src="logo.png" alt="Logo Villa do Bosque" style="max-width:80px;">
-        <h1>📋 Ordens de Serviço</h1>
-    </div>
+    <h1 class="page-title">📋 Ordens de Serviço</h1>
     <div class="header-actions">
         <a href="index.html" class="btn btn-voltar">← Voltar ao Painel</a>
         <a href="os-abrir.html" class="btn btn-success">📝 Nova OS</a>
     </div>
 
     <div class="filtros">
+        <!-- Status e Pendente -->
         <select id="filtroStatus">
             <option value="todos">Status: Todos</option>
             <option value="aberto" selected>Aberto</option>
@@ -133,6 +116,22 @@
             <option value="diretoria">Diretoria</option>
             <option value="admin">Admin</option>
         </select>
+
+        <!-- Reclamante -->
+        <span class="grupo-filtro">
+            <label>Reclamante:</label>
+            <input type="text" id="filtroQuadraReclamante" placeholder="Quadra">
+            <input type="text" id="filtroLoteReclamante" placeholder="Lote">
+        </span>
+
+        <!-- Reclamado -->
+        <span class="grupo-filtro">
+            <label>Reclamado:</label>
+            <input type="text" id="filtroQuadraReclamada" placeholder="Quadra">
+            <input type="text" id="filtroLoteReclamada" placeholder="Lote">
+        </span>
+
+        <!-- Busca geral -->
         <input type="text" id="filtroBusca" placeholder="Buscar...">
         <button class="btn-filtrar" id="btnFiltrar">Filtrar</button>
     </div>
@@ -158,9 +157,14 @@
     const filtroPendente = document.getElementById('filtroPendente');
     const filtroBusca = document.getElementById('filtroBusca');
     const btnFiltrar = document.getElementById('btnFiltrar');
+    const filtroQuadraReclamante = document.getElementById('filtroQuadraReclamante');
+    const filtroLoteReclamante = document.getElementById('filtroLoteReclamante');
+    const filtroQuadraReclamada = document.getElementById('filtroQuadraReclamada');
+    const filtroLoteReclamada = document.getElementById('filtroLoteReclamada');
 
     let sortField = 'numero';
     let sortAsc = false;
+    let userMap = {}; // uid -> { nome, funcao }
 
     const priorityMap = {
         'emergencial': { label: 'Emergencial', class: 'badge-emergencial', icon: '🔴' },
@@ -187,17 +191,21 @@
         return data.criado_em;
     }
 
-    // NOVA FUNÇÃO: categoriza o destino atual
+    // Função que retorna a categoria do destino atual
     function getPendenteCategoria(data) {
-        // 1. Se for grupo (salvo como 'group:admin' ou 'group:diretor')
+        // Caso 1: grupo
         if (data.direcionado_para === 'group:admin') return 'admin';
         if (data.direcionado_para === 'group:diretor') return 'diretoria';
 
-        // 2. Se tiver o campo direcionado_para_funcao (salvo ao criar)
-        if (data.direcionado_para_funcao === 'admin') return 'admin';
-        if (data.direcionado_para_funcao === 'diretor') return 'diretoria';
+        // Caso 2: personagem individual
+        const uid = data.direcionado_para;
+        if (uid && userMap[uid]) {
+            const funcao = userMap[uid].funcao;
+            if (funcao === 'admin') return 'admin';
+            if (funcao === 'diretor') return 'diretoria';
+        }
 
-        // 3. Fallback: inferir pelo nome (para dados antigos)
+        // Caso 3: fallback pelo nome (para dados muito antigos)
         const nome = (data.direcionado_para_nome || '').toLowerCase();
         if (nome.includes('admin')) return 'admin';
         if (nome.includes('diretor')) return 'diretoria';
@@ -205,6 +213,7 @@
         return 'outros';
     }
 
+    // --- Ordenação ---
     function ordenarDados(docs) {
         docs.sort((a, b) => {
             let valA, valB;
@@ -237,6 +246,7 @@
         return docs;
     }
 
+    // --- Renderização ---
     function renderizarTabela(docs) {
         if (!docs || docs.length === 0) {
             listaDiv.innerHTML = '<p class="empty-message">Nenhuma ordem encontrada com os filtros atuais.</p>';
@@ -307,6 +317,7 @@
         });
     }
 
+    // --- Aplicar filtros ---
     function aplicarFiltros() {
         let docs = window.allDocs || [];
 
@@ -318,7 +329,7 @@
             docs = docs.filter(d => d.status === 'concluida' || d.status === 'cancelada');
         }
 
-        // Filtro Pendente em (USANDO A NOVA FUNÇÃO)
+        // Filtro Pendente em
         const pendenteFiltro = filtroPendente.value;
         if (pendenteFiltro === 'diretoria') {
             docs = docs.filter(d => getPendenteCategoria(d) === 'diretoria');
@@ -326,7 +337,19 @@
             docs = docs.filter(d => getPendenteCategoria(d) === 'admin');
         }
 
-        // Busca
+        // Filtros de Reclamante (quadra e lote)
+        const qReclamante = filtroQuadraReclamante.value.trim().toLowerCase();
+        const lReclamante = filtroLoteReclamante.value.trim().toLowerCase();
+        if (qReclamante) docs = docs.filter(d => (d.quadra_reclamante || '').toLowerCase().includes(qReclamante));
+        if (lReclamante) docs = docs.filter(d => (d.lote_reclamante || '').toLowerCase().includes(lReclamante));
+
+        // Filtros de Reclamado (quadra e lote)
+        const qReclamada = filtroQuadraReclamada.value.trim().toLowerCase();
+        const lReclamada = filtroLoteReclamada.value.trim().toLowerCase();
+        if (qReclamada) docs = docs.filter(d => (d.quadra_reclamada || '').toLowerCase().includes(qReclamada));
+        if (lReclamada) docs = docs.filter(d => (d.lote_reclamada || '').toLowerCase().includes(lReclamada));
+
+        // Busca geral
         const busca = filtroBusca.value.trim().toLowerCase();
         if (busca) {
             docs = docs.filter(d => {
@@ -340,9 +363,21 @@
         renderizarTabela(docs);
     }
 
+    // --- Carregar dados ---
     function carregarOS() {
         listaDiv.innerHTML = '<p class="empty-message">Carregando ordens de serviço...</p>';
-        db.collection('ordens_servico').get()
+
+        // Primeiro, carregar os usuários para o mapa de funções
+        db.collection('usuarios').where('status', '==', 'ativo').get()
+            .then(snapshot => {
+                userMap = {};
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    userMap[doc.id] = { nome: data.nome, funcao: data.funcao };
+                });
+                // Agora carregar as OS
+                return db.collection('ordens_servico').get();
+            })
             .then(snapshot => {
                 if (snapshot.empty) {
                     window.allDocs = [];
@@ -362,12 +397,17 @@
             });
     }
 
+    // --- Event listeners ---
     btnFiltrar.addEventListener('click', aplicarFiltros);
     [filtroStatus, filtroPendente].forEach(el => el.addEventListener('change', aplicarFiltros));
+    // Inputs com delay
+    const inputsDelay = [filtroQuadraReclamante, filtroLoteReclamante, filtroQuadraReclamada, filtroLoteReclamada, filtroBusca];
     let timeoutBusca;
-    filtroBusca.addEventListener('input', () => {
-        clearTimeout(timeoutBusca);
-        timeoutBusca = setTimeout(aplicarFiltros, 300);
+    inputsDelay.forEach(input => {
+        input.addEventListener('input', () => {
+            clearTimeout(timeoutBusca);
+            timeoutBusca = setTimeout(aplicarFiltros, 300);
+        });
     });
 
     auth.onAuthStateChanged((user) => {

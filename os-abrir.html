@@ -11,9 +11,7 @@
         * { margin:0; padding:0; box-sizing:border-box; font-family: 'Calibri', 'Segoe UI', Tahoma, sans-serif; }
         body { background: #e8f5e9; padding: 16px 12px; display: flex; justify-content: center; min-height: 100vh; }
         .container { background: #fff; max-width: 650px; width: 100%; padding: 18px; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,80,0,0.12); border: 1px solid #a5d6a7; }
-        .logo-area { text-align: center; margin-bottom: 14px; }
-        .logo-area img { max-width: 80px; height: auto; }
-        .logo-area h1 { font-size: 22px; color: #1b5e20; background: #c8e6c9; display: inline-block; padding: 4px 16px; border-radius: 30px; }
+        .page-title { font-size: 24px; color: #1b5e20; background: #c8e6c9; display: inline-block; padding: 4px 18px; border-radius: 30px; margin-bottom: 12px; }
         .btn { padding: 8px 16px; background: #2e7d32; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s; }
         .btn:hover { background: #1b5e20; }
         .btn-success { background: #388e3c; }
@@ -32,35 +30,16 @@
         }
         textarea { resize: vertical; min-height: 50px; }
         input:focus, select:focus, textarea:focus { outline: none; border-color: #2e7d32; box-shadow: 0 0 0 2px rgba(46,125,50,0.15); }
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-        .form-row .form-group input {
-            width: 70%;
-            margin: 0 auto;
-            display: block;
-        }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .form-row .form-group input { width: 70%; margin: 0 auto; display: block; }
         .message { margin-top: 12px; padding: 8px; border-radius: 6px; display: none; font-size: 13px; }
         .message.error { display: block; background: #ffebee; color: #b71c1c; border: 1px solid #ef9a9a; }
         .message.success { display: block; background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
 
-        .bloco {
-            border: 1.5px solid #a5d6a7;
-            border-radius: 10px;
-            padding: 10px 12px 6px 12px;
-            margin-bottom: 14px;
-        }
+        .bloco { border: 1.5px solid #a5d6a7; border-radius: 10px; padding: 10px 12px 6px 12px; margin-bottom: 14px; }
         .bloco-reclamante { border-color: #66bb6a; }
         .bloco-reclamado { border-color: #ffa726; }
-        .bloco-title {
-            font-weight: 700;
-            font-size: 14px;
-            color: #1b5e20;
-            margin-bottom: 6px;
-            display: block;
-        }
+        .bloco-title { font-weight: 700; font-size: 14px; color: #1b5e20; margin-bottom: 6px; display: block; }
         .bloco-reclamante .bloco-title { color: #2e7d32; }
         .bloco-reclamado .bloco-title { color: #e65100; }
         .bloco .form-group { margin-bottom: 6px; }
@@ -69,7 +48,7 @@
             .container { padding: 14px; }
             .form-row { grid-template-columns: 1fr; gap: 4px; }
             .form-row .form-group input { width: 100%; }
-            .logo-area h1 { font-size: 18px; }
+            .page-title { font-size: 20px; }
             .bloco { padding: 8px 10px 4px 10px; }
         }
         select option.grupo { background-color: #e9ecef; }
@@ -79,11 +58,8 @@
 </head>
 <body>
 <div class="container">
-    <div class="logo-area">
-        <img src="logo.png" alt="Logo Villa do Bosque" style="max-width:80px;">
-        <h1>📝 Nova OS</h1>
-        <a href="index.html" class="btn-voltar">← Voltar</a>
-    </div>
+    <h1 class="page-title">📝 Nova OS</h1>
+    <a href="index.html" class="btn-voltar">← Voltar</a>
 
     <form id="osForm">
         <div class="form-group">
@@ -314,7 +290,7 @@
                     aberto_por_nome: currentUserNome,
                     direcionado_para: direcionadoPara,
                     direcionado_para_nome: direcionadoParaNome,
-                    direcionado_para_funcao: direcionadoParaFuncao, // NOVO CAMPO
+                    direcionado_para_funcao: direcionadoParaFuncao,
                     historico: [{
                         data: timestampISO,
                         acao: 'abertura',
