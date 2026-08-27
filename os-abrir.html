@@ -37,11 +37,46 @@
             grid-template-columns: 1fr 1fr;
             gap: 15px;
         }
-        /* Deixando os inputs menores (60% da largura da coluna) */
         .form-row .form-group input {
             width: 60%;
             margin: 0 auto;
             display: block;
+        }
+        /* === CAIXAS DE DESTAQUE === */
+        .bloco {
+            border: 2px solid #a5d6a7;
+            border-radius: 12px;
+            padding: 16px 16px 8px 16px;
+            margin-bottom: 16px;
+            background-color: #f8fdf8;
+        }
+        .bloco legend {
+            font-weight: 700;
+            font-size: 15px;
+            color: #1b5e20;
+            padding: 0 8px;
+            background-color: #fff;
+            border-radius: 8px;
+            border: 1px solid #a5d6a7;
+            padding: 2px 12px;
+            display: inline-block;
+            margin-bottom: 8px;
+        }
+        .bloco-reclamante {
+            border-color: #90caf9;
+            background-color: #f0f8ff;
+        }
+        .bloco-reclamante legend {
+            color: #0d47a1;
+            border-color: #90caf9;
+        }
+        .bloco-reclamado {
+            border-color: #ffcc80;
+            background-color: #fff8f0;
+        }
+        .bloco-reclamado legend {
+            color: #e65100;
+            border-color: #ffcc80;
         }
         .message { margin-top: 16px; padding: 12px; border-radius: 8px; display: none; }
         .message.error { display: block; background: #ffebee; color: #b71c1c; border: 1px solid #ef9a9a; }
@@ -51,6 +86,7 @@
             .form-row { grid-template-columns: 1fr; gap: 0; }
             .logo-area h1 { font-size: 22px; }
             .form-row .form-group input { width: 100%; }
+            .bloco { padding: 12px; }
         }
         select option.grupo { background-color: #e9ecef; }
         select option.admin { background-color: #fff3cd; }
@@ -84,27 +120,33 @@
             </select>
         </div>
 
-        <!-- QUADRA E LOTE RECLAMANTE (opcional) -->
-        <div class="form-row">
-            <div class="form-group">
-                <label>Quadra reclamante (opcional)</label>
-                <input type="text" id="quadraReclamante" placeholder="Ex: C">
-            </div>
-            <div class="form-group">
-                <label>Lote reclamante (opcional)</label>
-                <input type="text" id="loteReclamante" placeholder="Ex: 09">
+        <!-- BLOCO RECLAMANTE -->
+        <div class="bloco bloco-reclamante">
+            <legend>📌 Reclamante</legend>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Quadra (opcional)</label>
+                    <input type="text" id="quadraReclamante" placeholder="Ex: C">
+                </div>
+                <div class="form-group">
+                    <label>Lote (opcional)</label>
+                    <input type="text" id="loteReclamante" placeholder="Ex: 09">
+                </div>
             </div>
         </div>
 
-        <!-- QUADRA E LOTE RECLAMADO (opcional) -->
-        <div class="form-row">
-            <div class="form-group">
-                <label>Quadra reclamada (opcional)</label>
-                <input type="text" id="quadraReclamada" placeholder="Ex: D">
-            </div>
-            <div class="form-group">
-                <label>Lote reclamado (opcional)</label>
-                <input type="text" id="loteReclamado" placeholder="Ex: 12">
+        <!-- BLOCO RECLAMADO -->
+        <div class="bloco bloco-reclamado">
+            <legend>📍 Reclamado</legend>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Quadra (opcional)</label>
+                    <input type="text" id="quadraReclamada" placeholder="Ex: D">
+                </div>
+                <div class="form-group">
+                    <label>Lote (opcional)</label>
+                    <input type="text" id="loteReclamado" placeholder="Ex: 12">
+                </div>
             </div>
         </div>
 
@@ -183,25 +225,21 @@
 
                 let html = '<option value="">Selecione um destino...</option>';
 
-                // GRUPOS (cinza)
                 html += `<option value="group:admin" class="grupo" style="background-color:#e9ecef;">GRUPO: Administradores</option>`;
                 html += `<option value="group:diretor" class="grupo" style="background-color:#e9ecef;">GRUPO: Diretores</option>`;
 
-                // ADMINISTRADORES (amarelo)
                 admins.forEach(item => {
                     const isMe = (item.id === currentUser.uid);
                     const label = isMe ? `${item.nome} (você) (${item.funcao})` : `${item.nome} (${item.funcao})`;
                     html += `<option value="${item.id}" class="admin" style="background-color:#fff3cd;">${label}</option>`;
                 });
 
-                // DIRETORES (verde)
                 diretores.forEach(item => {
                     const isMe = (item.id === currentUser.uid);
                     const label = isMe ? `${item.nome} (você) (${item.funcao})` : `${item.nome} (${item.funcao})`;
                     html += `<option value="${item.id}" class="diretor" style="background-color:#d4edda;">${label}</option>`;
                 });
 
-                // OUTROS (fundo neutro)
                 outros.forEach(item => {
                     const isMe = (item.id === currentUser.uid);
                     const label = isMe ? `${item.nome} (você) (${item.funcao})` : `${item.nome} (${item.funcao})`;
