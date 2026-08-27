@@ -10,7 +10,7 @@
     <style>
         * { margin:0; padding:0; box-sizing:border-box; font-family: 'Calibri', 'Segoe UI', Tahoma, sans-serif; }
         body { background: #e8f5e9; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px 15px; }
-        .container { background: #fff; padding: 30px 25px; border-radius: 20px; box-shadow: 0 8px 30px rgba(0,80,0,0.15); width: 100%; max-width: 450px; border: 1px solid #a5d6a7; }
+        .container { background: #fff; padding: 30px 25px; border-radius: 20px; box-shadow: 0 8px 30px rgba(0,80,0,0.15); width: 100%; max-width: 480px; border: 1px solid #a5d6a7; }
         .logo-area { text-align: center; margin-bottom: 25px; }
         .logo-area img { max-width: 180px; height: auto; display: block; margin: 0 auto 10px; }
         .logo-area .main-title { font-size: 28px; font-weight: 700; color: #1b5e20; line-height: 1.2; margin-top: 5px; }
@@ -19,7 +19,24 @@
         label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 5px; color: #1b5e20; }
         input { width: 100%; padding: 14px 15px; border: 1px solid #a5d6a7; border-radius: 10px; font-size: 16px; background: #fafffe; }
         input:focus { outline: none; border-color: #2e7d32; box-shadow: 0 0 0 3px rgba(46,125,50,0.2); }
-        .btn { width: 100%; padding: 14px; background: #2e7d32; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 14px 20px;
+            background: #2e7d32;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-decoration: none;
+            text-align: center;
+            white-space: normal;
+            word-wrap: break-word;
+            margin-bottom: 10px;
+        }
         .btn:hover { background: #1b5e20; }
         .btn-danger { background: #c62828; }
         .btn-danger:hover { background: #b71c1c; }
@@ -38,12 +55,12 @@
         .user-info { background: #e8f5e9; padding: 15px; border-radius: 12px; margin: 20px 0; text-align: center; border: 1px solid #a5d6a7; }
         .user-info strong { color: #1b5e20; }
         .logout-area { text-align: center; margin-top: 20px; }
-        .logout-area .btn { width: auto; padding: 12px 40px; display: inline-block; }
+        .logout-area .btn { display: inline-block; width: auto; padding: 12px 40px; margin-bottom: 0; }
         .timeout-warning { font-size: 13px; color: #558b2f; text-align: right; margin-top: 10px; }
 
         .menu-panel { background: #f1f8e9; border-radius: 16px; padding: 20px; margin-top: 20px; border: 1px solid #a5d6a7; }
         .menu-panel h2 { font-size: 20px; margin: 0 0 15px; color: #2e7d32; border-bottom: 2px solid #c8e6c9; padding-bottom: 10px; }
-        .menu-panel .btn { margin-bottom: 10px; }
+        .menu-panel .btn:last-child { margin-bottom: 0; }
         @media (max-width: 600px) {
             body { padding: 10px 8px; }
             .container { padding: 20px 15px; max-width: 100%; }
@@ -88,7 +105,7 @@
             <p style="font-size:12px; color:#558b2f; margin-top:5px;">⏳ Sessão ativa por <span id="timerDisplay">4h00</span></p>
         </div>
 
-        <!-- MENU DINÂMICO (aparece de acordo com a função) -->
+        <!-- MENU DINÂMICO -->
         <div id="menuArea" class="menu-panel">
             <h2 id="menuTitle">📌 Ações disponíveis</h2>
             <div id="menuButtons"></div>
@@ -165,33 +182,28 @@
         userName.textContent = userData.nome || user.displayName || 'Usuário';
         userEmail.textContent = user.email;
 
-        // Determina a função
         let funcao = userData.funcao || 'tecnico';
-        let roleLabel = '';
         const roleMap = {
             'master': 'Master (Controle Total)',
             'admin': 'Administrador',
             'diretor': 'Diretor',
             'tecnico': 'Técnico'
         };
-        roleLabel = roleMap[funcao] || funcao;
-        userRoleDisplay.textContent = `🔹 Função: ${roleLabel}`;
+        userRoleDisplay.textContent = `🔹 Função: ${roleMap[funcao] || funcao}`;
 
-        // Monta o menu de acordo com a função
         let html = '';
         if (funcao === 'master') {
-            html += `<a href="personagens.html" class="btn btn-success" style="text-decoration:none; text-align:center;">👥 Gerenciar Personagens</a>`;
-            html += `<a href="os-list.html" class="btn btn-secondary" style="text-decoration:none; text-align:center;">📋 Listar Ordens de Serviço</a>`;
-            html += `<a href="os-abrir.html" class="btn" style="text-decoration:none; text-align:center; background:#2e7d32;">📝 Nova Ordem de Serviço</a>`;
+            html += `<a href="personagens.html" class="btn btn-success">👥 Gerenciar Personagens</a>`;
+            html += `<a href="os-list.html" class="btn btn-secondary">📋 Listar Ordens de Serviço</a>`;
+            html += `<a href="os-abrir.html" class="btn" style="background:#2e7d32;">📝 Nova Ordem de Serviço</a>`;
             menuTitle.textContent = '👑 Painel do Master';
         } else if (funcao === 'admin' || funcao === 'diretor') {
-            html += `<a href="os-list.html" class="btn btn-secondary" style="text-decoration:none; text-align:center;">📋 Listar Ordens de Serviço</a>`;
-            html += `<a href="os-abrir.html" class="btn" style="text-decoration:none; text-align:center; background:#2e7d32;">📝 Nova Ordem de Serviço</a>`;
-            menuTitle.textContent = `📌 Painel do ${roleLabel}`;
+            html += `<a href="os-list.html" class="btn btn-secondary">📋 Listar Ordens de Serviço</a>`;
+            html += `<a href="os-abrir.html" class="btn" style="background:#2e7d32;">📝 Nova Ordem de Serviço</a>`;
+            menuTitle.textContent = `📌 Painel do ${roleMap[funcao]}`;
         } else {
-            // técnico ou outro
-            html += `<a href="os-list.html" class="btn btn-secondary" style="text-decoration:none; text-align:center;">📋 Listar Ordens de Serviço</a>`;
-            menuTitle.textContent = `📌 Painel do ${roleLabel}`;
+            html += `<a href="os-list.html" class="btn btn-secondary">📋 Listar Ordens de Serviço</a>`;
+            menuTitle.textContent = `📌 Painel do ${roleMap[funcao]}`;
         }
         menuButtons.innerHTML = html;
 
@@ -224,22 +236,15 @@
             db.collection('usuarios').doc(user.uid).get()
                 .then(doc => {
                     if (doc.exists) {
-                        const data = doc.data();
-                        showDashboard(user, data);
+                        showDashboard(user, doc.data());
                     } else {
-                        // Se não existe no Firestore, cria um registro básico
-                        const defaultData = {
-                            nome: user.displayName || 'Usuário',
-                            funcao: 'tecnico',
-                            status: 'ativo'
-                        };
+                        const defaultData = { nome: user.displayName || 'Usuário', funcao: 'tecnico', status: 'ativo' };
                         db.collection('usuarios').doc(user.uid).set(defaultData)
                             .then(() => showDashboard(user, defaultData))
                             .catch(() => showDashboard(user, defaultData));
                     }
                 })
                 .catch(() => {
-                    // Fallback
                     const defaultData = { nome: user.displayName || 'Usuário', funcao: 'tecnico' };
                     showDashboard(user, defaultData);
                 });
