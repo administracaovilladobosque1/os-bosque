@@ -9,54 +9,57 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; font-family: 'Calibri', 'Segoe UI', Tahoma, sans-serif; }
-        body { background: #e8f5e9; padding: 20px 15px; display: flex; justify-content: center; min-height: 100vh; }
-        .container { background: #fff; max-width: 1100px; width: 100%; padding: 30px 25px; border-radius: 20px; box-shadow: 0 8px 30px rgba(0,80,0,0.15); border: 1px solid #a5d6a7; }
-        .logo-area { text-align: center; margin-bottom: 20px; }
-        .logo-area img { max-width: 120px; height: auto; }
-        .logo-area h1 { font-size: 28px; color: #1b5e20; background: #c8e6c9; display: inline-block; padding: 6px 20px; border-radius: 30px; }
-        .btn-voltar { background: #558b2f; color: white; padding: 10px 20px; border: none; border-radius: 10px; text-decoration: none; display: inline-block; margin-bottom: 20px; }
+        body { background: #e8f5e9; padding: 16px 12px; display: flex; justify-content: center; min-height: 100vh; }
+        .container { background: #fff; max-width: 1100px; width: 100%; padding: 18px 18px; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,80,0,0.12); border: 1px solid #a5d6a7; }
+        .logo-area { text-align: center; margin-bottom: 12px; }
+        .logo-area img { max-width: 80px; height: auto; }
+        .logo-area h1 { font-size: 24px; color: #1b5e20; background: #c8e6c9; display: inline-block; padding: 4px 18px; border-radius: 30px; }
+        .btn { padding: 8px 16px; background: #2e7d32; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s; text-decoration: none; display: inline-block; }
+        .btn:hover { background: #1b5e20; }
+        .btn-success { background: #388e3c; }
+        .btn-success:hover { background: #2e7d32; }
+        .btn-secondary { background: #6c757d; }
+        .btn-secondary:hover { background: #5a6268; }
+        .btn-voltar { background: #558b2f; }
         .btn-voltar:hover { background: #33691e; }
-        .btn-nova-os { background: #2e7d32; color: white; padding: 10px 20px; border: none; border-radius: 10px; text-decoration: none; display: inline-block; margin-left: 10px; }
-        .btn-nova-os:hover { background: #1b5e20; }
-        .filtros { display: flex; flex-wrap: wrap; gap: 15px; margin: 20px 0; align-items: center; }
-        .filtros select, .filtros input { padding: 10px; border: 1px solid #a5d6a7; border-radius: 10px; font-size: 15px; flex: 1 1 200px; }
-        .table-responsive { overflow-x: auto; margin-top: 20px; }
-        table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 650px; }
-        th { background: #c8e6c9; padding: 12px; text-align: left; color: #1b5e20; border-bottom: 2px solid #81c784; }
-        td { padding: 12px; border-bottom: 1px solid #c8e6c9; vertical-align: middle; }
-        .badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            white-space: nowrap;
-        }
-        /* Status */
+        .header-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; align-items: center; }
+        .filtros { display: flex; flex-wrap: wrap; gap: 12px; margin: 12px 0 16px; align-items: center; }
+        .filtros select, .filtros input { padding: 6px 10px; border: 1px solid #a5d6a7; border-radius: 6px; font-size: 14px; flex: 1 1 180px; background: #fafffe; }
+        .table-responsive { overflow-x: auto; margin-top: 12px; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 600px; }
+        th { background: #c8e6c9; padding: 10px; text-align: left; color: #1b5e20; border-bottom: 2px solid #81c784; }
+        td { padding: 10px; border-bottom: 1px solid #c8e6c9; vertical-align: middle; }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; }
         .badge-aberta { background: #e3f2fd; color: #0d47a1; }
         .badge-em_andamento { background: #fff3e0; color: #e65100; }
         .badge-concluida { background: #c8e6c9; color: #1b5e20; }
         .badge-cancelada { background: #e0e0e0; color: #424242; }
-        /* Prioridades */
         .badge-emergencial { background: #ffcdd2; color: #b71c1c; font-weight: bold; }
         .badge-urgente { background: #fff9c4; color: #f57f17; font-weight: bold; }
         .badge-normal { background: #c8e6c9; color: #1b5e20; font-weight: bold; }
-        /* Direcionado: Grupo (azul) vs Personagem (verde) */
         .badge-grupo { background: #e3f2fd; color: #0d47a1; font-weight: bold; }
         .badge-personagem { background: #e8f5e9; color: #1b5e20; font-weight: bold; }
         .badge .icone { margin-right: 4px; }
-        @media (max-width: 600px) { .container { padding: 20px 15px; } .logo-area h1 { font-size: 22px; } .filtros { flex-direction: column; } }
+        .empty-message { text-align: center; color: #555; padding: 30px 0; }
+        @media (max-width: 600px) {
+            .container { padding: 14px; }
+            .logo-area h1 { font-size: 20px; }
+            .filtros { flex-direction: column; align-items: stretch; }
+            .filtros select, .filtros input { flex: 1 1 auto; }
+            table { font-size: 13px; min-width: 400px; }
+            th, td { padding: 6px 8px; }
+        }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="logo-area">
-        <img src="logo.png" alt="Logo Villa do Bosque" style="max-width:100px;">
+        <img src="logo.png" alt="Logo Villa do Bosque" style="max-width:80px;">
         <h1>📋 Ordens de Serviço</h1>
-        <div>
-            <a href="index.html" class="btn-voltar">← Voltar ao Painel</a>
-            <a href="os-abrir.html" class="btn-nova-os">📝 Nova OS</a>
-        </div>
+    </div>
+    <div class="header-actions">
+        <a href="index.html" class="btn btn-voltar">← Voltar ao Painel</a>
+        <a href="os-abrir.html" class="btn btn-success">📝 Nova OS</a>
     </div>
 
     <div class="filtros">
@@ -69,10 +72,10 @@
             <option value="cancelada">Cancelada</option>
         </select>
         <input type="text" id="filtroBusca" placeholder="Buscar por número, título ou responsável...">
-        <button class="btn" id="btnFiltrar" style="background:#2e7d32; color:white; border:none; padding:10px 20px; border-radius:10px; cursor:pointer;">Filtrar</button>
+        <button class="btn" id="btnFiltrar" style="background:#2e7d32; color:white;">Filtrar</button>
     </div>
 
-    <div id="listaContainer"><p>Carregando ordens de serviço...</p></div>
+    <div id="listaContainer"><p class="empty-message">Carregando ordens de serviço...</p></div>
 </div>
 
 <script>
@@ -100,46 +103,73 @@
     };
 
     function carregarOS(statusFiltro = 'não_concluidas', busca = '') {
-        listaDiv.innerHTML = '<p>Carregando...</p>';
+        listaDiv.innerHTML = '<p class="empty-message">Carregando...</p>';
         let query = db.collection('ordens_servico');
 
+        // Aplica filtro de status, mas NÃO usa orderBy() para evitar índices compostos
         if (statusFiltro === 'não_concluidas') {
             query = query.where('status', 'in', ['aberta', 'em_andamento']);
         } else if (statusFiltro !== 'todas') {
             query = query.where('status', '==', statusFiltro);
         }
 
-        query.orderBy('criado_em', 'desc').get()
+        // Busca todos os documentos que atendem ao filtro (sem orderBy)
+        query.get()
             .then(snapshot => {
                 if (snapshot.empty) {
-                    listaDiv.innerHTML = '<p style="text-align:center; color:#555;">Nenhuma ordem de serviço encontrada.</p>';
+                    listaDiv.innerHTML = '<p class="empty-message">Nenhuma ordem de serviço encontrada.</p>';
                     return;
                 }
+
+                // Converte para array e ordena por data (criado_em) decrescente no front-end
+                let docs = [];
+                snapshot.forEach(doc => {
+                    docs.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Filtro por busca (se houver)
+                if (busca) {
+                    const lowerBusca = busca.toLowerCase();
+                    docs = docs.filter(doc => {
+                        const num = doc.numero ? String(doc.numero) : '';
+                        const tit = doc.titulo || '';
+                        const resp = doc.aberto_por_nome || '';
+                        return num.includes(lowerBusca) || tit.toLowerCase().includes(lowerBusca) || resp.toLowerCase().includes(lowerBusca);
+                    });
+                }
+
+                // Ordena por data decrescente (mais recente primeiro)
+                docs.sort((a, b) => {
+                    const dateA = a.criado_em ? new Date(a.criado_em) : new Date(0);
+                    const dateB = b.criado_em ? new Date(b.criado_em) : new Date(0);
+                    return dateB - dateA;
+                });
+
+                if (docs.length === 0) {
+                    listaDiv.innerHTML = '<p class="empty-message">Nenhuma ordem encontrada com os filtros atuais.</p>';
+                    return;
+                }
+
                 let html = `<div class="table-responsive"><table>
                     <thead><tr><th>Nº</th><th>Título</th><th>Aberto por</th><th>Direcionado a</th><th>Prioridade</th><th>Status</th><th>Data/Hora</th></tr></thead><tbody>`;
                 
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    const id = doc.id;
-
-                    // Status
+                docs.forEach(data => {
+                    const id = data.id;
                     const statusClass = `badge-${data.status || 'aberta'}`;
                     const statusLabel = data.status || 'aberta';
 
-                    // Prioridade
                     const p = data.prioridade || 'normal';
                     const pData = priorityMap[p] || priorityMap['normal'];
                     const prioridadeHtml = `<span class="badge ${pData.class}"><span class="icone">${pData.icon}</span> ${pData.label}</span>`;
 
-                    // Direcionado (Grupo ou Personagem)
                     let targetHtml = '';
                     if (data.direcionado_para && data.direcionado_para.startsWith('group:')) {
-                        // É um GRUPO
                         targetHtml = `<span class="badge badge-grupo"><span class="icone">👥</span> ${data.direcionado_para_nome || 'Grupo'}</span>`;
                     } else {
-                        // É um PERSONAGEM específico
                         targetHtml = `<span class="badge badge-personagem"><span class="icone">👤</span> ${data.direcionado_para_nome || '—'}</span>`;
                     }
+
+                    const dataHora = data.criado_em ? new Date(data.criado_em).toLocaleString('pt-BR') : '—';
 
                     html += `
                         <tr onclick="window.location.href='os-detalhe.html?id=${id}'" style="cursor:pointer;">
@@ -149,7 +179,7 @@
                             <td>${targetHtml}</td>
                             <td>${prioridadeHtml}</td>
                             <td><span class="badge ${statusClass}">${statusLabel.replace('_',' ').toUpperCase()}</span></td>
-                            <td>${data.criado_em ? new Date(data.criado_em).toLocaleString('pt-BR') : '—'}</td>
+                            <td>${dataHora}</td>
                         </tr>
                     `;
                 });
@@ -157,6 +187,7 @@
                 listaDiv.innerHTML = html;
             })
             .catch(err => {
+                console.error('Erro ao carregar OS:', err);
                 listaDiv.innerHTML = `<p style="color:red;">Erro ao carregar: ${err.message}</p>`;
             });
     }
@@ -167,7 +198,6 @@
         carregarOS(status, busca);
     });
 
-    // Carregar inicial
     auth.onAuthStateChanged((user) => {
         if (user) {
             carregarOS('não_concluidas', '');
