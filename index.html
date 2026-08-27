@@ -114,6 +114,9 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
+    // ============================================================
+    // E-MAIL MASTER (sem acentos, em minúsculo, sem espaços)
+    // ============================================================
     const MASTER_EMAIL = 'administracaovilladobosque@gmail.com';
     const TIMEOUT_MS = 4 * 60 * 60 * 1000;
     let timeoutId = null, timerInterval = null;
@@ -176,23 +179,28 @@
         dashboardScreen.style.display = 'block';
 
         // ============================================================
-        // FORÇA O NOME PARA MASTER
+        // NOME: FORÇA "Master" se o e-mail (case-insensitive) bater
         // ============================================================
+        const emailAtual = (user.email || '').trim().toLowerCase();
+        const masterEmailLower = MASTER_EMAIL.trim().toLowerCase();
         let nomeExibicao = 'Usuário';
-        if (user.email === MASTER_EMAIL) {
+
+        if (emailAtual === masterEmailLower) {
             nomeExibicao = 'Master';
         } else {
+            // Caso contrário, usa o Firestore ou displayName
             nomeExibicao = userData?.nome || user.displayName || 'Usuário';
         }
+
         userName.textContent = nomeExibicao;
         userEmail.textContent = user.email;
         sessionStorage.setItem('userLoggedIn', 'true');
 
         // ============================================================
-        // FORÇA A FUNÇÃO PARA MASTER (pelo e-mail)
+        // FUNÇÃO: FORÇA "master" se for o Master
         // ============================================================
         let funcao = userData?.funcao || 'tecnico';
-        if (user.email === MASTER_EMAIL) {
+        if (emailAtual === masterEmailLower) {
             funcao = 'master';
         }
 
@@ -205,7 +213,7 @@
         userRoleDisplay.textContent = `🔹 Função: ${roleMap[funcao] || funcao}`;
 
         // ============================================================
-        // MONTA O MENU
+        // MENU
         // ============================================================
         let html = '';
         if (funcao === 'master') {
