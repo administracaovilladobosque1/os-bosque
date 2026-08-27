@@ -30,7 +30,6 @@
         .message.error { display: block; background: #ffebee; color: #b71c1c; border: 1px solid #ef9a9a; }
         .message.success { display: block; background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
         @media (max-width: 600px) { .container { padding: 20px 15px; } .form-row { grid-template-columns: 1fr; gap: 0; } .logo-area h1 { font-size: 22px; } }
-        /* Estilo para os optgroups no select (funciona na maioria dos navegadores) */
         select optgroup { font-weight: bold; color: #2e7d32; }
         select optgroup option { font-weight: normal; color: #000; padding-left: 10px; }
     </style>
@@ -55,11 +54,11 @@
         <div class="form-row">
             <div class="form-group">
                 <label>Quadra (opcional)</label>
-                <input type="text" id="quadra" placeholder="Ex: J">
+                <input type="text" id="quadra" placeholder="Ex: C">
             </div>
             <div class="form-group">
                 <label>Lote (opcional)</label>
-                <input type="text" id="lote" placeholder="Ex: 1">
+                <input type="text" id="lote" placeholder="Ex: 09">
             </div>
         </div>
         <div class="form-group">
@@ -107,7 +106,7 @@
 
     let currentUser = null;
     let currentUserNome = '';
-    let personagensList = []; // Guarda a lista para usar no submit
+    let personagensList = [];
 
     function carregarPersonagens() {
         direcionadoSelect.innerHTML = '<option value="">Carregando...</option>';
@@ -118,7 +117,7 @@
                 const lista = [];
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    if (doc.id === currentUser.uid) return; // remove o próprio
+                    if (doc.id === currentUser.uid) return;
                     lista.push({ id: doc.id, nome: data.nome, funcao: data.funcao });
                 });
                 lista.sort((a, b) => a.nome.localeCompare(b.nome));
@@ -126,13 +125,11 @@
 
                 let html = '<option value="">Selecione um destino...</option>';
 
-                // ========== GRUPOS (com ícone 👥) ==========
                 html += '<optgroup label="📋 Grupos">';
                 html += '<option value="group:admin">👥 Administradores</option>';
                 html += '<option value="group:diretor">👥 Diretores</option>';
                 html += '</optgroup>';
 
-                // ========== PERSONAGENS INDIVIDUAIS (com ícone 👤) ==========
                 if (lista.length > 0) {
                     html += '<optgroup label="👤 Personagens">';
                     lista.forEach(item => {
@@ -186,7 +183,6 @@
         btnAbrir.disabled = true;
         btnAbrir.textContent = 'Abrindo...';
 
-        // Determinar o nome e o ID do direcionado
         let direcionadoPara = valSelecionado;
         let direcionadoParaNome = '';
 
@@ -195,7 +191,6 @@
         } else if (valSelecionado === 'group:diretor') {
             direcionadoParaNome = 'Diretores';
         } else {
-            // É um personagem específico
             const found = personagensList.find(p => p.id === valSelecionado);
             if (!found) {
                 showMessage(formMsg, 'Personagem selecionado não encontrado.', 'error');
@@ -206,7 +201,6 @@
             direcionadoParaNome = found.nome;
         }
 
-        // Gerar número e salvar
         gerarNumeroOS()
             .then(numero => {
                 const agora = new Date();
