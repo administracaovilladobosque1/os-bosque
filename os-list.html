@@ -10,7 +10,7 @@
     <style>
         * { margin:0; padding:0; box-sizing:border-box; font-family: 'Calibri', 'Segoe UI', Tahoma, sans-serif; }
         body { background: #e8f5e9; padding: 16px 12px; display: flex; justify-content: center; min-height: 100vh; }
-        .container { background: #fff; max-width: 1200px; width: 100%; padding: 18px 18px; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,80,0,0.12); border: 1px solid #a5d6a7; }
+        .container { background: #fff; max-width: 1300px; width: 100%; padding: 18px; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,80,0,0.12); border: 1px solid #a5d6a7; }
         .logo-area { text-align: center; margin-bottom: 12px; }
         .logo-area img { max-width: 80px; height: auto; }
         .logo-area h1 { font-size: 24px; color: #1b5e20; background: #c8e6c9; display: inline-block; padding: 4px 18px; border-radius: 30px; }
@@ -23,12 +23,39 @@
         .btn-voltar { background: #558b2f; }
         .btn-voltar:hover { background: #33691e; }
         .header-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; align-items: center; }
-        .filtros { display: flex; flex-wrap: wrap; gap: 12px; margin: 12px 0 16px; align-items: center; }
-        .filtros select, .filtros input { padding: 6px 10px; border: 1px solid #a5d6a7; border-radius: 6px; font-size: 14px; flex: 1 1 180px; background: #fafffe; }
+        .filtros {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 12px 0 16px;
+            align-items: center;
+        }
+        .filtros select, .filtros input {
+            padding: 6px 10px;
+            border: 1px solid #a5d6a7;
+            border-radius: 6px;
+            font-size: 14px;
+            background: #fafffe;
+            flex: 0 1 160px;
+        }
+        .filtros input[type="text"] { flex: 1 1 200px; }
+        .filtros .btn-filtrar { background: #2e7d32; color: white; border: none; padding: 6px 16px; border-radius: 6px; cursor: pointer; }
         .table-responsive { overflow-x: auto; margin-top: 12px; }
-        table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 700px; }
-        th { background: #c8e6c9; padding: 10px; text-align: left; color: #1b5e20; border-bottom: 2px solid #81c784; white-space: nowrap; }
-        td { padding: 10px; border-bottom: 1px solid #c8e6c9; vertical-align: middle; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 900px; }
+        th {
+            background: #c8e6c9;
+            padding: 10px 8px;
+            text-align: left;
+            color: #1b5e20;
+            border-bottom: 2px solid #81c784;
+            white-space: nowrap;
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+        }
+        th:hover { background: #b8d9b9; }
+        th .sorter { display: inline-block; margin-left: 4px; font-size: 12px; }
+        td { padding: 10px 8px; border-bottom: 1px solid #c8e6c9; vertical-align: middle; }
         .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; }
         .badge-aberta { background: #e3f2fd; color: #0d47a1; }
         .badge-em_andamento { background: #fff3e0; color: #e65100; }
@@ -48,8 +75,8 @@
             .logo-area h1 { font-size: 20px; }
             .filtros { flex-direction: column; align-items: stretch; }
             .filtros select, .filtros input { flex: 1 1 auto; }
-            table { font-size: 13px; min-width: 500px; }
-            th, td { padding: 6px 8px; }
+            table { font-size: 13px; min-width: 600px; }
+            th, td { padding: 6px 6px; }
         }
     </style>
 </head>
@@ -66,15 +93,17 @@
 
     <div class="filtros">
         <select id="filtroStatus">
-            <option value="não_concluidas" selected>Não concluídas</option>
-            <option value="todas">Todas</option>
-            <option value="aberta">Aberta</option>
-            <option value="em_andamento">Em andamento</option>
-            <option value="concluida">Concluída</option>
-            <option value="cancelada">Cancelada</option>
+            <option value="todos">Status: Todos</option>
+            <option value="aberto" selected>Aberto</option>
+            <option value="fechado">Fechado</option>
+        </select>
+        <select id="filtroPendente">
+            <option value="todos">Pendente em: Todos</option>
+            <option value="diretoria">Diretoria</option>
+            <option value="admin">Admin</option>
         </select>
         <input type="text" id="filtroBusca" placeholder="Buscar por número, título ou responsável...">
-        <button class="btn" id="btnFiltrar" style="background:#2e7d32; color:white;">Filtrar</button>
+        <button class="btn-filtrar" id="btnFiltrar">Filtrar</button>
     </div>
 
     <div id="listaContainer"><p class="empty-message">Carregando ordens de serviço...</p></div>
@@ -95,8 +124,13 @@
 
     const listaDiv = document.getElementById('listaContainer');
     const filtroStatus = document.getElementById('filtroStatus');
+    const filtroPendente = document.getElementById('filtroPendente');
     const filtroBusca = document.getElementById('filtroBusca');
     const btnFiltrar = document.getElementById('btnFiltrar');
+
+    // Estado da ordenação
+    let sortField = 'numero';
+    let sortAsc = false; // false = decrescente (mais recente)
 
     const priorityMap = {
         'emergencial': { label: 'Emergencial', class: 'badge-emergencial', icon: '🔴' },
@@ -104,7 +138,7 @@
         'normal': { label: 'Normal', class: 'badge-normal', icon: '🟢' }
     };
 
-    // Função para calcular dias entre duas datas
+    // Função para calcular dias
     function calcularDias(dataISO) {
         if (!dataISO) return '—';
         const data = new Date(dataISO);
@@ -116,115 +150,214 @@
         return `${diffDias} dias`;
     }
 
-    function carregarOS(statusFiltro = 'não_concluidas', busca = '') {
-        listaDiv.innerHTML = '<p class="empty-message">Carregando...</p>';
-        let query = db.collection('ordens_servico');
+    // Função que retorna a data do último evento do histórico
+    function getUltimaDataHistorico(data) {
+        if (data.historico && data.historico.length > 0) {
+            const ultimo = data.historico[data.historico.length - 1];
+            return ultimo.data || data.criado_em;
+        }
+        return data.criado_em;
+    }
 
-        if (statusFiltro === 'não_concluidas') {
-            query = query.where('status', 'in', ['aberta', 'em_andamento']);
-        } else if (statusFiltro !== 'todas') {
-            query = query.where('status', '==', statusFiltro);
+    // --- Funções de ordenação ---
+    function ordenarDados(docs) {
+        docs.sort((a, b) => {
+            let valA, valB;
+            switch (sortField) {
+                case 'numero':
+                    valA = a.numero || 0;
+                    valB = b.numero || 0;
+                    break;
+                case 'titulo':
+                    valA = (a.titulo || '').toLowerCase();
+                    valB = (b.titulo || '').toLowerCase();
+                    break;
+                case 'aberto_por_nome':
+                    valA = (a.aberto_por_nome || '').toLowerCase();
+                    valB = (b.aberto_por_nome || '').toLowerCase();
+                    break;
+                case 'prioridade':
+                    const prioOrder = { 'emergencial': 0, 'urgente': 1, 'normal': 2 };
+                    valA = prioOrder[a.prioridade] !== undefined ? prioOrder[a.prioridade] : 99;
+                    valB = prioOrder[b.prioridade] !== undefined ? prioOrder[b.prioridade] : 99;
+                    break;
+                case 'status':
+                    valA = (a.status || '').toLowerCase();
+                    valB = (b.status || '').toLowerCase();
+                    break;
+                case 'criado_em':
+                    valA = a.criado_em ? new Date(a.criado_em).getTime() : 0;
+                    valB = b.criado_em ? new Date(b.criado_em).getTime() : 0;
+                    break;
+                case 'pendente_em':
+                    valA = (a.direcionado_para_nome || '').toLowerCase();
+                    valB = (b.direcionado_para_nome || '').toLowerCase();
+                    break;
+                case 'dias_pendente':
+                    valA = getUltimaDataHistorico(a);
+                    valB = getUltimaDataHistorico(b);
+                    valA = valA ? new Date(valA).getTime() : 0;
+                    valB = valB ? new Date(valB).getTime() : 0;
+                    break;
+                case 'dias_aberto':
+                    valA = a.criado_em ? new Date(a.criado_em).getTime() : 0;
+                    valB = b.criado_em ? new Date(b.criado_em).getTime() : 0;
+                    break;
+                default:
+                    valA = 0; valB = 0;
+            }
+            if (typeof valA === 'string') {
+                return sortAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+            }
+            return sortAsc ? valA - valB : valB - valA;
+        });
+        return docs;
+    }
+
+    // --- Renderização da tabela ---
+    function renderizarTabela(docs) {
+        if (!docs || docs.length === 0) {
+            listaDiv.innerHTML = '<p class="empty-message">Nenhuma ordem encontrada com os filtros atuais.</p>';
+            return;
         }
 
+        // Ordenar
+        docs = ordenarDados(docs);
+
+        let html = `<div class="table-responsive"><table>
+            <thead><tr>
+                <th data-sort="numero">Nº <span class="sorter">${sortField === 'numero' ? (sortAsc ? '▲' : '▼') : '⇅'}</span></th>
+                <th data-sort="titulo">Título <span class="sorter">${sortField === 'titulo' ? (sortAsc ? '▲' : '▼') : '⇅'}</span></th>
+                <th data-sort="aberto_por_nome">Aberto por <span class="sorter">${sortField === 'aberto_por_nome' ? (sortAsc ? '▲' : '▼') : '⇅'}</span></th>
+                <th data-sort="prioridade">Prioridade <span class="sorter">${sortField === 'prioridade' ? (sortAsc ? '▲' : '▼') : '⇅'}</span></th>
+                <th data-sort="status">Status <span class="sorter">${sortField === 'status' ? (sortAsc ? '▲' : '▼') : '⇅'}</span></th>
+                <th data-sort="criado_em">Data/Hora <span class="sorter">${sortField === 'criado_em' ? (sortAsc ? '▲' : '▼') : '⇅'}</span></th>
+                <th data-sort="pendente_em">Pendente em <span class="sorter">${sortField === 'pendente_em' ? (sortAsc ? '▲' : '▼') : '⇅'}</span></th>
+                <th data-sort="dias_pendente">Dias pendente <span class="sorter">${sortField === 'dias_pendente' ? (sortAsc ? '▲' : '▼') : '⇅'}</span></th>
+                <th data-sort="dias_aberto">Dias aberto <span class="sorter">${sortField === 'dias_aberto' ? (sortAsc ? '▲' : '▼') : '⇅'}</span></th>
+            </tr></thead><tbody>`;
+
+        docs.forEach(data => {
+            const id = data.id;
+            const statusClass = `badge-${data.status || 'aberta'}`;
+            const statusLabel = data.status || 'aberta';
+
+            const p = data.prioridade || 'normal';
+            const pData = priorityMap[p] || priorityMap['normal'];
+            const prioridadeHtml = `<span class="badge ${pData.class}"><span class="icone">${pData.icon}</span> ${pData.label}</span>`;
+
+            let pendenteHtml = '';
+            if (data.direcionado_para && data.direcionado_para.startsWith('group:')) {
+                pendenteHtml = `<span class="badge badge-grupo"><span class="icone">👥</span> ${data.direcionado_para_nome || 'Grupo'}</span>`;
+            } else {
+                pendenteHtml = `<span class="badge badge-personagem"><span class="icone">👤</span> ${data.direcionado_para_nome || '—'}</span>`;
+            }
+
+            const dataHora = data.criado_em ? new Date(data.criado_em).toLocaleString('pt-BR') : '—';
+            const diasAberto = data.criado_em ? calcularDias(data.criado_em) : '—';
+            let diasPendente = '—';
+            const ultData = getUltimaDataHistorico(data);
+            if (ultData) diasPendente = calcularDias(ultData);
+
+            html += `
+                <tr onclick="window.location.href='os-detalhe.html?id=${id}'" style="cursor:pointer;">
+                    <td><strong>${data.numero || 'N/A'}</strong></td>
+                    <td>${data.titulo || 'Sem título'}</td>
+                    <td>${data.aberto_por_nome || '—'}</td>
+                    <td>${prioridadeHtml}</td>
+                    <td><span class="badge ${statusClass}">${statusLabel.replace('_',' ').toUpperCase()}</span></td>
+                    <td>${dataHora}</td>
+                    <td>${pendenteHtml}</td>
+                    <td><span class="dias-numero">${diasPendente}</span></td>
+                    <td><span class="dias-numero">${diasAberto}</span></td>
+                </tr>
+            `;
+        });
+        html += `</tbody></table></div>`;
+        listaDiv.innerHTML = html;
+
+        // Adicionar event listeners nos cabeçalhos
+        document.querySelectorAll('th[data-sort]').forEach(th => {
+            th.addEventListener('click', () => {
+                const field = th.dataset.sort;
+                if (sortField === field) {
+                    sortAsc = !sortAsc;
+                } else {
+                    sortField = field;
+                    sortAsc = false; // inicia decrescente para os primeiros cliques (mais comum)
+                }
+                // Reaplica filtros e ordena
+                aplicarFiltros();
+            });
+        });
+    }
+
+    // --- Função principal de filtragem ---
+    function aplicarFiltros() {
+        const statusFiltro = filtroStatus.value;
+        const pendenteFiltro = filtroPendente.value;
+        const busca = filtroBusca.value.trim().toLowerCase();
+
+        // Usa os dados brutos armazenados na variável global `allDocs`
+        let docs = window.allDocs || [];
+
+        // Filtro de Status
+        if (statusFiltro === 'aberto') {
+            docs = docs.filter(d => d.status === 'aberta' || d.status === 'em_andamento');
+        } else if (statusFiltro === 'fechado') {
+            docs = docs.filter(d => d.status === 'concluida' || d.status === 'cancelada');
+        }
+
+        // Filtro de "Pendente em"
+        if (pendenteFiltro === 'diretoria') {
+            docs = docs.filter(d => {
+                const nome = (d.direcionado_para_nome || '').toLowerCase();
+                const isDiretor = (d.direcionado_para && d.direcionado_para.startsWith('group:diretor')) ||
+                                  (d.direcionado_para && !d.direcionado_para.startsWith('group:') && d.direcionado_para_nome && nome.includes('diretor'));
+                return isDiretor;
+            });
+        } else if (pendenteFiltro === 'admin') {
+            docs = docs.filter(d => {
+                const nome = (d.direcionado_para_nome || '').toLowerCase();
+                const isAdmin = (d.direcionado_para && d.direcionado_para.startsWith('group:admin')) ||
+                                (d.direcionado_para && !d.direcionado_para.startsWith('group:') && d.direcionado_para_nome && nome.includes('admin'));
+                return isAdmin;
+            });
+        }
+
+        // Filtro de busca textual
+        if (busca) {
+            docs = docs.filter(d => {
+                const num = d.numero ? String(d.numero) : '';
+                const tit = (d.titulo || '').toLowerCase();
+                const resp = (d.aberto_por_nome || '').toLowerCase();
+                return num.includes(busca) || tit.includes(busca) || resp.includes(busca);
+            });
+        }
+
+        renderizarTabela(docs);
+    }
+
+    // --- Carregar dados do Firestore ---
+    function carregarOS() {
+        listaDiv.innerHTML = '<p class="empty-message">Carregando ordens de serviço...</p>';
+        let query = db.collection('ordens_servico');
+
+        // Busca todos (sem filtro de status no backend, faremos no front)
         query.get()
             .then(snapshot => {
                 if (snapshot.empty) {
+                    window.allDocs = [];
                     listaDiv.innerHTML = '<p class="empty-message">Nenhuma ordem de serviço encontrada.</p>';
                     return;
                 }
-
                 let docs = [];
                 snapshot.forEach(doc => {
                     docs.push({ id: doc.id, ...doc.data() });
                 });
-
-                if (busca) {
-                    const lowerBusca = busca.toLowerCase();
-                    docs = docs.filter(doc => {
-                        const num = doc.numero ? String(doc.numero) : '';
-                        const tit = doc.titulo || '';
-                        const resp = doc.aberto_por_nome || '';
-                        return num.includes(lowerBusca) || tit.toLowerCase().includes(lowerBusca) || resp.toLowerCase().includes(lowerBusca);
-                    });
-                }
-
-                // Ordena por data decrescente
-                docs.sort((a, b) => {
-                    const dateA = a.criado_em ? new Date(a.criado_em) : new Date(0);
-                    const dateB = b.criado_em ? new Date(b.criado_em) : new Date(0);
-                    return dateB - dateA;
-                });
-
-                if (docs.length === 0) {
-                    listaDiv.innerHTML = '<p class="empty-message">Nenhuma ordem encontrada com os filtros atuais.</p>';
-                    return;
-                }
-
-                let html = `<div class="table-responsive"><table>
-                    <thead><tr>
-                        <th>Nº</th>
-                        <th>Título</th>
-                        <th>Aberto por</th>
-                        <th>Prioridade</th>
-                        <th>Status</th>
-                        <th>Data/Hora</th>
-                        <th>Pendente em</th>
-                        <th>Dias pendente</th>
-                        <th>Dias aberto</th>
-                    </tr></thead><tbody>`;
-                
-                docs.forEach(data => {
-                    const id = data.id;
-                    const statusClass = `badge-${data.status || 'aberta'}`;
-                    const statusLabel = data.status || 'aberta';
-
-                    // Prioridade
-                    const p = data.prioridade || 'normal';
-                    const pData = priorityMap[p] || priorityMap['normal'];
-                    const prioridadeHtml = `<span class="badge ${pData.class}"><span class="icone">${pData.icon}</span> ${pData.label}</span>`;
-
-                    // Pendente em (destino atual)
-                    let pendenteHtml = '';
-                    if (data.direcionado_para && data.direcionado_para.startsWith('group:')) {
-                        pendenteHtml = `<span class="badge badge-grupo"><span class="icone">👥</span> ${data.direcionado_para_nome || 'Grupo'}</span>`;
-                    } else {
-                        pendenteHtml = `<span class="badge badge-personagem"><span class="icone">👤</span> ${data.direcionado_para_nome || '—'}</span>`;
-                    }
-
-                    // Data de criação
-                    const dataHora = data.criado_em ? new Date(data.criado_em).toLocaleString('pt-BR') : '—';
-
-                    // Dias aberto (desde a criação)
-                    const diasAberto = data.criado_em ? calcularDias(data.criado_em) : '—';
-
-                    // Dias pendente (desde a última ação do histórico)
-                    let diasPendente = '—';
-                    if (data.historico && data.historico.length > 0) {
-                        const ultimoEvento = data.historico[data.historico.length - 1];
-                        if (ultimoEvento.data) {
-                            diasPendente = calcularDias(ultimoEvento.data);
-                        }
-                    } else if (data.criado_em) {
-                        // Se não houver histórico, usa a data de criação
-                        diasPendente = calcularDias(data.criado_em);
-                    }
-
-                    html += `
-                        <tr onclick="window.location.href='os-detalhe.html?id=${id}'" style="cursor:pointer;">
-                            <td><strong>${data.numero || 'N/A'}</strong></td>
-                            <td>${data.titulo || 'Sem título'}</td>
-                            <td>${data.aberto_por_nome || '—'}</td>
-                            <td>${prioridadeHtml}</td>
-                            <td><span class="badge ${statusClass}">${statusLabel.replace('_',' ').toUpperCase()}</span></td>
-                            <td>${dataHora}</td>
-                            <td>${pendenteHtml}</td>
-                            <td><span class="dias-numero">${diasPendente}</span></td>
-                            <td><span class="dias-numero">${diasAberto}</span></td>
-                        </tr>
-                    `;
-                });
-                html += `</tbody></table></div>`;
-                listaDiv.innerHTML = html;
+                window.allDocs = docs;
+                // Aplica filtros iniciais (default: Aberto)
+                aplicarFiltros();
             })
             .catch(err => {
                 console.error('Erro ao carregar OS:', err);
@@ -232,15 +365,26 @@
             });
     }
 
+    // --- Event listeners ---
     btnFiltrar.addEventListener('click', () => {
-        const status = filtroStatus.value;
-        const busca = filtroBusca.value.trim().toLowerCase();
-        carregarOS(status, busca);
+        aplicarFiltros();
     });
 
+    // Ao mudar os selects, já aplica automaticamente (opcional)
+    [filtroStatus, filtroPendente].forEach(el => {
+        el.addEventListener('change', aplicarFiltros);
+    });
+    // Busca com delay (após 300ms de inatividade)
+    let timeoutBusca;
+    filtroBusca.addEventListener('input', () => {
+        clearTimeout(timeoutBusca);
+        timeoutBusca = setTimeout(aplicarFiltros, 300);
+    });
+
+    // --- Autenticação ---
     auth.onAuthStateChanged((user) => {
         if (user) {
-            carregarOS('não_concluidas', '');
+            carregarOS();
         } else {
             window.location.href = 'index.html';
         }
