@@ -19,7 +19,7 @@
         label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 5px; color: #1b5e20; }
         input { width: 100%; padding: 14px 15px; border: 1px solid #a5d6a7; border-radius: 10px; font-size: 16px; background: #fafffe; }
         input:focus { outline: none; border-color: #2e7d32; box-shadow: 0 0 0 3px rgba(46,125,50,0.2); }
-        .btn { width: 100%; padding: 14px; background: #2e7d32; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s; text-decoration: none; text-align: center; display: inline-block; }
+        .btn { width: 100%; padding: 14px; background: #2e7d32; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s; }
         .btn:hover { background: #1b5e20; }
         .btn-danger { background: #c62828; }
         .btn-danger:hover { background: #b71c1c; }
@@ -27,8 +27,6 @@
         .btn-success:hover { background: #2e7d32; }
         .btn-secondary { background: #6c757d; }
         .btn-secondary:hover { background: #5a6268; }
-        .btn-warning { background: #f57c00; }
-        .btn-warning:hover { background: #e65100; }
         .message { margin-top: 16px; padding: 12px; border-radius: 8px; display: none; }
         .message.error { display: block; background: #ffebee; color: #b71c1c; border: 1px solid #ef9a9a; }
         .message.success { display: block; background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
@@ -43,15 +41,22 @@
 
         .master-panel { background: #f1f8e9; border-radius: 16px; padding: 20px; margin-top: 20px; border: 1px solid #a5d6a7; }
         h2 { font-size: 20px; margin: 25px 0 15px; color: #2e7d32; border-bottom: 2px solid #c8e6c9; padding-bottom: 10px; }
-        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-        .menu-grid .btn { width: 100%; padding: 12px; font-size: 14px; }
-
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .btn-group .btn {
+            text-decoration: none;
+            text-align: center;
+        }
         @media (max-width: 600px) {
             body { padding: 10px 8px; }
             .container { padding: 20px 15px; max-width: 100%; }
             .logo-area img { max-width: 120px; }
             .logo-area .main-title { font-size: 22px; }
-            .menu-grid { grid-template-columns: 1fr; }
+            .btn-group .btn { width: 100%; }
         }
     </style>
 </head>
@@ -91,25 +96,25 @@
             <p style="font-size:12px; color:#558b2f; margin-top:5px;">⏳ Sessão ativa por <span id="timerDisplay">4h00</span></p>
         </div>
 
-        <!-- ÁREA DO MASTER -->
+        <!-- ÁREA DO MASTER (só para Master) -->
         <div id="masterArea" class="hidden">
             <div class="master-panel">
                 <h2>👑 Painel do Master</h2>
-                <div class="menu-grid">
-                    <a href="personagens.html" class="btn btn-success">👥 Personagens</a>
-                    <a href="os-abrir.html" class="btn btn-warning">📝 Nova OS</a>
-                    <a href="os-list.html" class="btn btn-secondary">📋 Listar OS</a>
+                <div class="btn-group">
+                    <a href="personagens.html" class="btn btn-success">👥 Gerenciar Personagens</a>
+                    <a href="os-list.html" class="btn btn-secondary">📋 Listar Ordens de Serviço</a>
+                    <a href="os-abrir.html" class="btn btn-secondary">📝 Nova OS</a>
                 </div>
             </div>
         </div>
 
-        <!-- ÁREA PARA ADMIN E DIRETOR (futuramente) -->
-        <div id="userArea" class="hidden">
-            <div class="master-panel" style="background:#f8f9fa;">
-                <h2>📋 Menu Principal</h2>
-                <div class="menu-grid">
-                    <a href="os-abrir.html" class="btn btn-warning">📝 Nova OS</a>
-                    <a href="os-list.html" class="btn btn-secondary">📋 Listar OS</a>
+        <!-- ÁREA GERAL (para Admin e Diretor) -->
+        <div id="generalArea" class="hidden">
+            <div class="master-panel" style="background:#fafffe;">
+                <h2>📋 Ações</h2>
+                <div class="btn-group">
+                    <a href="os-list.html" class="btn btn-secondary">📋 Listar Ordens de Serviço</a>
+                    <a href="os-abrir.html" class="btn btn-success">📝 Nova OS</a>
                 </div>
             </div>
         </div>
@@ -141,7 +146,7 @@
     const loginScreen = document.getElementById('loginScreen');
     const dashboardScreen = document.getElementById('dashboard');
     const masterArea = document.getElementById('masterArea');
-    const userArea = document.getElementById('userArea');
+    const generalArea = document.getElementById('generalArea');
     const userRoleDisplay = document.getElementById('userRoleDisplay');
     const timerDisplay = document.getElementById('timerDisplay');
     const loginForm = document.getElementById('loginForm');
@@ -151,6 +156,8 @@
     const loginMessage = document.getElementById('loginMessage');
     const userName = document.getElementById('userName');
     const userEmail = document.getElementById('userEmail');
+
+    let currentUserRole = 'tecnico'; // padrão
 
     function resetTimeout() {
         if (timeoutId) clearTimeout(timeoutId);
@@ -182,38 +189,52 @@
     function showDashboard(user) {
         loginScreen.classList.add('hidden');
         dashboardScreen.style.display = 'block';
-        
-        // ================================================================
-        // CORREÇÃO: Exibe "Master" para o e-mail do Master
-        // ================================================================
-        if (user.email === MASTER_EMAIL) {
-            userName.textContent = 'Master';
-        } else {
-            userName.textContent = user.displayName || 'Usuário';
-        }
-        
+        userName.textContent = user.displayName || 'Usuário';
         userEmail.textContent = user.email;
 
+        // Verifica se é Master
         if (user.email === MASTER_EMAIL) {
             masterArea.classList.remove('hidden');
-            userArea.classList.add('hidden');
+            generalArea.classList.add('hidden');
             userRoleDisplay.textContent = '👑 Função: Master (Controle Total)';
         } else {
             masterArea.classList.add('hidden');
-            userArea.classList.remove('hidden');
-            db.collection('usuarios').doc(user.uid).get().then(doc => {
-                if (doc.exists) {
-                    const role = doc.data().funcao || 'tecnico';
-                    const map = { 'admin':'Administrador', 'diretor':'Diretor', 'master':'Master' };
-                    userRoleDisplay.textContent = `🔹 Função: ${map[role] || role}`;
-                }
-            }).catch(() => {});
+            // Busca a função do usuário no Firestore
+            db.collection('usuarios').doc(user.uid).get()
+                .then(doc => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        currentUserRole = data.funcao || 'tecnico';
+                        const roleMap = { 'admin':'Administrador', 'diretor':'Diretor', 'master':'Master', 'tecnico':'Técnico' };
+                        userRoleDisplay.textContent = `🔹 Função: ${roleMap[currentUserRole] || currentUserRole}`;
+                        // Mostra área geral se for admin ou diretor
+                        if (currentUserRole === 'admin' || currentUserRole === 'diretor') {
+                            generalArea.classList.remove('hidden');
+                        } else {
+                            generalArea.classList.add('hidden');
+                        }
+                    } else {
+                        // Se não tem documento, assume técnico e esconde área geral
+                        currentUserRole = 'tecnico';
+                        userRoleDisplay.textContent = '🔹 Função: Técnico';
+                        generalArea.classList.add('hidden');
+                    }
+                })
+                .catch(() => {
+                    currentUserRole = 'tecnico';
+                    userRoleDisplay.textContent = '🔹 Função: Técnico';
+                    generalArea.classList.add('hidden');
+                });
         }
+
         resetTimeout();
         setupActivityListeners();
     }
 
-    function showMessage(el, text, type) { el.textContent = text; el.className = 'message ' + type; }
+    function showMessage(el, text, type) {
+        el.textContent = text;
+        el.className = 'message ' + type;
+    }
 
     loginForm.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -235,27 +256,21 @@
 
     auth.onAuthStateChanged((user) => {
         if (user) {
-            // Busca o nome no Firestore, mas se for Master, forçamos a exibição de "Master"
             db.collection('usuarios').doc(user.uid).get()
                 .then(doc => {
-                    if (user.email === MASTER_EMAIL) {
-                        // Se for Master, ignoramos o que está no banco e colocamos "Master"
-                        userName.textContent = 'Master';
-                    } else if (doc.exists) {
-                        userName.textContent = doc.data().nome || user.displayName || 'Usuário';
+                    if (doc.exists) {
+                        const data = doc.data();
+                        userName.textContent = data.nome || user.displayName || 'Usuário';
+                        currentUserRole = data.funcao || 'tecnico';
                     } else {
                         userName.textContent = user.displayName || 'Usuário';
+                        currentUserRole = 'tecnico';
                     }
                     userEmail.textContent = user.email;
                     showDashboard(user);
                 })
                 .catch(() => {
-                    // Em caso de erro, verifica se é Master
-                    if (user.email === MASTER_EMAIL) {
-                        userName.textContent = 'Master';
-                    } else {
-                        userName.textContent = user.displayName || 'Usuário';
-                    }
+                    userName.textContent = user.displayName || 'Usuário';
                     userEmail.textContent = user.email;
                     showDashboard(user);
                 });
@@ -265,7 +280,7 @@
             loginMessage.className = 'message';
             loginMessage.textContent = '';
             masterArea.classList.add('hidden');
-            userArea.classList.add('hidden');
+            generalArea.classList.add('hidden');
             if (timerInterval) clearInterval(timerInterval);
             if (timeoutId) clearTimeout(timeoutId);
         }
