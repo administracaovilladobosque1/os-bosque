@@ -33,6 +33,22 @@
         .hidden { display: none !important; }
 
         #dashboard { display: none; }
+        .dashboard-logo {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .dashboard-logo .main-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1b5e20;
+            line-height: 1.2;
+        }
+        .dashboard-logo .main-title span {
+            background: #c8e6c9;
+            padding: 4px 16px;
+            border-radius: 30px;
+            display: inline-block;
+        }
         .user-info { background: #e8f5e9; padding: 15px; border-radius: 12px; margin: 20px 0; text-align: center; border: 1px solid #a5d6a7; }
         .user-info strong { color: #1b5e20; }
         .logout-area { text-align: center; margin-top: 20px; }
@@ -47,12 +63,13 @@
             .container { padding: 20px 15px; max-width: 100%; }
             .logo-area img { max-width: 120px; }
             .logo-area .main-title { font-size: 22px; }
+            .dashboard-logo .main-title { font-size: 20px; }
         }
     </style>
 </head>
 <body>
 <div class="container" id="app">
-    <!-- TELA DE LOGIN -->
+    <!-- TELA DE LOGIN (com logo) -->
     <div id="loginScreen">
         <div class="logo-area">
             <img src="logo.png" alt="Logo Villa do Bosque">
@@ -72,11 +89,10 @@
         <div id="loginMessage" class="message"></div>
     </div>
 
-    <!-- DASHBOARD -->
+    <!-- DASHBOARD (sem logo, apenas título) -->
     <div id="dashboard">
-        <div class="logo-area" style="margin-bottom:10px;">
-            <img src="logo.png" alt="Logo Villa do Bosque" style="max-width:100px;">
-            <div class="main-title" style="font-size:22px;"><span>SISTEMA<br>ORDEM DE SERVIÇO</span></div>
+        <div class="dashboard-logo">
+            <div class="main-title"><span>SISTEMA<br>ORDEM DE SERVIÇO</span></div>
         </div>
         <h1 style="font-size:26px; color:#1b5e20; text-align:center;">📋 Painel de Controle</h1>
         <div class="user-info">
@@ -129,8 +145,6 @@
     const menuButtons = document.getElementById('menuButtons');
     const menuTitle = document.getElementById('menuTitle');
 
-    // ===== PREVENIR FLASH DE LOGIN =====
-    // Se o sessionStorage indicar que o usuário estava logado, já mostra o dashboard
     if (sessionStorage.getItem('userLoggedIn') === 'true') {
         loginScreen.classList.add('hidden');
         dashboardScreen.style.display = 'block';
@@ -172,11 +186,12 @@
     function showDashboard(user, userData) {
         loginScreen.classList.add('hidden');
         dashboardScreen.style.display = 'block';
-        userName.textContent = userData.nome || user.displayName || 'Usuário';
+        const nomeExibicao = userData?.nome || user.displayName || 'Usuário';
+        userName.textContent = nomeExibicao;
         userEmail.textContent = user.email;
         sessionStorage.setItem('userLoggedIn', 'true');
 
-        let funcao = userData.funcao || 'tecnico';
+        let funcao = userData?.funcao || 'tecnico';
         const roleMap = {
             'master': 'Master (Controle Total)',
             'admin': 'Administrador',
@@ -257,8 +272,7 @@
         }
     });
 
-    // Se não houver sessionStorage e o usuário estiver deslogado, a tela de login já está visível
-    // Se houver sessionStorage mas o usuário não estiver autenticado (ex: token expirado), o onAuthStateChanged vai deslogar e mostrar o login
+    showLoginScreen();
 </script>
 </body>
 </html>
