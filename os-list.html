@@ -187,23 +187,20 @@
         return data.criado_em;
     }
 
-    // Função que determina se a OS está pendente em Diretoria ou Admin
+    // NOVA FUNÇÃO: categoriza o destino atual
     function getPendenteCategoria(data) {
-        const target = data.direcionado_para;
+        // 1. Se for grupo (salvo como 'group:admin' ou 'group:diretor')
+        if (data.direcionado_para === 'group:admin') return 'admin';
+        if (data.direcionado_para === 'group:diretor') return 'diretoria';
+
+        // 2. Se tiver o campo direcionado_para_funcao (salvo ao criar)
+        if (data.direcionado_para_funcao === 'admin') return 'admin';
+        if (data.direcionado_para_funcao === 'diretor') return 'diretoria';
+
+        // 3. Fallback: inferir pelo nome (para dados antigos)
         const nome = (data.direcionado_para_nome || '').toLowerCase();
-        const funcao = data.direcionado_para_funcao || ''; // salvo ao criar
-
-        // Se for grupo
-        if (target === 'group:diretor') return 'diretoria';
-        if (target === 'group:admin') return 'admin';
-
-        // Se for personagem individual, usa a função salva
-        if (funcao === 'diretor') return 'diretoria';
-        if (funcao === 'admin') return 'admin';
-
-        // Fallback: verifica se o nome contém "diretor" ou "admin"
-        if (nome.includes('diretor')) return 'diretoria';
         if (nome.includes('admin')) return 'admin';
+        if (nome.includes('diretor')) return 'diretoria';
 
         return 'outros';
     }
@@ -321,7 +318,7 @@
             docs = docs.filter(d => d.status === 'concluida' || d.status === 'cancelada');
         }
 
-        // Filtro Pendente em
+        // Filtro Pendente em (USANDO A NOVA FUNÇÃO)
         const pendenteFiltro = filtroPendente.value;
         if (pendenteFiltro === 'diretoria') {
             docs = docs.filter(d => getPendenteCategoria(d) === 'diretoria');

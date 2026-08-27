@@ -10,7 +10,7 @@
     <style>
         * { margin:0; padding:0; box-sizing:border-box; font-family: 'Calibri', 'Segoe UI', Tahoma, sans-serif; }
         body { background: #e8f5e9; padding: 16px 12px; display: flex; justify-content: center; min-height: 100vh; }
-        .container { background: #fff; max-width: 650px; width: 100%; padding: 18px 18px; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,80,0,0.12); border: 1px solid #a5d6a7; }
+        .container { background: #fff; max-width: 650px; width: 100%; padding: 18px; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,80,0,0.12); border: 1px solid #a5d6a7; }
         .logo-area { text-align: center; margin-bottom: 14px; }
         .logo-area img { max-width: 80px; height: auto; }
         .logo-area h1 { font-size: 22px; color: #1b5e20; background: #c8e6c9; display: inline-block; padding: 4px 16px; border-radius: 30px; }
@@ -46,19 +46,14 @@
         .message.error { display: block; background: #ffebee; color: #b71c1c; border: 1px solid #ef9a9a; }
         .message.success { display: block; background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
 
-        /* CAIXAS DE CONTORNO */
         .bloco {
             border: 1.5px solid #a5d6a7;
             border-radius: 10px;
             padding: 10px 12px 6px 12px;
             margin-bottom: 14px;
         }
-        .bloco-reclamante {
-            border-color: #66bb6a;
-        }
-        .bloco-reclamado {
-            border-color: #ffa726;
-        }
+        .bloco-reclamante { border-color: #66bb6a; }
+        .bloco-reclamado { border-color: #ffa726; }
         .bloco-title {
             font-weight: 700;
             font-size: 14px;
@@ -66,16 +61,9 @@
             margin-bottom: 6px;
             display: block;
         }
-        .bloco-reclamante .bloco-title {
-            color: #2e7d32;
-        }
-        .bloco-reclamado .bloco-title {
-            color: #e65100;
-        }
-        /* Remove o espaçamento extra dentro do bloco */
-        .bloco .form-group {
-            margin-bottom: 6px;
-        }
+        .bloco-reclamante .bloco-title { color: #2e7d32; }
+        .bloco-reclamado .bloco-title { color: #e65100; }
+        .bloco .form-group { margin-bottom: 6px; }
 
         @media (max-width: 600px) {
             .container { padding: 14px; }
@@ -116,7 +104,6 @@
             </select>
         </div>
 
-        <!-- BLOCO RECLAMANTE (borda verde) -->
         <div class="bloco bloco-reclamante">
             <span class="bloco-title">📌 Reclamante</span>
             <div class="form-row">
@@ -131,7 +118,6 @@
             </div>
         </div>
 
-        <!-- BLOCO RECLAMADO (borda laranja) -->
         <div class="bloco bloco-reclamado">
             <span class="bloco-title">📍 Reclamado</span>
             <div class="form-row">
@@ -288,11 +274,14 @@
 
         let direcionadoPara = valSelecionado;
         let direcionadoParaNome = '';
+        let direcionadoParaFuncao = '';
 
         if (valSelecionado === 'group:admin') {
             direcionadoParaNome = 'Administradores';
+            direcionadoParaFuncao = 'admin';
         } else if (valSelecionado === 'group:diretor') {
             direcionadoParaNome = 'Diretores';
+            direcionadoParaFuncao = 'diretor';
         } else {
             const found = personagensList.find(p => p.id === valSelecionado);
             if (!found) {
@@ -302,6 +291,7 @@
                 return;
             }
             direcionadoParaNome = found.nome;
+            direcionadoParaFuncao = found.funcao || '';
         }
 
         gerarNumeroOS()
@@ -324,6 +314,7 @@
                     aberto_por_nome: currentUserNome,
                     direcionado_para: direcionadoPara,
                     direcionado_para_nome: direcionadoParaNome,
+                    direcionado_para_funcao: direcionadoParaFuncao, // NOVO CAMPO
                     historico: [{
                         data: timestampISO,
                         acao: 'abertura',
