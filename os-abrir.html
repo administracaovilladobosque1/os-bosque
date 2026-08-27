@@ -45,18 +45,44 @@
         .message { margin-top: 12px; padding: 8px; border-radius: 6px; display: none; font-size: 13px; }
         .message.error { display: block; background: #ffebee; color: #b71c1c; border: 1px solid #ef9a9a; }
         .message.success { display: block; background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
-        .sub-label {
-            font-size: 14px;
+
+        /* CAIXAS DE CONTORNO */
+        .bloco {
+            border: 1.5px solid #a5d6a7;
+            border-radius: 10px;
+            padding: 10px 12px 6px 12px;
+            margin-bottom: 14px;
+        }
+        .bloco-reclamante {
+            border-color: #66bb6a;
+        }
+        .bloco-reclamado {
+            border-color: #ffa726;
+        }
+        .bloco-title {
             font-weight: 700;
+            font-size: 14px;
             color: #1b5e20;
-            margin: 8px 0 4px 0;
+            margin-bottom: 6px;
             display: block;
         }
+        .bloco-reclamante .bloco-title {
+            color: #2e7d32;
+        }
+        .bloco-reclamado .bloco-title {
+            color: #e65100;
+        }
+        /* Remove o espaçamento extra dentro do bloco */
+        .bloco .form-group {
+            margin-bottom: 6px;
+        }
+
         @media (max-width: 600px) {
             .container { padding: 14px; }
-            .form-row { grid-template-columns: 1fr; gap: 0; }
+            .form-row { grid-template-columns: 1fr; gap: 4px; }
             .form-row .form-group input { width: 100%; }
             .logo-area h1 { font-size: 18px; }
+            .bloco { padding: 8px 10px 4px 10px; }
         }
         select option.grupo { background-color: #e9ecef; }
         select option.admin { background-color: #fff3cd; }
@@ -90,29 +116,33 @@
             </select>
         </div>
 
-        <!-- RECLAMANTE -->
-        <span class="sub-label">📌 Reclamante</span>
-        <div class="form-row">
-            <div class="form-group">
-                <label>Quadra</label>
-                <input type="text" id="quadraReclamante" placeholder="Ex: C (opcional)">
-            </div>
-            <div class="form-group">
-                <label>Lote</label>
-                <input type="text" id="loteReclamante" placeholder="Ex: 09 (opcional)">
+        <!-- BLOCO RECLAMANTE (borda verde) -->
+        <div class="bloco bloco-reclamante">
+            <span class="bloco-title">📌 Reclamante</span>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Quadra (opcional)</label>
+                    <input type="text" id="quadraReclamante" placeholder="Ex: C">
+                </div>
+                <div class="form-group">
+                    <label>Lote (opcional)</label>
+                    <input type="text" id="loteReclamante" placeholder="Ex: 09">
+                </div>
             </div>
         </div>
 
-        <!-- RECLAMADO -->
-        <span class="sub-label">📍 Reclamado</span>
-        <div class="form-row">
-            <div class="form-group">
-                <label>Quadra</label>
-                <input type="text" id="quadraReclamada" placeholder="Ex: D (opcional)">
-            </div>
-            <div class="form-group">
-                <label>Lote</label>
-                <input type="text" id="loteReclamado" placeholder="Ex: 12 (opcional)">
+        <!-- BLOCO RECLAMADO (borda laranja) -->
+        <div class="bloco bloco-reclamado">
+            <span class="bloco-title">📍 Reclamado</span>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Quadra (opcional)</label>
+                    <input type="text" id="quadraReclamada" placeholder="Ex: D">
+                </div>
+                <div class="form-group">
+                    <label>Lote (opcional)</label>
+                    <input type="text" id="loteReclamado" placeholder="Ex: 12">
+                </div>
             </div>
         </div>
 
