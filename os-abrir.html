@@ -55,26 +55,26 @@
         <div class="form-row">
             <div class="form-group">
                 <label>Quadra (opcional)</label>
-                <input type="text" id="quadra" placeholder="Ex: J">
+                <input type="text" id="quadra" placeholder="Ex: C">
             </div>
             <div class="form-group">
                 <label>Lote (opcional)</label>
-                <input type="text" id="lote" placeholder="Ex: 1">
+                <input type="text" id="lote" placeholder="Ex: 09">
             </div>
         </div>
         <div class="form-group">
             <label>Direcionar para</label>
             <select id="direcionadoPara" required>
-                <option value="">Selecione um personagem...</option>
+                <option value="">Carregando personagens...</option>
             </select>
         </div>
         <div class="form-group">
             <label>Prioridade</label>
             <select id="prioridade" required>
                 <option value="baixa">Baixa</option>
-                <option value="media" selected>Média</option>
+                <option value="media">Média</option>
                 <option value="alta">Alta</option>
-                <option value="urgente">Urgente</option>
+                <option value="urgente" selected>Urgente (resolver logo)</option>
             </select>
         </div>
         <button type="submit" class="btn btn-success" id="btnAbrir">Abrir OS</button>
@@ -107,32 +107,50 @@
 
     let currentUser = null;
     let currentUserNome = '';
-    let currentUserFuncao = '';
 
     // Carregar lista de personagens ativos para o dropdown
     function carregarPersonagens() {
+        direcionadoSelect.innerHTML = '<option value="">Carregando personagens...</option>';
+        
         db.collection('usuarios')
             .where('status', '==', 'ativo')
             .orderBy('nome')
             .get()
             .then(snapshot => {
-                direcionadoSelect.innerHTML = '<option value="">Selecione um personagem...</option>';
+                direcionadoSelect.innerHTML = '';
+                
                 if (snapshot.empty) {
                     direcionadoSelect.innerHTML = '<option value="">Nenhum personagem ativo disponível</option>';
                     return;
                 }
+
+                // Adiciona opção padrão
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = 'Selecione um personagem...';
+                direcionadoSelect.appendChild(defaultOption);
+
+                let count = 0;
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    // Não incluir o próprio usuário na lista de direcionamento
+                    // Não permite direcionar para si mesmo
                     if (doc.id === currentUser.uid) return;
+                    
                     const option = document.createElement('option');
                     option.value = doc.id;
                     option.textContent = `${data.nome} (${data.funcao})`;
                     direcionadoSelect.appendChild(option);
+                    count++;
                 });
+
+                if (count === 0) {
+                    // Se só tem o próprio usuário, não mostra nenhum
+                    direcionadoSelect.innerHTML = '<option value="">Nenhum outro personagem ativo disponível</option>';
+                }
             })
             .catch(err => {
                 console.error('Erro ao carregar personagens:', err);
+                direcionadoSelect.innerHTML = `<option value="">Erro ao carregar: ${err.message}</option>`;
             });
     }
 
@@ -177,12 +195,11 @@
                 const dadosDirecionado = doc.data();
                 const nomeDirecionado = dadosDirecionado.nome || 'Desconhecido';
 
-                // Gerar número da OS
                 return gerarNumeroOS().then(numero => {
                     const agora = new Date();
                     const timestampISO = agora.toISOString();
+                    const dataFormatada = agora.toLocaleString('pt-BR');
 
-                    // Dados da OS
                     const osData = {
                         numero: numero,
                         titulo: titulo,
@@ -195,19 +212,19 @@
                         aberto_por_nome: currentUserNome,
                         direcionado_para: direcionadoPara,
                         direcionado_para_nome: nomeDirecionado,
-                        // Usando string ISO em vez de serverTimestamp para o histórico
                         historico: [{
                             data: timestampISO,
+                            data_formatada: dataFormatada,
                             acao: 'abertura',
                             usuario: currentUserNome,
                             mensagem: `OS aberta por ${currentUserNome}`,
                             direcionado_para: nomeDirecionado
                         }],
-                        criado_em: new Date().toISOString(), // string ISO
-                        atualizado_em: new Date().toISOString()
+                        criado_em: timestampISO,
+                        criado_em_formatado: dataFormatada,
+                        atualizado_em: timestampISO
                     };
 
-                    // Salvar no Firestore
                     return db.collection('ordens_servico').add(osData);
                 });
             })
@@ -238,22 +255,18 @@
     auth.onAuthStateChanged((user) => {
         if (user) {
             currentUser = user;
-            // Buscar nome e função do usuário logado
             db.collection('usuarios').doc(user.uid).get()
                 .then(doc => {
                     if (doc.exists) {
                         const data = doc.data();
                         currentUserNome = data.nome || user.displayName || 'Usuário';
-                        currentUserFuncao = data.funcao || 'tecnico';
                     } else {
                         currentUserNome = user.displayName || 'Usuário';
-                        currentUserFuncao = 'tecnico';
                     }
                     carregarPersonagens();
                 })
                 .catch(() => {
                     currentUserNome = user.displayName || 'Usuário';
-                    currentUserFuncao = 'tecnico';
                     carregarPersonagens();
                 });
         } else {
