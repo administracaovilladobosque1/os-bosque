@@ -30,7 +30,6 @@
         .message.error { display: block; background: #ffebee; color: #b71c1c; border: 1px solid #ef9a9a; }
         .message.success { display: block; background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
         @media (max-width: 600px) { .container { padding: 20px 15px; } .form-row { grid-template-columns: 1fr; gap: 0; } .logo-area h1 { font-size: 22px; } }
-        /* Cores para as opções do select */
         select option.grupo { background-color: #e9ecef; }
         select option.admin { background-color: #fff3cd; }
         select option.diretor { background-color: #d4edda; }
@@ -68,7 +67,6 @@
             <select id="direcionadoPara" required>
                 <option value="">Carregando...</option>
             </select>
-            <small style="color:#555;">👥 Grupos (cinza) | 👤 Administradores (amarelo) | 👤 Diretores (verde)</small>
         </div>
         <div class="form-group">
             <label>Prioridade</label>
@@ -136,25 +134,25 @@
 
                 let html = '<option value="">Selecione um destino...</option>';
 
-                // --- GRUPOS (cinza) ---
+                // GRUPOS (cinza)
                 html += `<option value="group:admin" class="grupo" style="background-color:#e9ecef;">GRUPO: Administradores</option>`;
                 html += `<option value="group:diretor" class="grupo" style="background-color:#e9ecef;">GRUPO: Diretores</option>`;
 
-                // --- ADMINISTRADORES (amarelo) ---
+                // ADMINISTRADORES (amarelo)
                 admins.forEach(item => {
                     const isMe = (item.id === currentUser.uid);
                     const label = isMe ? `${item.nome} (você) (${item.funcao})` : `${item.nome} (${item.funcao})`;
                     html += `<option value="${item.id}" class="admin" style="background-color:#fff3cd;">${label}</option>`;
                 });
 
-                // --- DIRETORES (verde) ---
+                // DIRETORES (verde)
                 diretores.forEach(item => {
                     const isMe = (item.id === currentUser.uid);
                     const label = isMe ? `${item.nome} (você) (${item.funcao})` : `${item.nome} (${item.funcao})`;
                     html += `<option value="${item.id}" class="diretor" style="background-color:#d4edda;">${label}</option>`;
                 });
 
-                // --- OUTROS (caso existam) ---
+                // OUTROS (fundo neutro)
                 outros.forEach(item => {
                     const isMe = (item.id === currentUser.uid);
                     const label = isMe ? `${item.nome} (você) (${item.funcao})` : `${item.nome} (${item.funcao})`;
