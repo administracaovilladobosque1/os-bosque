@@ -20,6 +20,7 @@
         .filtros select, .filtros input { padding: 10px; border: 1px solid #a5d6a7; border-radius: 10px; font-size: 15px; flex: 1 1 200px; }
         .btn { padding: 10px 20px; background: #2e7d32; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; }
         .btn:hover { background: #1b5e20; }
+        .btn-sm { padding: 6px 12px; font-size: 13px; }
         .table-responsive { overflow-x: auto; margin-top: 20px; }
         table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 600px; }
         th { background: #c8e6c9; padding: 12px; text-align: left; color: #1b5e20; border-bottom: 2px solid #81c784; }
@@ -29,6 +30,10 @@
         .badge-em_andamento { background: #fff9c4; color: #f57f17; }
         .badge-concluida { background: #c8e6c9; color: #1b5e20; }
         .badge-cancelada { background: #e0e0e0; color: #424242; }
+        .badge-baixa { background: #e8f5e9; color: #1b5e20; }
+        .badge-media { background: #fff9c4; color: #f57f17; }
+        .badge-alta { background: #ffccbc; color: #bf360c; }
+        .badge-urgente { background: #ffcdd2; color: #b71c1c; }
         @media (max-width: 600px) { .container { padding: 20px 15px; } .logo-area h1 { font-size: 22px; } .filtros { flex-direction: column; } }
     </style>
 </head>
@@ -42,14 +47,23 @@
 
     <div class="filtros">
         <select id="filtroStatus">
+            <option value="não_concluidas">Abertas (não concluídas)</option>
             <option value="todas">Todas</option>
             <option value="aberta">Aberta</option>
             <option value="em_andamento">Em andamento</option>
             <option value="concluida">Concluída</option>
             <option value="cancelada">Cancelada</option>
         </select>
-        <input type="text" id="filtroBusca" placeholder="Buscar por número, título ou responsável...">
+        <select id="filtroPrioridade">
+            <option value="todas">Todas prioridades</option>
+            <option value="baixa">Baixa</option>
+            <option value="media">Média</option>
+            <option value="alta">Alta</option>
+            <option value="urgente">Urgente</option>
+        </select>
+        <input type="text" id="filtroBusca" placeholder="Buscar por número ou título...">
         <button class="btn" id="btnFiltrar">Filtrar</button>
+        <button class="btn btn-sm" id="btnLimparFiltros" style="background:#6c757d;">Limpar</button>
     </div>
 
     <div id="listaContainer"><p>Carregando ordens de serviço...</p></div>
@@ -70,10 +84,14 @@
 
     const listaDiv = document.getElementById('listaContainer');
     const filtroStatus = document.getElementById('filtroStatus');
+    const filtroPrioridade = document.getElementById('filtroPrioridade');
     const filtroBusca = document.getElementById('filtroBusca');
     const btnFiltrar = document.getElementById('btnFiltrar');
+    const btnLimpar = document.getElementById('btnLimparFiltros');
 
-    function carregarOS(statusFiltro = 'não_concluidas', busca = '') {
+    let todasOS = [];
+
+    function carregarOS(statusFiltro = 'não_concluidas', prioridadeFiltro = 'todas', busca = '') {
         listaDiv.innerHTML = '<p>Carregando...</p>';
         let query = db.collection('ordens_servico');
 
@@ -85,49 +103,92 @@
 
         query.orderBy('criado_em', 'desc').get()
             .then(snapshot => {
-                if (snapshot.empty) {
-                    listaDiv.innerHTML = '<p style="text-align:center; color:#555;">Nenhuma ordem de serviço encontrada.</p>';
-                    return;
-                }
-                let html = `<div class="table-responsive"><table>
-                    <thead><tr><th>Nº</th><th>Título</th><th>Aberto por</th><th>Direcionado a</th><th>Status</th><th>Data/Hora</th></tr></thead><tbody>`;
+                todasOS = [];
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    const id = doc.id;
-                    const statusClass = `badge-${data.status || 'aberta'}`;
-                    const statusLabel = data.status || 'aberta';
-                    html += `
-                        <tr onclick="window.location.href='os-detalhe.html?id=${id}'" style="cursor:pointer;">
-                            <td><strong>${data.numero || 'N/A'}</strong></td>
-                            <td>${data.titulo || 'Sem título'}</td>
-                            <td>${data.aberto_por_nome || '—'}</td>
-                            <td>${data.direcionado_para || '—'}</td>
-                            <td><span class="badge ${statusClass}">${statusLabel.replace('_',' ').toUpperCase()}</span></td>
-                            <td>${data.criado_em ? new Date(data.criado_em.seconds * 1000).toLocaleString('pt-BR') : '—'}</td>
-                        </tr>
-                    `;
+                    data.id = doc.id;
+                    todasOS.push(data);
                 });
-                html += `</tbody></table></div>`;
-                listaDiv.innerHTML = html;
+                aplicarFiltros(prioridadeFiltro, busca);
             })
             .catch(err => {
                 listaDiv.innerHTML = `<p style="color:red;">Erro ao carregar: ${err.message}</p>`;
             });
     }
 
-    btnFiltrar.addEventListener('click', () => {
+    function aplicarFiltros(prioridadeFiltro, busca) {
+        let filtradas = todasOS;
+
+        if (prioridadeFiltro !== 'todas') {
+            filtradas = filtradas.filter(os => os.prioridade === prioridadeFiltro);
+        }
+
+        if (busca.trim() !== '') {
+            const termo = busca.trim().toLowerCase();
+            filtradas = filtradas.filter(os => 
+                String(os.numero).includes(termo) || 
+                (os.titulo && os.titulo.toLowerCase().includes(termo))
+            );
+        }
+
+        if (filtradas.length === 0) {
+            listaDiv.innerHTML = '<p style="text-align:center; color:#555;">Nenhuma ordem de serviço encontrada.</p>';
+            return;
+        }
+
+        let html = `<div class="table-responsive"><table>
+            <thead><tr>
+                <th>Nº</th>
+                <th>Título</th>
+                <th>Aberto por</th>
+                <th>Direcionado a</th>
+                <th>Prioridade</th>
+                <th>Status</th>
+                <th>Data/Hora</th>
+            </tr></thead><tbody>`;
+        filtradas.forEach(os => {
+            const statusClass = `badge-${os.status || 'aberta'}`;
+            const statusLabel = (os.status || 'aberta').replace('_', ' ').toUpperCase();
+            const prioridadeClass = `badge-${os.prioridade || 'media'}`;
+            const prioridadeLabel = (os.prioridade || 'media').toUpperCase();
+            html += `
+                <tr onclick="window.location.href='os-detalhe.html?id=${os.id}'" style="cursor:pointer;">
+                    <td><strong>#${os.numero || 'N/A'}</strong></td>
+                    <td>${os.titulo || 'Sem título'}</td>
+                    <td>${os.aberto_por_nome || '—'}</td>
+                    <td>${os.direcionado_para || '—'}</td>
+                    <td><span class="badge ${prioridadeClass}">${prioridadeLabel}</span></td>
+                    <td><span class="badge ${statusClass}">${statusLabel}</span></td>
+                    <td>${os.criado_em ? new Date(os.criado_em.seconds * 1000).toLocaleString('pt-BR') : '—'}</td>
+                </tr>
+            `;
+        });
+        html += `</tbody></table></div>`;
+        listaDiv.innerHTML = html;
+    }
+
+    function aplicarFiltrosAtuais() {
         const status = filtroStatus.value;
-        const busca = filtroBusca.value.trim().toLowerCase();
-        carregarOS(status, busca);
+        const prioridade = filtroPrioridade.value;
+        const busca = filtroBusca.value;
+        carregarOS(status, prioridade, busca);
+    }
+
+    btnFiltrar.addEventListener('click', aplicarFiltrosAtuais);
+    btnLimpar.addEventListener('click', () => {
+        filtroStatus.value = 'não_concluidas';
+        filtroPrioridade.value = 'todas';
+        filtroBusca.value = '';
+        aplicarFiltrosAtuais();
     });
 
     auth.onAuthStateChanged((user) => {
         if (user) {
-            carregarOS('não_concluidas', '');
+            carregarOS('não_concluidas', 'todas', '');
         } else {
             window.location.href = 'index.html';
         }
     });
 </script>
 </body>
-</html>
+</html> 

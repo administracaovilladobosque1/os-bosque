@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Detalhe da OS - Villa do Bosque</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family: 'Calibri', 'Segoe UI', Tahoma, sans-serif; }
+        body { background: #e8f5e9; padding: 20px 15px; display: flex; justify-content: center; min-height: 100vh; }
+        .container { background: #fff; max-width: 900px; width: 100%; padding: 30px 25px; border-radius: 20px; box-shadow: 0 8px 30px rgba(0,80,0,0.15); border: 1px solid #a5d6a7; }
+        .logo-area { text-align: center; margin-bottom: 20px; }
+        .logo-area img { max-width: 100px; height: auto; }
+        .logo-area h1 { font-size: 24px; color: #1b5e20; background: #c8e6c9; display: inline-block; padding: 6px 20px; border-radius: 30px; }
+        .btn { padding: 10px 18px; background: #2e7d32; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .btn:hover { background: #1b5e20; }
+        .btn-success { background: #388e3c; }
+        .btn-success:hover { background: #2e7d32; }
+        .btn-danger { background: #c62828; }
+        .btn-danger:hover { background: #b71c1c; }
+        .btn-warning { background: #f57c00; }
+        .btn-warning:hover { background: #e65100; }
+        .btn-secondary { background: #6c757d; }
+        .btn-secondary:hover { background: #5a6268; }
+        .btn-voltar { background: #558b2f; margin-bottom: 20px; }
+        .btn-voltar:hover { background: #33691e; }
+        .btn-sm { padding: 6px 12px; font-size: 13px; }
+        .form-group { margin-bottom: 16px; }
+        label { display: block; font-weight: 600; font-size: 14px; color: #1b5e20; margin-bottom: 4px; }
+        input, select, textarea { width: 100%; padding: 10px 14px; border: 1px solid #a5d6a7; border-radius: 10px; font-size: 15px; background: #fafffe; }
+        textarea { resize: vertical; min-height: 60px; }
+        .message { margin-top: 16px; padding: 12px; border-radius: 8px; display: none; }
+        .message.error { display: block; background: #ffebee; color: #b71c1c; border: 1px solid #ef9a9a; }
+        .message.success { display: block; background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
+
+        .os-header { background: #f1f8e9; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #a5d6a7; }
+        .os-header .numero { font-size: 22px; font-weight: 700; color: #1b5e20; }
+        .os-header .status { float: right; }
+        .os-header .info { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 14px; color: #333; }
+        .os-header .info strong { color: #1b5e20; }
+
+        .historico { margin-top: 20px; }
+        .historico .item { background: #f8f9fa; padding: 12px 15px; border-radius: 10px; margin-bottom: 8px; border-left: 4px solid #2e7d32; }
+        .historico .item .cabecalho { display: flex; justify-content: space-between; font-size: 13px; color: #555; margin-bottom: 4px; }
+        .historico .item .cabecalho .autor { font-weight: 600; color: #1b5e20; }
+        .historico .item .texto { font-size: 15px; color: #222; }
+
+        .acoes { margin-top: 25px; padding-top: 20px; border-top: 2px solid #c8e6c9; }
+        .acoes .btn { margin-right: 8px; margin-bottom: 8px; }
+
+        .badge { display: inline-block; padding: 4px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; }
+        .badge-aberta { background: #ffcdd2; color: #b71c1c; }
+        .badge-em_andamento { background: #fff9c4; color: #f57f17; }
+        .badge-concluida { background: #c8e6c9; color: #1b5e20; }
+        .badge-cancelada { background: #e0e0e0; color: #424242; }
+        .badge-baixa { background: #e8f5e9; color: #1b5e20; }
+        .badge-media { background: #fff9c4; color: #f57f17; }
+        .badge-alta { background: #ffccbc; color: #bf360c; }
+        .badge-urgente { background: #ffcdd2; color: #b71c1c; }
+
+        .tempo { font-size: 14px; color: #558b2f; margin-top: 10px; }
+
+        @media (max-width: 600px) {
+            .container { padding: 20px 15px; }
+            .os-header .info { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="logo-area">
+        <img src="logo.png" alt="Logo Villa do Bosque" style="max-width:80px;">
+        <h1>🔍 Detalhe da OS</h1>
+        <a href="os-list.html" class="btn btn-voltar" style="display:inline-block; margin-top:10px; text-decoration:none;">← Voltar à lista</a>
+    </div>
+
+    <div id="osDetalhe">
+        <div id="loading"><p>Carregando...</p></div>
+        <div id="conteudo" style="display:none;">
+            <!-- Cabeçalho da OS -->
+            <div class="os-header" id="osHeader">
+                <div>
+                    <span class="numero" id="osNumero">#001</span>
+                    <span class="status" id="osStatusBadge"></span>
+                </div>
+                <div class="info">
+                    <div><strong>Título:</strong> <span id="osTitulo">—</span></div>
+                    <div><strong>Prioridade:</strong> <span id="osPrioridade">—</span></div>
+                    <div><strong>Aberto por:</strong> <span id="osAbertoPor">—</span></div>
+                    <div><strong>Direcionado a:</strong> <span id="osDirecionado">—</span></div>
+                    <div><strong>Quadra:</strong> <span id="osQuadra">—</span></div>
+                    <div><strong>Lote:</strong> <span id="osLote">—</span></div>
+                    <div><strong>Data de abertura:</strong> <span id="osDataAbertura">—</span></div>
+                    <div><strong>Tempo aberto:</strong> <span id="osTempoAberto">—</span></div>
+                </div>
+                <div class="tempo" id="osTempoParado"><strong>Tempo parado no responsável atual:</strong> —</div>
+            </div>
+
+            <!-- Histórico (conversa) -->
+            <h2 style="color:#2e7d32; margin-top:20px;">📜 Histórico</h2>
+            <div class="historico" id="osHistorico">
+                <p>Nenhuma ação registrada.</p>
+            </div>
+
+            <!-- Ações -->
+            <div class="acoes" id="osAcoes">
+                <h3 style="color:#2e7d32;">⚡ Ações</h3>
+                <!-- Botões dinâmicos serão inseridos aqui -->
+                <div id="acoesContainer"></div>
+            </div>
+
+            <!-- Formulário para nova ação -->
+            <div class="acoes" id="novaAcaoArea">
+                <h3 style="color:#2e7d32;">✏️ Adicionar ação</h3>
+                <form id="novaAcaoForm">
+                    <div class="form-group">
+                        <label>Descrição da ação</label>
+                        <textarea id="acaoDescricao" placeholder="Descreva a ação realizada..." required></textarea>
+                    </div>
+                    <div class="form-group" id="grupoDirecionamento" style="display:none;">
+                        <label>Direcionar para</label>
+                        <select id="acaoDirecionarPara">
+                            <option value="">Selecione...</option>
+                            <option value="grupo_admin">👥 Grupo: Administradores</option>
+                            <option value="grupo_diretor">👥 Grupo: Diretores</option>
+                            <!-- Personagens serão carregados -->
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-success">Adicionar ação</button>
+                    <div id="acaoMessage" class="message"></div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyDx_6oWO30Drh8GkuQA9jk2Oym7H8J3ABg",
+        authDomain: "villa-bosque1.firebaseapp.com",
+        projectId: "villa-bosque1",
+        storageBucket: "villa-bosque1.firebasestorage.app",
+        messagingSenderId: "372474036025",
+        appId: "1:372474036025:web:bbbee10723469d77cbb2e8"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // Pega o ID da OS da URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const osId = urlParams.get('id');
+
+    let osData = null;
+    let personagens = [];
+    let userAtual = null;
+
+    // Elementos
+    const loading = document.getElementById('loading');
+    const conteudo = document.getElementById('conteudo');
+    const osNumero = document.getElementById('osNumero');
+    const osTitulo = document.getElementById('osTitulo');
+    const osPrioridade = document.getElementById('osPrioridade');
+    const osAbertoPor = document.getElementById('osAbertoPor');
+    const osDirecionado = document.getElementById('osDirecionado');
+    const osQuadra = document.getElementById('osQuadra');
+    const osLote = document.getElementById('osLote');
+    const osDataAbertura = document.getElementById('osDataAbertura');
+    const osStatusBadge = document.getElementById('osStatusBadge');
+    const osTempoAberto = document.getElementById('osTempoAberto');
+    const osTempoParado = document.getElementById('osTempoParado');
+    const osHistorico = document.getElementById('osHistorico');
+    const acoesContainer = document.getElementById('acoesContainer');
+    const novaAcaoForm = document.getElementById('novaAcaoForm');
+    const acaoDescricao = document.getElementById('acaoDescricao');
+    const acaoDirecionarPara = document.getElementById('acaoDirecionarPara');
+    const grupoDirecionamento = document.getElementById('grupoDirecionamento');
+    const acaoMessage = document.getElementById('acaoMessage');
+
+    // Carregar personagens para direcionamento
+    function carregarPersonagens() {
+        db.collection('usuarios')
+            .where('status', '==', 'ativo')
+            .get()
+            .then(snapshot => {
+                personagens = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    personagens.push({
+                        uid: doc.id,
+                        nome: data.nome,
+                        email: data.email,
+                        funcao: data.funcao
+                    });
+                });
+                // Preencher o select de direcionamento
+                acaoDirecionarPara.innerHTML = `
+                    <option value="">Selecione...</option>
+                    <option value="grupo_admin">👥 Grupo: Administradores</option>
+                    <option value="grupo_diretor">👥 Grupo: Diretores</option>
+                `;
+                personagens.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.uid;
+                    opt.textContent = `👤 ${p.nome} (${p.funcao})`;
+                    acaoDirecionarPara.appendChild(opt);
+                });
+            })
+            .catch(err => console.error('Erro ao carregar personagens:', err));
+    }
+
+    // Calcular tempo decorrido
+    function calcularTempo(seconds) {
+        if (!seconds) return '—';
+        const total = Math.floor((Date.now() / 1000) - seconds);
+        if (total < 60) return `${total} segundos`;
+        if (total < 3600) return `${Math.floor(total/60)} minutos`;
+        if (total < 86400) return `${Math.floor(total/3600)} horas`;
+        return `${Math.floor(total/86400)} dias`;
+    }
+
+    function atualizarTempos(criadoEmSec) {
+        if (criadoEmSec) {
+            osTempoAberto.textContent = calcularTempo(criadoEmSec);
+        }
+        // Tempo parado: calcula desde a última ação (ou desde abertura se não houver)
+        if (osData && osData.historico && osData.historico.length > 0) {
+            const ultimaAcao = osData.historico[osData.historico.length - 1];
+            if (ultimaAcao && ultimaAcao.data) {
+                const sec = ultimaAcao.data.seconds || ultimaAcao.data._seconds;
+                if (sec) {
+                    osTempoParado.textContent = `⏱️ ${calcularTempo(sec)} parado (desde última ação)`;
+                }
+            }
+        } else if (criadoEmSec) {
+            osTempoParado.textContent = `⏱️ ${calcularTempo(criadoEmSec)} parado (desde abertura)`;
+        }
+    }
+
+    // Carregar OS
+    function carregarOS() {
+        if (!osId) {
+            loading.innerHTML = '<p style="color:red;">ID da OS não informado.</p>';
+            return;
+        }
+
+        db.collection('ordens_servico').doc(osId).get()
+            .then(doc => {
+                if (!doc.exists) {
+                    loading.innerHTML = '<p style="color:red;">OS não encontrada.</p>';
+                    return;
+                }
+                osData = doc.data();
+                osData.id = doc.id;
+
+                loading.style.display = 'none';
+                conteudo.style.display = 'block';
+
+                // Preencher cabeçalho
+                osNumero.textContent = `#${osData.numero || 'N/A'}`;
+                osTitulo.textContent = osData.titulo || '—';
+                osPrioridade.innerHTML = `<span class="badge badge-${osData.prioridade || 'media'}">${(osData.prioridade || 'media').toUpperCase()}</span>`;
+                osAbertoPor.textContent = osData.aberto_por_nome || '—';
+                osDirecionado.textContent = osData.direcionado_para || '—';
+                osQuadra.textContent = osData.quadra || '—';
+                osLote.textContent = osData.lote || '—';
+                osDataAbertura.textContent = osData.criado_em ? new Date(osData.criado_em.seconds * 1000).toLocaleString('pt-BR') : '—';
+
+                const statusLabel = (osData.status || 'aberta').replace('_', ' ').toUpperCase();
+                osStatusBadge.innerHTML = `<span class="badge badge-${osData.status || 'aberta'}">${statusLabel}</span>`;
+
+                // Atualizar tempos
+                if (osData.criado_em) {
+                    const sec = osData.criado_em.seconds || osData.criado_em._seconds;
+                    atualizarTempos(sec);
+                    // Atualizar a cada 30 segundos
+                    setInterval(() => {
+                        if (osData.criado_em) {
+                            const sec = osData.criado_em.seconds || osData.criado_em._seconds;
+                            atualizarTempos(sec);
+                        }
+                    }, 30000);
+                }
+
+                // Histórico
+                if (osData.historico && osData.historico.length > 0) {
+                    let html = '';
+                    osData.historico.forEach(item => {
+                        const dataStr = item.data ? new Date(item.data.seconds * 1000).toLocaleString('pt-BR') : '—';
+                        html += `
+                            <div class="item">
+                                <div class="cabecalho">
+                                    <span class="autor">${item.autor_nome || '—'}</span>
+                                    <span>${dataStr}</span>
+                                </div>
+                                <div class="texto">${item.descricao || item.acao || ''}</div>
+                            </div>
+                        `;
+                    });
+                    osHistorico.innerHTML = html;
+                } else {
+                    osHistorico.innerHTML = '<p>Nenhum histórico registrado.</p>';
+                }
+
+                // Ações (botões)
+                gerarBotoesAcao();
+                // Mostrar área de nova ação
+                novaAcaoForm.style.display = 'block';
+                // Mostrar direcionamento apenas se a OS não estiver concluída
+                if (osData.status === 'concluida' || osData.status === 'cancelada') {
+                    grupoDirecionamento.style.display = 'none';
+                } else {
+                    grupoDirecionamento.style.display = 'block';
+                    // Pré-seleciona o direcionamento atual
+                    if (osData.direcionado_para_tipo === 'grupo') {
+                        acaoDirecionarPara.value = osData.direcionado_para === 'Administradores' ? 'grupo_admin' : 'grupo_diretor';
+                    } else if (osData.direcionado_para_tipo === 'personagem' && osData.direcionado_para_id) {
+                        acaoDirecionarPara.value = osData.direcionado_para_id;
+                    }
+                }
+                carregarPersonagens();
+            })
+            .catch(err => {
+                loading.innerHTML = `<p style="color:red;">Erro ao carregar: ${err.message}</p>`;
+            });
+    }
+
+    // Gerar botões de ação com base no status e permissões
+    function gerarBotoesAcao() {
+        acoesContainer.innerHTML = '';
+        const status = osData.status;
+        const user = auth.currentUser;
+        const isMaster = user && user.email === 'administracaovilladobosque@gmail.com';
+        const isDiretor = userAtual && userAtual.funcao === 'diretor';
+
+        // Botão: Em andamento (se estiver aberta)
+        if (status === 'aberta') {
+            const btn = document.createElement('button');
+            btn.className = 'btn btn-warning';
+            btn.textContent = '⏳ Marcar como Em Andamento';
+            btn.onclick = () => mudarStatus('em_andamento');
+            acoesContainer.appendChild(btn);
+        }
+
+        // Botão: Concluir (apenas diretores podem concluir)
+        if ((status === 'aberta' || status === 'em_andamento') && (isMaster || isDiretor)) {
+            const btn = document.createElement('button');
+            btn.className = 'btn btn-success';
+            btn.textContent = '✅ Concluir OS';
+            btn.onclick = () => {
+                if (confirm('Deseja concluir esta OS?')) {
+                    mudarStatus('concluida');
+                }
+            };
+            acoesContainer.appendChild(btn);
+        }
+
+        // Botão: Reabrir (apenas diretores podem reabrir)
+        if ((status === 'concluida' || status === 'cancelada') && (isMaster || isDiretor)) {
+            const btn = document.createElement('button');
+            btn.className = 'btn btn-warning';
+            btn.textContent = '🔄 Reabrir OS';
+            btn.onclick = () => {
+                if (confirm('Deseja reabrir esta OS?')) {
+                    mudarStatus('aberta');
+                }
+            };
+            acoesContainer.appendChild(btn);
+        }
+
+        // Botão: Cancelar (apenas Master)
+        if (isMaster && status !== 'cancelada' && status !== 'concluida') {
+            const btn = document.createElement('button');
+            btn.className = 'btn btn-danger';
+            btn.textContent = '❌ Cancelar OS';
+            btn.onclick = () => {
+                if (confirm('Deseja cancelar esta OS?')) {
+                    mudarStatus('cancelada');
+                }
+            };
+            acoesContainer.appendChild(btn);
+        }
+
+        // Se não houver botões
+        if (acoesContainer.children.length === 0) {
+            acoesContainer.innerHTML = '<p style="color:#555;">Nenhuma ação disponível para seu perfil.</p>';
+        }
+    }
+
+    // Mudar status da OS
+    function mudarStatus(novoStatus) {
+        const user = auth.currentUser;
+        if (!user) return;
+
+        db.collection('usuarios').doc(user.uid).get()
+            .then(doc => {
+                const nome = doc.exists ? doc.data().nome : user.displayName || 'Usuário';
+                // Adicionar entrada no histórico
+                const historicoItem = {
+                    tipo: 'mudanca_status',
+                    data: firebase.firestore.FieldValue.serverTimestamp(),
+                    autor: user.uid,
+                    autor_nome: nome,
+                    acao: `Status alterado para ${novoStatus.replace('_',' ').toUpperCase()}`,
+                    descricao: `Status alterado para ${novoStatus.replace('_',' ').toUpperCase()}`
+                };
+
+                return db.collection('ordens_servico').doc(osId).update({
+                    status: novoStatus,
+                    historico: firebase.firestore.FieldValue.arrayUnion(historicoItem)
+                });
+            })
+            .then(() => {
+                alert(`OS alterada para ${novoStatus.replace('_',' ').toUpperCase()}`);
+                carregarOS(); // Recarrega
+            })
+            .catch(err => alert('Erro ao alterar status: ' + err.message));
+    }
+
+    // Adicionar nova ação
+    novaAcaoForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const descricao = acaoDescricao.value.trim();
+        const direcionarVal = acaoDirecionarPara.value;
+        const user = auth.currentUser;
+
+        if (!descricao) {
+            showMessage(acaoMessage, 'Digite uma descrição para a ação.', 'error');
+            return;
+        }
+
+        db.collection('usuarios').doc(user.uid).get()
+            .then(doc => {
+                const nome = doc.exists ? doc.data().nome : user.displayName || 'Usuário';
+                let direcionadoPara = '';
+                let direcionadoParaTipo = '';
+                let direcionadoParaId = '';
+
+                if (direcionarVal === 'grupo_admin') {
+                    direcionadoPara = 'Administradores';
+                    direcionadoParaTipo = 'grupo';
+                } else if (direcionarVal === 'grupo_diretor') {
+                    direcionadoPara = 'Diretores';
+                    direcionadoParaTipo = 'grupo';
+                } else if (direcionarVal) {
+                    const p = personagens.find(p => p.uid === direcionarVal);
+                    if (p) {
+                        direcionadoPara = p.nome;
+                        direcionadoParaTipo = 'personagem';
+                        direcionadoParaId = p.uid;
+                    }
+                }
+
+                const historicoItem = {
+                    tipo: 'acao',
+                    data: firebase.firestore.FieldValue.serverTimestamp(),
+                    autor: user.uid,
+                    autor_nome: nome,
+                    acao: 'Ação registrada',
+                    descricao: descricao,
+                    direcionado_para: direcionadoPara,
+                    direcionado_para_tipo: direcionadoParaTipo,
+                    direcionado_para_id: direcionadoParaId
+                };
+
+                const updateData = {
+                    historico: firebase.firestore.FieldValue.arrayUnion(historicoItem)
+                };
+
+                // Se houve direcionamento, atualiza também os campos principais
+                if (direcionadoPara) {
+                    updateData.direcionado_para = direcionadoPara;
+                    updateData.direcionado_para_tipo = direcionadoParaTipo;
+                    updateData.direcionado_para_id = direcionadoParaId;
+                }
+
+                return db.collection('ordens_servico').doc(osId).update(updateData);
+            })
+            .then(() => {
+                showMessage(acaoMessage, 'Ação adicionada com sucesso!', 'success');
+                acaoDescricao.value = '';
+                acaoDirecionarPara.value = '';
+                carregarOS(); // Recarrega
+                setTimeout(() => {
+                    acaoMessage.className = 'message';
+                    acaoMessage.textContent = '';
+                }, 3000);
+            })
+            .catch(err => {
+                showMessage(acaoMessage, 'Erro ao adicionar ação: ' + err.message, 'error');
+            });
+    });
+
+    function showMessage(el, text, type) { el.textContent = text; el.className = 'message ' + type; }
+
+    // Observador de autenticação
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            userAtual = user;
+            // Busca função do usuário
+            db.collection('usuarios').doc(user.uid).get()
+                .then(doc => {
+                    if (doc.exists) {
+                        userAtual.funcao = doc.data().funcao;
+                    }
+                    carregarOS();
+                })
+                .catch(() => carregarOS());
+        } else {
+            window.location.href = 'index.html';
+        }
+    });
+</script>
+</body>
+</html>
