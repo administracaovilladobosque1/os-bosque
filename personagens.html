@@ -21,6 +21,8 @@
         .btn-secondary { background: #6c757d; }
         .btn-secondary:hover { background: #5a6268; }
         .btn-sm { padding: 4px 10px; font-size: 12px; }
+        .btn-warning { background: #f0ad4e; color: #000; }
+        .btn-warning:hover { background: #ec971f; }
         .btn-voltar { background: #558b2f; }
         .btn-voltar:hover { background: #33691e; }
         .form-group { margin-bottom: 12px; }
@@ -48,6 +50,41 @@
             table { font-size: 13px; min-width: 400px; }
             th, td { padding: 6px; }
         }
+
+        /* ===== MODAL ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-box {
+            background: #fff;
+            max-width: 450px;
+            width: 90%;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+            border: 1px solid #a5d6a7;
+        }
+        .modal-box h2 {
+            color: #1b5e20;
+            margin-bottom: 16px;
+            font-size: 22px;
+            border-bottom: 2px solid #c8e6c9;
+            padding-bottom: 8px;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+            justify-content: flex-end;
+        }
+        .modal-actions .btn { width: auto; }
     </style>
 </head>
 <body>
@@ -100,6 +137,39 @@
     <div id="listaContainer"><p>Carregando...</p></div>
 </div>
 
+<!-- ===== MODAL DE EDIÇÃO ===== -->
+<div class="modal-overlay" id="editModal">
+    <div class="modal-box">
+        <h2>✏️ Editar Personagem</h2>
+        <form id="editForm">
+            <div class="form-group">
+                <label>Nome completo</label>
+                <input type="text" id="editNome" required>
+            </div>
+            <div class="form-group">
+                <label>Função</label>
+                <select id="editFuncao" required>
+                    <option value="admin">Administrador</option>
+                    <option value="diretor">Diretor</option>
+                    <option value="master">Master</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Status</label>
+                <select id="editStatus" required>
+                    <option value="ativo">Ativo</option>
+                    <option value="inativo">Inativo</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="fecharModal()">Cancelar</button>
+                <button type="submit" class="btn btn-success">Salvar</button>
+            </div>
+            <div id="editMessage" class="message"></div>
+        </form>
+    </div>
+</div>
+
 <script>
     const firebaseConfig = {
         apiKey: "AIzaSyDx_6oWO30Drh8GkuQA9jk2Oym7H8J3ABg",
@@ -113,6 +183,9 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
+    // ============================================================
+    // REFERÊNCIAS
+    // ============================================================
     const form = document.getElementById('personagemForm');
     const nomeInput = document.getElementById('nome');
     const emailInput = document.getElementById('email');
@@ -122,8 +195,71 @@
     const masterPasswordInput = document.getElementById('masterPassword');
     const formMsg = document.getElementById('formMessage');
     const listaDiv = document.getElementById('listaContainer');
+
+    // Modal
+    const modal = document.getElementById('editModal');
+    const editNome = document.getElementById('editNome');
+    const editFuncao = document.getElementById('editFuncao');
+    const editStatus = document.getElementById('editStatus');
+    const editForm = document.getElementById('editForm');
+    const editMsg = document.getElementById('editMessage');
+    let editUid = null; // armazena o uid do personagem sendo editado
+
     const MASTER_EMAIL = 'administracaovilladobosque@gmail.com';
 
+    // ============================================================
+    // FUNÇÕES DO MODAL
+    // ============================================================
+    function abrirModal(uid, nome, funcao, status) {
+        editUid = uid;
+        editNome.value = nome || '';
+        editFuncao.value = funcao || 'admin';
+        editStatus.value = status || 'ativo';
+        editMsg.className = 'message';
+        editMsg.textContent = '';
+        modal.classList.add('active');
+    }
+
+    function fecharModal() {
+        modal.classList.remove('active');
+        editUid = null;
+        editForm.reset();
+    }
+
+    // ============================================================
+    // SALVAR EDIÇÃO
+    // ============================================================
+    editForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        if (!editUid) return;
+
+        const nome = editNome.value.trim();
+        const funcao = editFuncao.value;
+        const status = editStatus.value;
+
+        if (!nome) {
+            showMessage(editMsg, 'O nome não pode ficar vazio.', 'error');
+            return;
+        }
+
+        db.collection('usuarios').doc(editUid).update({
+            nome: nome,
+            funcao: funcao,
+            status: status
+        })
+        .then(() => {
+            showMessage(editMsg, '✅ Personagem atualizado com sucesso!', 'success');
+            fecharModal();
+            carregarLista();
+        })
+        .catch(err => {
+            showMessage(editMsg, 'Erro: ' + err.message, 'error');
+        });
+    });
+
+    // ============================================================
+    // CARREGAR LISTA
+    // ============================================================
     function carregarLista() {
         listaDiv.innerHTML = '<p>Carregando...</p>';
         db.collection('usuarios').orderBy('criado_em', 'desc').get()
@@ -145,6 +281,7 @@
                             <td><span class="badge ${statusClass}">${data.status || 'ativo'}</span></td>
                             <td>
                                 ${!isMaster ? `
+                                    <button class="btn btn-sm btn-warning" onclick="abrirModal('${uid}','${data.nome || ''}','${data.funcao || 'admin'}','${data.status || 'ativo'}')">✏️ Editar</button>
                                     <button class="btn btn-sm btn-secondary" onclick="toggleStatus('${uid}','${data.status}')">
                                         ${data.status === 'ativo' ? 'Inativar' : 'Ativar'}
                                     </button>
@@ -160,6 +297,9 @@
             .catch(err => { listaDiv.innerHTML = `<p style="color:red;">Erro ao carregar: ${err.message}</p>`; });
     }
 
+    // ============================================================
+    // FUNÇÕES EXISTENTES (toggleStatus, excluir)
+    // ============================================================
     window.toggleStatus = function(uid, currentStatus) {
         const novoStatus = currentStatus === 'ativo' ? 'inativo' : 'ativo';
         if (!confirm(`Deseja ${novoStatus === 'ativo' ? 'ativar' : 'inativar'} este usuário?`)) return;
@@ -175,6 +315,9 @@
             .catch(err => alert('Erro: ' + err.message));
     };
 
+    // ============================================================
+    // CRIAR NOVO PERSONAGEM
+    // ============================================================
     form.addEventListener('submit', (e) => {
         e.preventDefault();
         const nome = nomeInput.value.trim();
@@ -200,22 +343,16 @@
         }
 
         auth.signInWithEmailAndPassword(masterUser.email, masterPass)
-            .then(() => {
-                return auth.createUserWithEmailAndPassword(email, senha);
-            })
+            .then(() => auth.createUserWithEmailAndPassword(email, senha))
             .then((userCredential) => {
                 const newUser = userCredential.user;
                 return newUser.updateProfile({ displayName: nome })
-                    .then(() => {
-                        return db.collection('usuarios').doc(newUser.uid).set({
-                            nome, email, funcao, status,
-                            criado_por: auth.currentUser.uid,
-                            criado_em: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                    })
-                    .then(() => {
-                        return auth.signInWithEmailAndPassword(masterUser.email, masterPass);
-                    });
+                    .then(() => db.collection('usuarios').doc(newUser.uid).set({
+                        nome, email, funcao, status,
+                        criado_por: auth.currentUser.uid,
+                        criado_em: firebase.firestore.FieldValue.serverTimestamp()
+                    }))
+                    .then(() => auth.signInWithEmailAndPassword(masterUser.email, masterPass));
             })
             .then(() => {
                 showMessage(formMsg, 'Personagem cadastrado com sucesso!', 'success');
@@ -224,13 +361,9 @@
             })
             .catch((error) => {
                 let msg = error.message;
-                if (error.code === 'auth/email-already-in-use') {
-                    msg = 'Este e-mail já está em uso.';
-                } else if (error.code === 'auth/wrong-password') {
-                    msg = 'Senha do Master incorreta. Verifique e tente novamente.';
-                } else if (error.code === 'auth/too-many-requests') {
-                    msg = 'Muitas tentativas. Aguarde um momento.';
-                }
+                if (error.code === 'auth/email-already-in-use') msg = 'E-mail já em uso.';
+                else if (error.code === 'auth/wrong-password') msg = 'Senha do Master incorreta.';
+                else if (error.code === 'auth/too-many-requests') msg = 'Muitas tentativas. Aguarde um momento.';
                 showMessage(formMsg, msg, 'error');
                 if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
                     alert('Sua senha de Master está incorreta. Faça login novamente.');
@@ -244,6 +377,9 @@
         el.className = 'message ' + type;
     }
 
+    // ============================================================
+    // AUTENTICAÇÃO
+    // ============================================================
     auth.onAuthStateChanged((user) => {
         if (user && user.email === MASTER_EMAIL) {
             carregarLista();
