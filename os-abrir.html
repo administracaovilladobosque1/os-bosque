@@ -9,84 +9,54 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; font-family: 'Calibri', 'Segoe UI', Tahoma, sans-serif; }
-        body { background: #e8f5e9; padding: 20px 15px; display: flex; justify-content: center; min-height: 100vh; }
-        .container { background: #fff; max-width: 800px; width: 100%; padding: 30px 25px; border-radius: 20px; box-shadow: 0 8px 30px rgba(0,80,0,0.15); border: 1px solid #a5d6a7; }
-        .logo-area { text-align: center; margin-bottom: 20px; }
-        .logo-area img { max-width: 120px; height: auto; }
-        .logo-area h1 { font-size: 28px; color: #1b5e20; background: #c8e6c9; display: inline-block; padding: 6px 20px; border-radius: 30px; }
-        .btn { padding: 12px 20px; background: #2e7d32; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        body { background: #e8f5e9; padding: 16px 12px; display: flex; justify-content: center; min-height: 100vh; }
+        .container { background: #fff; max-width: 650px; width: 100%; padding: 18px 18px; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,80,0,0.12); border: 1px solid #a5d6a7; }
+        .logo-area { text-align: center; margin-bottom: 14px; }
+        .logo-area img { max-width: 80px; height: auto; }
+        .logo-area h1 { font-size: 22px; color: #1b5e20; background: #c8e6c9; display: inline-block; padding: 4px 16px; border-radius: 30px; }
+        .btn { padding: 8px 16px; background: #2e7d32; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s; }
         .btn:hover { background: #1b5e20; }
         .btn-success { background: #388e3c; }
         .btn-success:hover { background: #2e7d32; }
-        .btn-voltar { background: #558b2f; margin-bottom: 20px; }
+        .btn-voltar { background: #558b2f; display: inline-block; text-decoration: none; color: white; padding: 5px 12px; border-radius: 6px; font-size: 13px; margin-bottom: 12px; }
         .btn-voltar:hover { background: #33691e; }
-        .form-group { margin-bottom: 16px; }
-        label { display: block; font-weight: 600; font-size: 14px; color: #1b5e20; margin-bottom: 4px; }
+        .form-group { margin-bottom: 10px; }
+        label { display: block; font-weight: 600; font-size: 13px; color: #1b5e20; margin-bottom: 2px; }
         input, select, textarea {
             width: 100%;
-            padding: 12px 15px;
+            padding: 6px 10px;
             border: 1px solid #a5d6a7;
-            border-radius: 10px;
-            font-size: 16px;
+            border-radius: 6px;
+            font-size: 14px;
             background: #fafffe;
         }
-        textarea { resize: vertical; min-height: 80px; }
-        input:focus, select:focus, textarea:focus { outline: none; border-color: #2e7d32; box-shadow: 0 0 0 3px rgba(46,125,50,0.2); }
+        textarea { resize: vertical; min-height: 50px; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #2e7d32; box-shadow: 0 0 0 2px rgba(46,125,50,0.15); }
         .form-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
+            gap: 10px;
         }
         .form-row .form-group input {
-            width: 60%;
+            width: 70%;
             margin: 0 auto;
             display: block;
         }
-        /* === CAIXAS DE DESTAQUE === */
-        .bloco {
-            border: 2px solid #a5d6a7;
-            border-radius: 12px;
-            padding: 16px 16px 8px 16px;
-            margin-bottom: 16px;
-            background-color: #f8fdf8;
-        }
-        .bloco legend {
-            font-weight: 700;
-            font-size: 15px;
-            color: #1b5e20;
-            padding: 0 8px;
-            background-color: #fff;
-            border-radius: 8px;
-            border: 1px solid #a5d6a7;
-            padding: 2px 12px;
-            display: inline-block;
-            margin-bottom: 8px;
-        }
-        .bloco-reclamante {
-            border-color: #90caf9;
-            background-color: #f0f8ff;
-        }
-        .bloco-reclamante legend {
-            color: #0d47a1;
-            border-color: #90caf9;
-        }
-        .bloco-reclamado {
-            border-color: #ffcc80;
-            background-color: #fff8f0;
-        }
-        .bloco-reclamado legend {
-            color: #e65100;
-            border-color: #ffcc80;
-        }
-        .message { margin-top: 16px; padding: 12px; border-radius: 8px; display: none; }
+        .message { margin-top: 12px; padding: 8px; border-radius: 6px; display: none; font-size: 13px; }
         .message.error { display: block; background: #ffebee; color: #b71c1c; border: 1px solid #ef9a9a; }
         .message.success { display: block; background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
+        .sub-label {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1b5e20;
+            margin: 8px 0 4px 0;
+            display: block;
+        }
         @media (max-width: 600px) {
-            .container { padding: 20px 15px; }
+            .container { padding: 14px; }
             .form-row { grid-template-columns: 1fr; gap: 0; }
-            .logo-area h1 { font-size: 22px; }
             .form-row .form-group input { width: 100%; }
-            .bloco { padding: 12px; }
+            .logo-area h1 { font-size: 18px; }
         }
         select option.grupo { background-color: #e9ecef; }
         select option.admin { background-color: #fff3cd; }
@@ -96,19 +66,19 @@
 <body>
 <div class="container">
     <div class="logo-area">
-        <img src="logo.png" alt="Logo Villa do Bosque" style="max-width:100px;">
-        <h1>📝 Nova Ordem de Serviço</h1>
-        <a href="index.html" class="btn btn-voltar" style="display:inline-block; margin-top:10px; text-decoration:none;">← Voltar ao Painel</a>
+        <img src="logo.png" alt="Logo Villa do Bosque" style="max-width:80px;">
+        <h1>📝 Nova OS</h1>
+        <a href="index.html" class="btn-voltar">← Voltar</a>
     </div>
 
     <form id="osForm">
         <div class="form-group">
-            <label>Título da OS</label>
+            <label>Título</label>
             <input type="text" id="titulo" placeholder="Ex: Reclamação barulho" required>
         </div>
         <div class="form-group">
             <label>Descrição / Relato</label>
-            <textarea id="descricao" placeholder="Descreva o problema ou solicitação" required></textarea>
+            <textarea id="descricao" placeholder="Descreva o problema" required></textarea>
         </div>
         <div class="form-group">
             <label>Tipo</label>
@@ -120,33 +90,29 @@
             </select>
         </div>
 
-        <!-- BLOCO RECLAMANTE -->
-        <div class="bloco bloco-reclamante">
-            <legend>📌 Reclamante</legend>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Quadra (opcional)</label>
-                    <input type="text" id="quadraReclamante" placeholder="Ex: C">
-                </div>
-                <div class="form-group">
-                    <label>Lote (opcional)</label>
-                    <input type="text" id="loteReclamante" placeholder="Ex: 09">
-                </div>
+        <!-- RECLAMANTE -->
+        <span class="sub-label">📌 Reclamante</span>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Quadra</label>
+                <input type="text" id="quadraReclamante" placeholder="Ex: C (opcional)">
+            </div>
+            <div class="form-group">
+                <label>Lote</label>
+                <input type="text" id="loteReclamante" placeholder="Ex: 09 (opcional)">
             </div>
         </div>
 
-        <!-- BLOCO RECLAMADO -->
-        <div class="bloco bloco-reclamado">
-            <legend>📍 Reclamado</legend>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Quadra (opcional)</label>
-                    <input type="text" id="quadraReclamada" placeholder="Ex: D">
-                </div>
-                <div class="form-group">
-                    <label>Lote (opcional)</label>
-                    <input type="text" id="loteReclamado" placeholder="Ex: 12">
-                </div>
+        <!-- RECLAMADO -->
+        <span class="sub-label">📍 Reclamado</span>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Quadra</label>
+                <input type="text" id="quadraReclamada" placeholder="Ex: D (opcional)">
+            </div>
+            <div class="form-group">
+                <label>Lote</label>
+                <input type="text" id="loteReclamado" placeholder="Ex: 12 (opcional)">
             </div>
         </div>
 
@@ -164,7 +130,7 @@
                 <option value="normal">🟢 Normal (resolver)</option>
             </select>
         </div>
-        <button type="submit" class="btn btn-success" id="btnAbrir">Abrir OS</button>
+        <button type="submit" class="btn btn-success" id="btnAbrir" style="width:100%;">Abrir OS</button>
         <div id="formMessage" class="message"></div>
     </form>
 </div>
