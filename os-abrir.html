@@ -30,13 +30,10 @@
         .message.error { display: block; background: #ffebee; color: #b71c1c; border: 1px solid #ef9a9a; }
         .message.success { display: block; background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
         @media (max-width: 600px) { .container { padding: 20px 15px; } .form-row { grid-template-columns: 1fr; gap: 0; } .logo-area h1 { font-size: 22px; } }
-        /* Estilo para os OPTION (funciona no Chrome, Edge, Firefox) */
-        select option.grupo { background-color: #e9ecef; font-weight: bold; }
+        /* Cores para as opções do select */
+        select option.grupo { background-color: #e9ecef; }
         select option.admin { background-color: #fff3cd; }
         select option.diretor { background-color: #d4edda; }
-        /* Estilo para OPTGROUP */
-        select optgroup { font-weight: bold; color: #2e7d32; }
-        select optgroup option { font-weight: normal; color: #000; padding-left: 10px; }
     </style>
 </head>
 <body>
@@ -71,7 +68,7 @@
             <select id="direcionadoPara" required>
                 <option value="">Carregando...</option>
             </select>
-            <small style="color:#555;">👥 Grupos | 👤 Administradores (amarelo) | 👤 Diretores (verde)</small>
+            <small style="color:#555;">👥 Grupos (cinza) | 👤 Administradores (amarelo) | 👤 Diretores (verde)</small>
         </div>
         <div class="form-group">
             <label>Prioridade</label>
@@ -111,7 +108,7 @@
 
     let currentUser = null;
     let currentUserNome = '';
-    let personagensList = []; // Guarda todos os ativos para lookup
+    let personagensList = [];
 
     function carregarPersonagens() {
         direcionadoSelect.innerHTML = '<option value="">Carregando...</option>';
@@ -119,14 +116,12 @@
             .where('status', '==', 'ativo')
             .get()
             .then(snapshot => {
-                // --- 1. Separar e ordenar ---
                 const admins = [];
                 const diretores = [];
-                const outros = []; // para caso tenha master ou técnico
+                const outros = [];
 
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    // Inclui TODOS, inclusive o próprio (para auto-direcionamento)
                     const item = { id: doc.id, nome: data.nome, funcao: data.funcao };
                     if (data.funcao === 'admin') admins.push(item);
                     else if (data.funcao === 'diretor') diretores.push(item);
@@ -137,47 +132,34 @@
                 diretores.sort((a, b) => a.nome.localeCompare(b.nome));
                 outros.sort((a, b) => a.nome.localeCompare(b.nome));
 
-                // Guarda todos na lista para lookup no submit
                 personagensList = [...admins, ...diretores, ...outros];
 
-                // --- 2. Montar o HTML do SELECT ---
                 let html = '<option value="">Selecione um destino...</option>';
 
-                // == GRUPOS (cinza) ==
-                html += '<optgroup label="📋 Grupos">';
-                html += `<option value="group:admin" class="grupo" style="background-color:#e9ecef;">👥 Administradores</option>`;
-                html += `<option value="group:diretor" class="grupo" style="background-color:#e9ecef;">👥 Diretores</option>`;
-                html += '</optgroup>';
+                // --- GRUPOS (cinza) ---
+                html += `<option value="group:admin" class="grupo" style="background-color:#e9ecef;">GRUPO: Administradores</option>`;
+                html += `<option value="group:diretor" class="grupo" style="background-color:#e9ecef;">GRUPO: Diretores</option>`;
 
-                // == ADMINISTRADORES INDIVIDUAIS (amarelo claro) ==
-                if (admins.length > 0) {
-                    html += '<optgroup label="👤 Administradores">';
-                    admins.forEach(item => {
-                        const selected = (item.id === currentUser.uid) ? ' (você)' : '';
-                        html += `<option value="${item.id}" class="admin" style="background-color:#fff3cd;">👤 ${item.nome}${selected} (${item.funcao})</option>`;
-                    });
-                    html += '</optgroup>';
-                }
+                // --- ADMINISTRADORES (amarelo) ---
+                admins.forEach(item => {
+                    const isMe = (item.id === currentUser.uid);
+                    const label = isMe ? `${item.nome} (você) (${item.funcao})` : `${item.nome} (${item.funcao})`;
+                    html += `<option value="${item.id}" class="admin" style="background-color:#fff3cd;">${label}</option>`;
+                });
 
-                // == DIRETORES INDIVIDUAIS (verde claro) ==
-                if (diretores.length > 0) {
-                    html += '<optgroup label="👤 Diretores">';
-                    diretores.forEach(item => {
-                        const selected = (item.id === currentUser.uid) ? ' (você)' : '';
-                        html += `<option value="${item.id}" class="diretor" style="background-color:#d4edda;">👤 ${item.nome}${selected} (${item.funcao})</option>`;
-                    });
-                    html += '</optgroup>';
-                }
+                // --- DIRETORES (verde) ---
+                diretores.forEach(item => {
+                    const isMe = (item.id === currentUser.uid);
+                    const label = isMe ? `${item.nome} (você) (${item.funcao})` : `${item.nome} (${item.funcao})`;
+                    html += `<option value="${item.id}" class="diretor" style="background-color:#d4edda;">${label}</option>`;
+                });
 
-                // == OUTROS (caso haja Master ou Técnico, fundo neutro) ==
-                if (outros.length > 0) {
-                    html += '<optgroup label="👤 Outros">';
-                    outros.forEach(item => {
-                        const selected = (item.id === currentUser.uid) ? ' (você)' : '';
-                        html += `<option value="${item.id}" style="background-color:#f8f9fa;">👤 ${item.nome}${selected} (${item.funcao})</option>`;
-                    });
-                    html += '</optgroup>';
-                }
+                // --- OUTROS (caso existam) ---
+                outros.forEach(item => {
+                    const isMe = (item.id === currentUser.uid);
+                    const label = isMe ? `${item.nome} (você) (${item.funcao})` : `${item.nome} (${item.funcao})`;
+                    html += `<option value="${item.id}" style="background-color:#f8f9fa;">${label}</option>`;
+                });
 
                 direcionadoSelect.innerHTML = html;
             })
@@ -228,7 +210,6 @@
         } else if (valSelecionado === 'group:diretor') {
             direcionadoParaNome = 'Diretores';
         } else {
-            // Personagem específico (pode ser ele mesmo)
             const found = personagensList.find(p => p.id === valSelecionado);
             if (!found) {
                 showMessage(formMsg, 'Personagem selecionado não encontrado.', 'error');
