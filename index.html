@@ -182,10 +182,18 @@
     function showDashboard(user) {
         loginScreen.classList.add('hidden');
         dashboardScreen.style.display = 'block';
-        userName.textContent = user.displayName || 'Usuário';
+        
+        // ================================================================
+        // CORREÇÃO: Exibe "Master" para o e-mail do Master
+        // ================================================================
+        if (user.email === MASTER_EMAIL) {
+            userName.textContent = 'Master';
+        } else {
+            userName.textContent = user.displayName || 'Usuário';
+        }
+        
         userEmail.textContent = user.email;
 
-        // Verifica se é Master
         if (user.email === MASTER_EMAIL) {
             masterArea.classList.remove('hidden');
             userArea.classList.add('hidden');
@@ -227,16 +235,30 @@
 
     auth.onAuthStateChanged((user) => {
         if (user) {
-            db.collection('usuarios').doc(user.uid).get().then(doc => {
-                if (doc.exists) userName.textContent = doc.data().nome || user.displayName || 'Usuário';
-                else userName.textContent = user.displayName || 'Usuário';
-                userEmail.textContent = user.email;
-                showDashboard(user);
-            }).catch(() => {
-                userName.textContent = user.displayName || 'Usuário';
-                userEmail.textContent = user.email;
-                showDashboard(user);
-            });
+            // Busca o nome no Firestore, mas se for Master, forçamos a exibição de "Master"
+            db.collection('usuarios').doc(user.uid).get()
+                .then(doc => {
+                    if (user.email === MASTER_EMAIL) {
+                        // Se for Master, ignoramos o que está no banco e colocamos "Master"
+                        userName.textContent = 'Master';
+                    } else if (doc.exists) {
+                        userName.textContent = doc.data().nome || user.displayName || 'Usuário';
+                    } else {
+                        userName.textContent = user.displayName || 'Usuário';
+                    }
+                    userEmail.textContent = user.email;
+                    showDashboard(user);
+                })
+                .catch(() => {
+                    // Em caso de erro, verifica se é Master
+                    if (user.email === MASTER_EMAIL) {
+                        userName.textContent = 'Master';
+                    } else {
+                        userName.textContent = user.displayName || 'Usuário';
+                    }
+                    userEmail.textContent = user.email;
+                    showDashboard(user);
+                });
         } else {
             showLoginScreen();
             loginForm.reset();
