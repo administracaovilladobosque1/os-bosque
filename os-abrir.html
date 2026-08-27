@@ -3,83 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>Abrir OS - Villa do Bosque</title>
+    <title>Ordens de Serviço - Villa do Bosque</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; font-family: 'Calibri', 'Segoe UI', Tahoma, sans-serif; }
         body { background: #e8f5e9; padding: 20px 15px; display: flex; justify-content: center; min-height: 100vh; }
-        .container { background: #fff; max-width: 800px; width: 100%; padding: 30px 25px; border-radius: 20px; box-shadow: 0 8px 30px rgba(0,80,0,0.15); border: 1px solid #a5d6a7; }
+        .container { background: #fff; max-width: 1100px; width: 100%; padding: 30px 25px; border-radius: 20px; box-shadow: 0 8px 30px rgba(0,80,0,0.15); border: 1px solid #a5d6a7; }
         .logo-area { text-align: center; margin-bottom: 20px; }
         .logo-area img { max-width: 120px; height: auto; }
         .logo-area h1 { font-size: 28px; color: #1b5e20; background: #c8e6c9; display: inline-block; padding: 6px 20px; border-radius: 30px; }
-        .btn { padding: 12px 20px; background: #2e7d32; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s; }
-        .btn:hover { background: #1b5e20; }
-        .btn-success { background: #388e3c; }
-        .btn-success:hover { background: #2e7d32; }
-        .btn-danger { background: #c62828; }
-        .btn-danger:hover { background: #b71c1c; }
-        .btn-voltar { background: #558b2f; margin-bottom: 20px; }
+        .btn-voltar { background: #558b2f; color: white; padding: 10px 20px; border: none; border-radius: 10px; text-decoration: none; display: inline-block; margin-bottom: 20px; }
         .btn-voltar:hover { background: #33691e; }
-        .form-group { margin-bottom: 16px; }
-        label { display: block; font-weight: 600; font-size: 14px; color: #1b5e20; margin-bottom: 4px; }
-        input, select, textarea { width: 100%; padding: 12px 15px; border: 1px solid #a5d6a7; border-radius: 10px; font-size: 16px; background: #fafffe; }
-        textarea { resize: vertical; min-height: 80px; }
-        input:focus, select:focus, textarea:focus { outline: none; border-color: #2e7d32; box-shadow: 0 0 0 3px rgba(46,125,50,0.2); }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .message { margin-top: 16px; padding: 12px; border-radius: 8px; display: none; }
-        .message.error { display: block; background: #ffebee; color: #b71c1c; border: 1px solid #ef9a9a; }
-        .message.success { display: block; background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
-        .hidden { display: none; }
-        @media (max-width: 600px) { .container { padding: 20px 15px; } .form-row { grid-template-columns: 1fr; gap: 0; } .logo-area h1 { font-size: 22px; } }
+        .btn-nova-os { background: #2e7d32; color: white; padding: 10px 20px; border: none; border-radius: 10px; text-decoration: none; display: inline-block; margin-left: 10px; }
+        .btn-nova-os:hover { background: #1b5e20; }
+        .filtros { display: flex; flex-wrap: wrap; gap: 15px; margin: 20px 0; align-items: center; }
+        .filtros select, .filtros input { padding: 10px; border: 1px solid #a5d6a7; border-radius: 10px; font-size: 15px; flex: 1 1 200px; }
+        .table-responsive { overflow-x: auto; margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 600px; }
+        th { background: #c8e6c9; padding: 12px; text-align: left; color: #1b5e20; border-bottom: 2px solid #81c784; }
+        td { padding: 12px; border-bottom: 1px solid #c8e6c9; vertical-align: middle; }
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .badge-aberta { background: #e3f2fd; color: #0d47a1; }
+        .badge-em_andamento { background: #fff3e0; color: #e65100; }
+        .badge-concluida { background: #c8e6c9; color: #1b5e20; }
+        .badge-cancelada { background: #e0e0e0; color: #424242; }
+        /* Prioridades com bolinhas */
+        .badge-emergencial { background: #ffcdd2; color: #b71c1c; font-weight: bold; }
+        .badge-urgente { background: #fff9c4; color: #f57f17; font-weight: bold; }
+        .badge-normal { background: #c8e6c9; color: #1b5e20; font-weight: bold; }
+        .badge .icone { margin-right: 4px; }
+        @media (max-width: 600px) { .container { padding: 20px 15px; } .logo-area h1 { font-size: 22px; } .filtros { flex-direction: column; } }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="logo-area">
         <img src="logo.png" alt="Logo Villa do Bosque" style="max-width:100px;">
-        <h1>📝 Nova Ordem de Serviço</h1>
-        <a href="index.html" class="btn btn-voltar" style="display:inline-block; margin-top:10px; text-decoration:none;">← Voltar ao Painel</a>
+        <h1>📋 Ordens de Serviço</h1>
+        <div>
+            <a href="index.html" class="btn-voltar">← Voltar ao Painel</a>
+            <a href="os-abrir.html" class="btn-nova-os">📝 Nova OS</a>
+        </div>
     </div>
 
-    <form id="osForm">
-        <div class="form-group">
-            <label>Título da OS</label>
-            <input type="text" id="titulo" placeholder="Ex: Reclamação barulho" required>
-        </div>
-        <div class="form-group">
-            <label>Descrição / Relato</label>
-            <textarea id="descricao" placeholder="Descreva o problema ou solicitação" required></textarea>
-        </div>
-        <div class="form-row">
-            <div class="form-group">
-                <label>Quadra (opcional)</label>
-                <input type="text" id="quadra" placeholder="Ex: C">
-            </div>
-            <div class="form-group">
-                <label>Lote (opcional)</label>
-                <input type="text" id="lote" placeholder="Ex: 09">
-            </div>
-        </div>
-        <div class="form-group">
-            <label>Direcionar para</label>
-            <select id="direcionadoPara" required>
-                <option value="">Carregando personagens...</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Prioridade</label>
-            <select id="prioridade" required>
-                <option value="baixa">Baixa</option>
-                <option value="media">Média</option>
-                <option value="alta">Alta</option>
-                <option value="urgente" selected>Urgente (resolver logo)</option>
-            </select>
-        </div>
-        <button type="submit" class="btn btn-success" id="btnAbrir">Abrir OS</button>
-        <div id="formMessage" class="message"></div>
-    </form>
+    <div class="filtros">
+        <select id="filtroStatus">
+            <option value="todas">Todas</option>
+            <option value="aberta">Aberta</option>
+            <option value="em_andamento">Em andamento</option>
+            <option value="concluida">Concluída</option>
+            <option value="cancelada">Cancelada</option>
+        </select>
+        <input type="text" id="filtroBusca" placeholder="Buscar por número, título ou responsável...">
+        <button class="btn" id="btnFiltrar" style="background:#2e7d32; color:white; border:none; padding:10px 20px; border-radius:10px; cursor:pointer;">Filtrar</button>
+    </div>
+
+    <div id="listaContainer"><p>Carregando ordens de serviço...</p></div>
 </div>
 
 <script>
@@ -95,180 +83,76 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    const form = document.getElementById('osForm');
-    const tituloInput = document.getElementById('titulo');
-    const descricaoInput = document.getElementById('descricao');
-    const quadraInput = document.getElementById('quadra');
-    const loteInput = document.getElementById('lote');
-    const direcionadoSelect = document.getElementById('direcionadoPara');
-    const prioridadeSelect = document.getElementById('prioridade');
-    const formMsg = document.getElementById('formMessage');
-    const btnAbrir = document.getElementById('btnAbrir');
+    const listaDiv = document.getElementById('listaContainer');
+    const filtroStatus = document.getElementById('filtroStatus');
+    const filtroBusca = document.getElementById('filtroBusca');
+    const btnFiltrar = document.getElementById('btnFiltrar');
 
-    let currentUser = null;
-    let currentUserNome = '';
+    // Mapeamento de prioridades
+    const priorityMap = {
+        'emergencial': { label: 'Emergencial', class: 'badge-emergencial', icon: '🔴' },
+        'urgente': { label: 'Urgente', class: 'badge-urgente', icon: '🟡' },
+        'normal': { label: 'Normal', class: 'badge-normal', icon: '🟢' }
+    };
 
-    // Carregar lista de personagens ativos para o dropdown
-    function carregarPersonagens() {
-        direcionadoSelect.innerHTML = '<option value="">Carregando personagens...</option>';
-        
-        db.collection('usuarios')
-            .where('status', '==', 'ativo')
-            .orderBy('nome')
-            .get()
+    function carregarOS(statusFiltro = 'não_concluidas', busca = '') {
+        listaDiv.innerHTML = '<p>Carregando...</p>';
+        let query = db.collection('ordens_servico');
+
+        if (statusFiltro === 'não_concluidas') {
+            query = query.where('status', 'in', ['aberta', 'em_andamento']);
+        } else if (statusFiltro !== 'todas') {
+            query = query.where('status', '==', statusFiltro);
+        }
+
+        query.orderBy('criado_em', 'desc').get()
             .then(snapshot => {
-                direcionadoSelect.innerHTML = '';
-                
                 if (snapshot.empty) {
-                    direcionadoSelect.innerHTML = '<option value="">Nenhum personagem ativo disponível</option>';
+                    listaDiv.innerHTML = '<p style="text-align:center; color:#555;">Nenhuma ordem de serviço encontrada.</p>';
                     return;
                 }
-
-                // Adiciona opção padrão
-                const defaultOption = document.createElement('option');
-                defaultOption.value = '';
-                defaultOption.textContent = 'Selecione um personagem...';
-                direcionadoSelect.appendChild(defaultOption);
-
-                let count = 0;
+                let html = `<div class="table-responsive"><table>
+                    <thead><tr><th>Nº</th><th>Título</th><th>Aberto por</th><th>Direcionado a</th><th>Prioridade</th><th>Status</th><th>Data/Hora</th></tr></thead><tbody>`;
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    // Não permite direcionar para si mesmo
-                    if (doc.id === currentUser.uid) return;
+                    const id = doc.id;
+                    const statusClass = `badge-${data.status || 'aberta'}`;
+                    const statusLabel = data.status || 'aberta';
                     
-                    const option = document.createElement('option');
-                    option.value = doc.id;
-                    option.textContent = `${data.nome} (${data.funcao})`;
-                    direcionadoSelect.appendChild(option);
-                    count++;
-                });
+                    // Prioridade
+                    const p = data.prioridade || 'normal';
+                    const pData = priorityMap[p] || priorityMap['normal'];
+                    const prioridadeHtml = `<span class="badge ${pData.class}"><span class="icone">${pData.icon}</span> ${pData.label}</span>`;
 
-                if (count === 0) {
-                    // Se só tem o próprio usuário, não mostra nenhum
-                    direcionadoSelect.innerHTML = '<option value="">Nenhum outro personagem ativo disponível</option>';
-                }
+                    html += `
+                        <tr onclick="window.location.href='os-detalhe.html?id=${id}'" style="cursor:pointer;">
+                            <td><strong>${data.numero || 'N/A'}</strong></td>
+                            <td>${data.titulo || 'Sem título'}</td>
+                            <td>${data.aberto_por_nome || '—'}</td>
+                            <td>${data.direcionado_para_nome || '—'}</td>
+                            <td>${prioridadeHtml}</td>
+                            <td><span class="badge ${statusClass}">${statusLabel.replace('_',' ').toUpperCase()}</span></td>
+                            <td>${data.criado_em ? new Date(data.criado_em).toLocaleString('pt-BR') : '—'}</td>
+                        </tr>
+                    `;
+                });
+                html += `</tbody></table></div>`;
+                listaDiv.innerHTML = html;
             })
             .catch(err => {
-                console.error('Erro ao carregar personagens:', err);
-                direcionadoSelect.innerHTML = `<option value="">Erro ao carregar: ${err.message}</option>`;
+                listaDiv.innerHTML = `<p style="color:red;">Erro ao carregar: ${err.message}</p>`;
             });
     }
 
-    // Gerar número sequencial da OS (ex: 001, 002, ...)
-    function gerarNumeroOS() {
-        return db.collection('ordens_servico')
-            .orderBy('numero', 'desc')
-            .limit(1)
-            .get()
-            .then(snapshot => {
-                if (snapshot.empty) return 1;
-                const ultimo = snapshot.docs[0].data().numero || 0;
-                return ultimo + 1;
-            });
-    }
-
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const titulo = tituloInput.value.trim();
-        const descricao = descricaoInput.value.trim();
-        const quadra = quadraInput.value.trim();
-        const lote = loteInput.value.trim();
-        const direcionadoPara = direcionadoSelect.value;
-        const prioridade = prioridadeSelect.value;
-
-        if (!titulo || !descricao) {
-            showMessage(formMsg, 'Preencha título e descrição.', 'error');
-            return;
-        }
-        if (!direcionadoPara) {
-            showMessage(formMsg, 'Selecione para quem direcionar a OS.', 'error');
-            return;
-        }
-
-        btnAbrir.disabled = true;
-        btnAbrir.textContent = 'Abrindo...';
-
-        // Buscar nome do personagem direcionado
-        db.collection('usuarios').doc(direcionadoPara).get()
-            .then(doc => {
-                if (!doc.exists) throw new Error('Personagem não encontrado.');
-                const dadosDirecionado = doc.data();
-                const nomeDirecionado = dadosDirecionado.nome || 'Desconhecido';
-
-                return gerarNumeroOS().then(numero => {
-                    const agora = new Date();
-                    const timestampISO = agora.toISOString();
-                    const dataFormatada = agora.toLocaleString('pt-BR');
-
-                    const osData = {
-                        numero: numero,
-                        titulo: titulo,
-                        descricao: descricao,
-                        quadra: quadra || null,
-                        lote: lote || null,
-                        prioridade: prioridade,
-                        status: 'aberta',
-                        aberto_por: currentUser.uid,
-                        aberto_por_nome: currentUserNome,
-                        direcionado_para: direcionadoPara,
-                        direcionado_para_nome: nomeDirecionado,
-                        historico: [{
-                            data: timestampISO,
-                            data_formatada: dataFormatada,
-                            acao: 'abertura',
-                            usuario: currentUserNome,
-                            mensagem: `OS aberta por ${currentUserNome}`,
-                            direcionado_para: nomeDirecionado
-                        }],
-                        criado_em: timestampISO,
-                        criado_em_formatado: dataFormatada,
-                        atualizado_em: timestampISO
-                    };
-
-                    return db.collection('ordens_servico').add(osData);
-                });
-            })
-            .then((docRef) => {
-                showMessage(formMsg, `✅ OS #${docRef.id} aberta com sucesso!`, 'success');
-                form.reset();
-                btnAbrir.disabled = false;
-                btnAbrir.textContent = 'Abrir OS';
-                // Recarregar lista de personagens
-                carregarPersonagens();
-                setTimeout(() => {
-                    window.location.href = 'os-list.html';
-                }, 2000);
-            })
-            .catch((error) => {
-                console.error('Erro ao abrir OS:', error);
-                showMessage(formMsg, `Erro ao abrir OS: ${error.message}`, 'error');
-                btnAbrir.disabled = false;
-                btnAbrir.textContent = 'Abrir OS';
-            });
+    btnFiltrar.addEventListener('click', () => {
+        const status = filtroStatus.value;
+        const busca = filtroBusca.value.trim().toLowerCase();
+        carregarOS(status, busca);
     });
-
-    function showMessage(el, text, type) {
-        el.textContent = text;
-        el.className = 'message ' + type;
-    }
 
     auth.onAuthStateChanged((user) => {
         if (user) {
-            currentUser = user;
-            db.collection('usuarios').doc(user.uid).get()
-                .then(doc => {
-                    if (doc.exists) {
-                        const data = doc.data();
-                        currentUserNome = data.nome || user.displayName || 'Usuário';
-                    } else {
-                        currentUserNome = user.displayName || 'Usuário';
-                    }
-                    carregarPersonagens();
-                })
-                .catch(() => {
-                    currentUserNome = user.displayName || 'Usuário';
-                    carregarPersonagens();
-                });
+            carregarOS('não_concluidas', '');
         } else {
             window.location.href = 'index.html';
         }
