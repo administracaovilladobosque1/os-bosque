@@ -22,14 +22,38 @@
         .btn-voltar:hover { background: #33691e; }
         .form-group { margin-bottom: 16px; }
         label { display: block; font-weight: 600; font-size: 14px; color: #1b5e20; margin-bottom: 4px; }
-        input, select, textarea { width: 100%; padding: 12px 15px; border: 1px solid #a5d6a7; border-radius: 10px; font-size: 16px; background: #fafffe; }
-        input:focus, select:focus, textarea:focus { outline: none; border-color: #2e7d32; box-shadow: 0 0 0 3px rgba(46,125,50,0.2); }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #a5d6a7;
+            border-radius: 10px;
+            font-size: 16px;
+            background: #fafffe;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #2e7d32;
+            box-shadow: 0 0 0 3px rgba(46,125,50,0.2);
+        }
         textarea { resize: vertical; min-height: 80px; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .message { margin-top: 16px; padding: 12px; border-radius: 8px; display: none; }
         .message.error { display: block; background: #ffebee; color: #b71c1c; border: 1px solid #ef9a9a; }
         .message.success { display: block; background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
-        @media (max-width: 600px) { .container { padding: 20px 15px; } .form-row { grid-template-columns: 1fr; gap: 0; } }
+
+        /* Diferenciação visual para os grupos no select */
+        select option.grupo {
+            background-color: #fff3cd;  /* amarelo claro */
+            font-weight: 600;
+        }
+        select option.personagem {
+            background-color: #ffffff;
+        }
+
+        @media (max-width: 600px) {
+            .container { padding: 20px 15px; }
+            .form-row { grid-template-columns: 1fr; gap: 0; }
+        }
     </style>
 </head>
 <body>
@@ -43,7 +67,7 @@
     <form id="osForm">
         <div class="form-group">
             <label>Título da OS</label>
-            <input type="text" id="titulo" placeholder="Ex: Manutenção no jardim" required>
+            <input type="text" id="titulo" placeholder="Ex: Excesso velocidade" required>
         </div>
         <div class="form-group">
             <label>Descrição / Relato</label>
@@ -52,29 +76,29 @@
         <div class="form-row">
             <div class="form-group">
                 <label>Quadra (opcional)</label>
-                <input type="text" id="quadra" placeholder="Ex: Q-12">
+                <input type="text" id="quadra" placeholder="Ex: C">
             </div>
             <div class="form-group">
                 <label>Lote (opcional)</label>
-                <input type="text" id="lote" placeholder="Ex: L-03">
+                <input type="text" id="lote" placeholder="Ex: 09">
             </div>
         </div>
         <div class="form-group">
             <label>Direcionar para</label>
             <select id="direcionarPara" required>
                 <option value="">Selecione...</option>
-                <option value="grupo_admin">👥 Grupo: Administradores</option>
-                <option value="grupo_diretor">👥 Grupo: Diretores</option>
-                <!-- Os personagens específicos serão carregados via JavaScript -->
+                <!-- Os grupos serão inseridos com a classe "grupo" -->
+                <option value="grupo_admin" class="grupo">👥 Grupo: Administradores</option>
+                <option value="grupo_diretor" class="grupo">👥 Grupo: Diretores</option>
+                <!-- Os personagens serão inseridos dinamicamente com a classe "personagem" -->
             </select>
         </div>
         <div class="form-group">
             <label>Prioridade</label>
             <select id="prioridade" required>
-                <option value="baixa">Baixa</option>
-                <option value="media" selected>Média</option>
-                <option value="alta">Alta</option>
-                <option value="urgente">Urgente</option>
+                <option value="emergencial">🔴 Emergencial (resolver hoje)</option>
+                <option value="urgente">🟠 Urgente (resolver logo)</option>
+                <option value="normal">🟢 Normal (resolver)</option>
             </select>
         </div>
         <button type="submit" class="btn btn-success">Abrir OS</button>
@@ -113,8 +137,14 @@
             .get()
             .then(snapshot => {
                 personagens = [];
+                // Remove opções antigas de personagens (mantém os grupos)
+                document.querySelectorAll('option.personagem').forEach(el => el.remove());
+
                 snapshot.forEach(doc => {
                     const data = doc.data();
+                    // Não adicionar o próprio Master como opção de direcionamento (opcional)
+                    // Se quiser incluir o Master, remova o filtro abaixo.
+                    if (data.email === 'administracaovilladobosque@gmail.com') return;
                     personagens.push({
                         uid: doc.id,
                         nome: data.nome,
@@ -122,18 +152,13 @@
                         funcao: data.funcao
                     });
                 });
-                // Adiciona opções de personagens específicos no select
-                // Mantém as opções de grupo já existentes
-                const grupoAdmin = document.querySelector('option[value="grupo_admin"]');
-                const grupoDiretor = document.querySelector('option[value="grupo_diretor"]');
-                // Remove opções antigas de personagens (se houver)
-                document.querySelectorAll('option[data-tipo="personagem"]').forEach(el => el.remove());
-                // Adiciona os personagens
+
+                // Adiciona os personagens com a classe "personagem"
                 personagens.forEach(p => {
                     const opt = document.createElement('option');
                     opt.value = p.uid;
                     opt.textContent = `👤 ${p.nome} (${p.funcao})`;
-                    opt.dataset.tipo = 'personagem';
+                    opt.className = 'personagem';
                     direcionarPara.appendChild(opt);
                 });
             })
@@ -178,9 +203,10 @@
             if (doc.exists) nomeAbertoPor = doc.data().nome || nomeAbertoPor;
         } catch (e) {}
 
-        // Determinar direcionamento (grupo ou personagem específico)
+        // Determinar direcionamento
         let direcionadoPara = '';
         let direcionadoParaTipo = '';
+        let direcionadoParaId = '';
         if (direcionarVal === 'grupo_admin') {
             direcionadoPara = 'Administradores';
             direcionadoParaTipo = 'grupo';
@@ -188,10 +214,15 @@
             direcionadoPara = 'Diretores';
             direcionadoParaTipo = 'grupo';
         } else {
-            // Personagem específico
             const p = personagens.find(p => p.uid === direcionarVal);
-            direcionadoPara = p ? p.nome : 'Desconhecido';
-            direcionadoParaTipo = 'personagem';
+            if (p) {
+                direcionadoPara = p.nome;
+                direcionadoParaTipo = 'personagem';
+                direcionadoParaId = p.uid;
+            } else {
+                showMessage(formMsg, 'Personagem não encontrado.', 'error');
+                return;
+            }
         }
 
         const numero = await gerarNumeroOS();
@@ -208,9 +239,8 @@
             aberto_por_nome: nomeAbertoPor,
             direcionado_para: direcionadoPara,
             direcionado_para_tipo: direcionadoParaTipo,
-            direcionado_para_id: direcionarVal,
+            direcionado_para_id: direcionadoParaId,
             criado_em: firebase.firestore.FieldValue.serverTimestamp(),
-            // Histórico inicial
             historico: [{
                 tipo: 'abertura',
                 data: firebase.firestore.FieldValue.serverTimestamp(),
@@ -219,8 +249,7 @@
                 acao: 'abertura',
                 descricao: `OS aberta por ${nomeAbertoPor}. Relato: ${descricaoVal}`
             }],
-            // Contagem de tempo
-            tempo_aberto: 0, // será calculado em tempo real no front-end
+            tempo_aberto: 0,
             tempo_parado: 0
         };
 
@@ -228,7 +257,6 @@
             await db.collection('ordens_servico').add(dadosOS);
             showMessage(formMsg, `OS #${numero} aberta com sucesso!`, 'success');
             form.reset();
-            // Redireciona para a listagem após 2 segundos
             setTimeout(() => {
                 window.location.href = 'os-list.html';
             }, 2000);
