@@ -114,16 +114,10 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // ============================================================
-    // CONFIGURAÇÃO DO MASTER (por e-mail)
-    // ============================================================
     const MASTER_EMAIL = 'administracaovilladobosque@gmail.com';
     const TIMEOUT_MS = 4 * 60 * 60 * 1000;
     let timeoutId = null, timerInterval = null;
 
-    // ============================================================
-    // ELEMENTOS
-    // ============================================================
     const loginScreen = document.getElementById('loginScreen');
     const dashboardScreen = document.getElementById('dashboard');
     const userRoleDisplay = document.getElementById('userRoleDisplay');
@@ -144,9 +138,6 @@
         dashboardScreen.style.display = 'block';
     }
 
-    // ============================================================
-    // TIMEOUT
-    // ============================================================
     function resetTimeout() {
         if (timeoutId) clearTimeout(timeoutId);
         if (timerInterval) clearInterval(timerInterval);
@@ -170,9 +161,6 @@
         ['click','mousemove','keydown','scroll','touchstart'].forEach(ev => document.addEventListener(ev, resetTimeout));
     }
 
-    // ============================================================
-    // FUNÇÕES DE TELA
-    // ============================================================
     function showLoginScreen() {
         loginScreen.classList.remove('hidden');
         dashboardScreen.style.display = 'none';
@@ -187,17 +175,23 @@
         loginScreen.classList.add('hidden');
         dashboardScreen.style.display = 'block';
 
-        // Nome do usuário: prioriza o Firestore, depois displayName
-        const nomeExibicao = userData?.nome || user.displayName || 'Usuário';
+        // ============================================================
+        // FORÇA O NOME PARA MASTER
+        // ============================================================
+        let nomeExibicao = 'Usuário';
+        if (user.email === MASTER_EMAIL) {
+            nomeExibicao = 'Master';
+        } else {
+            nomeExibicao = userData?.nome || user.displayName || 'Usuário';
+        }
         userName.textContent = nomeExibicao;
         userEmail.textContent = user.email;
         sessionStorage.setItem('userLoggedIn', 'true');
 
         // ============================================================
-        // DETERMINA A FUNÇÃO – FORÇA MASTER PELO E-MAIL
+        // FORÇA A FUNÇÃO PARA MASTER (pelo e-mail)
         // ============================================================
         let funcao = userData?.funcao || 'tecnico';
-        // Se o e-mail for o MASTER_EMAIL, SOBRESCREVE para 'master'
         if (user.email === MASTER_EMAIL) {
             funcao = 'master';
         }
@@ -211,7 +205,7 @@
         userRoleDisplay.textContent = `🔹 Função: ${roleMap[funcao] || funcao}`;
 
         // ============================================================
-        // MONTA O MENU DE ACORDO COM A FUNÇÃO
+        // MONTA O MENU
         // ============================================================
         let html = '';
         if (funcao === 'master') {
@@ -235,9 +229,6 @@
 
     function showMessage(el, text, type) { el.textContent = text; el.className = 'message ' + type; }
 
-    // ============================================================
-    // LOGIN / LOGOUT
-    // ============================================================
     loginForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const email = loginEmail.value.trim();
@@ -261,9 +252,6 @@
         auth.signOut();
     });
 
-    // ============================================================
-    // OBSERVADOR DE AUTENTICAÇÃO
-    // ============================================================
     auth.onAuthStateChanged((user) => {
         if (user) {
             db.collection('usuarios').doc(user.uid).get()
@@ -271,7 +259,6 @@
                     if (doc.exists) {
                         showDashboard(user, doc.data());
                     } else {
-                        // Se não existe, cria um registro básico
                         const defaultData = { nome: user.displayName || 'Usuário', funcao: 'tecnico', status: 'ativo' };
                         db.collection('usuarios').doc(user.uid).set(defaultData)
                             .then(() => showDashboard(user, defaultData))
@@ -279,7 +266,6 @@
                     }
                 })
                 .catch(() => {
-                    // Fallback
                     const defaultData = { nome: user.displayName || 'Usuário', funcao: 'tecnico' };
                     showDashboard(user, defaultData);
                 });
