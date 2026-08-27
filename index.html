@@ -41,22 +41,11 @@
 
         .master-panel { background: #f1f8e9; border-radius: 16px; padding: 20px; margin-top: 20px; border: 1px solid #a5d6a7; }
         h2 { font-size: 20px; margin: 25px 0 15px; color: #2e7d32; border-bottom: 2px solid #c8e6c9; padding-bottom: 10px; }
-        .btn-group {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        .btn-group .btn {
-            text-decoration: none;
-            text-align: center;
-        }
         @media (max-width: 600px) {
             body { padding: 10px 8px; }
             .container { padding: 20px 15px; max-width: 100%; }
             .logo-area img { max-width: 120px; }
             .logo-area .main-title { font-size: 22px; }
-            .btn-group .btn { width: 100%; }
         }
     </style>
 </head>
@@ -96,25 +85,14 @@
             <p style="font-size:12px; color:#558b2f; margin-top:5px;">⏳ Sessão ativa por <span id="timerDisplay">4h00</span></p>
         </div>
 
-        <!-- ÁREA DO MASTER (só para Master) -->
+        <!-- ÁREA DO MASTER -->
         <div id="masterArea" class="hidden">
             <div class="master-panel">
                 <h2>👑 Painel do Master</h2>
-                <div class="btn-group">
-                    <a href="personagens.html" class="btn btn-success">👥 Gerenciar Personagens</a>
-                    <a href="os-list.html" class="btn btn-secondary">📋 Listar Ordens de Serviço</a>
-                    <a href="os-abrir.html" class="btn btn-secondary">📝 Nova OS</a>
-                </div>
-            </div>
-        </div>
-
-        <!-- ÁREA GERAL (para Admin e Diretor) -->
-        <div id="generalArea" class="hidden">
-            <div class="master-panel" style="background:#fafffe;">
-                <h2>📋 Ações</h2>
-                <div class="btn-group">
-                    <a href="os-list.html" class="btn btn-secondary">📋 Listar Ordens de Serviço</a>
-                    <a href="os-abrir.html" class="btn btn-success">📝 Nova OS</a>
+                <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
+                    <a href="personagens.html" class="btn btn-success" style="text-decoration:none; text-align:center;">👥 Gerenciar Personagens</a>
+                    <a href="os-list.html" class="btn btn-secondary" style="text-decoration:none; text-align:center;">📋 Listar Ordens de Serviço</a>
+                    <a href="os-abrir.html" class="btn" style="text-decoration:none; text-align:center; background:#2e7d32;">📝 Nova Ordem de Serviço</a>
                 </div>
             </div>
         </div>
@@ -146,7 +124,6 @@
     const loginScreen = document.getElementById('loginScreen');
     const dashboardScreen = document.getElementById('dashboard');
     const masterArea = document.getElementById('masterArea');
-    const generalArea = document.getElementById('generalArea');
     const userRoleDisplay = document.getElementById('userRoleDisplay');
     const timerDisplay = document.getElementById('timerDisplay');
     const loginForm = document.getElementById('loginForm');
@@ -156,8 +133,6 @@
     const loginMessage = document.getElementById('loginMessage');
     const userName = document.getElementById('userName');
     const userEmail = document.getElementById('userEmail');
-
-    let currentUserRole = 'tecnico'; // padrão
 
     function resetTimeout() {
         if (timeoutId) clearTimeout(timeoutId);
@@ -192,49 +167,24 @@
         userName.textContent = user.displayName || 'Usuário';
         userEmail.textContent = user.email;
 
-        // Verifica se é Master
         if (user.email === MASTER_EMAIL) {
             masterArea.classList.remove('hidden');
-            generalArea.classList.add('hidden');
             userRoleDisplay.textContent = '👑 Função: Master (Controle Total)';
         } else {
             masterArea.classList.add('hidden');
-            // Busca a função do usuário no Firestore
-            db.collection('usuarios').doc(user.uid).get()
-                .then(doc => {
-                    if (doc.exists) {
-                        const data = doc.data();
-                        currentUserRole = data.funcao || 'tecnico';
-                        const roleMap = { 'admin':'Administrador', 'diretor':'Diretor', 'master':'Master', 'tecnico':'Técnico' };
-                        userRoleDisplay.textContent = `🔹 Função: ${roleMap[currentUserRole] || currentUserRole}`;
-                        // Mostra área geral se for admin ou diretor
-                        if (currentUserRole === 'admin' || currentUserRole === 'diretor') {
-                            generalArea.classList.remove('hidden');
-                        } else {
-                            generalArea.classList.add('hidden');
-                        }
-                    } else {
-                        // Se não tem documento, assume técnico e esconde área geral
-                        currentUserRole = 'tecnico';
-                        userRoleDisplay.textContent = '🔹 Função: Técnico';
-                        generalArea.classList.add('hidden');
-                    }
-                })
-                .catch(() => {
-                    currentUserRole = 'tecnico';
-                    userRoleDisplay.textContent = '🔹 Função: Técnico';
-                    generalArea.classList.add('hidden');
-                });
+            db.collection('usuarios').doc(user.uid).get().then(doc => {
+                if (doc.exists) {
+                    const role = doc.data().funcao || 'tecnico';
+                    const map = { 'admin':'Administrador', 'diretor':'Diretor', 'master':'Master' };
+                    userRoleDisplay.textContent = `🔹 Função: ${map[role] || role}`;
+                }
+            }).catch(() => {});
         }
-
         resetTimeout();
         setupActivityListeners();
     }
 
-    function showMessage(el, text, type) {
-        el.textContent = text;
-        el.className = 'message ' + type;
-    }
+    function showMessage(el, text, type) { el.textContent = text; el.className = 'message ' + type; }
 
     loginForm.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -256,31 +206,22 @@
 
     auth.onAuthStateChanged((user) => {
         if (user) {
-            db.collection('usuarios').doc(user.uid).get()
-                .then(doc => {
-                    if (doc.exists) {
-                        const data = doc.data();
-                        userName.textContent = data.nome || user.displayName || 'Usuário';
-                        currentUserRole = data.funcao || 'tecnico';
-                    } else {
-                        userName.textContent = user.displayName || 'Usuário';
-                        currentUserRole = 'tecnico';
-                    }
-                    userEmail.textContent = user.email;
-                    showDashboard(user);
-                })
-                .catch(() => {
-                    userName.textContent = user.displayName || 'Usuário';
-                    userEmail.textContent = user.email;
-                    showDashboard(user);
-                });
+            db.collection('usuarios').doc(user.uid).get().then(doc => {
+                if (doc.exists) userName.textContent = doc.data().nome || user.displayName || 'Usuário';
+                else userName.textContent = user.displayName || 'Usuário';
+                userEmail.textContent = user.email;
+                showDashboard(user);
+            }).catch(() => {
+                userName.textContent = user.displayName || 'Usuário';
+                userEmail.textContent = user.email;
+                showDashboard(user);
+            });
         } else {
             showLoginScreen();
             loginForm.reset();
             loginMessage.className = 'message';
             loginMessage.textContent = '';
             masterArea.classList.add('hidden');
-            generalArea.classList.add('hidden');
             if (timerInterval) clearInterval(timerInterval);
             if (timeoutId) clearTimeout(timeoutId);
         }

@@ -21,7 +21,7 @@
         .filtros { display: flex; flex-wrap: wrap; gap: 15px; margin: 20px 0; align-items: center; }
         .filtros select, .filtros input { padding: 10px; border: 1px solid #a5d6a7; border-radius: 10px; font-size: 15px; flex: 1 1 200px; }
         .table-responsive { overflow-x: auto; margin-top: 20px; }
-        table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 600px; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 650px; }
         th { background: #c8e6c9; padding: 12px; text-align: left; color: #1b5e20; border-bottom: 2px solid #81c784; }
         td { padding: 12px; border-bottom: 1px solid #c8e6c9; vertical-align: middle; }
         .badge {
@@ -32,14 +32,18 @@
             font-weight: 600;
             white-space: nowrap;
         }
+        /* Status */
         .badge-aberta { background: #e3f2fd; color: #0d47a1; }
         .badge-em_andamento { background: #fff3e0; color: #e65100; }
         .badge-concluida { background: #c8e6c9; color: #1b5e20; }
         .badge-cancelada { background: #e0e0e0; color: #424242; }
-        /* Prioridades com bolinhas */
+        /* Prioridades */
         .badge-emergencial { background: #ffcdd2; color: #b71c1c; font-weight: bold; }
         .badge-urgente { background: #fff9c4; color: #f57f17; font-weight: bold; }
         .badge-normal { background: #c8e6c9; color: #1b5e20; font-weight: bold; }
+        /* Direcionado: Grupo (azul) vs Personagem (verde) */
+        .badge-grupo { background: #e3f2fd; color: #0d47a1; font-weight: bold; }
+        .badge-personagem { background: #e8f5e9; color: #1b5e20; font-weight: bold; }
         .badge .icone { margin-right: 4px; }
         @media (max-width: 600px) { .container { padding: 20px 15px; } .logo-area h1 { font-size: 22px; } .filtros { flex-direction: column; } }
     </style>
@@ -57,6 +61,7 @@
 
     <div class="filtros">
         <select id="filtroStatus">
+            <option value="não_concluidas" selected>Não concluídas</option>
             <option value="todas">Todas</option>
             <option value="aberta">Aberta</option>
             <option value="em_andamento">Em andamento</option>
@@ -88,7 +93,6 @@
     const filtroBusca = document.getElementById('filtroBusca');
     const btnFiltrar = document.getElementById('btnFiltrar');
 
-    // Mapeamento de prioridades
     const priorityMap = {
         'emergencial': { label: 'Emergencial', class: 'badge-emergencial', icon: '🔴' },
         'urgente': { label: 'Urgente', class: 'badge-urgente', icon: '🟡' },
@@ -113,23 +117,36 @@
                 }
                 let html = `<div class="table-responsive"><table>
                     <thead><tr><th>Nº</th><th>Título</th><th>Aberto por</th><th>Direcionado a</th><th>Prioridade</th><th>Status</th><th>Data/Hora</th></tr></thead><tbody>`;
+                
                 snapshot.forEach(doc => {
                     const data = doc.data();
                     const id = doc.id;
+
+                    // Status
                     const statusClass = `badge-${data.status || 'aberta'}`;
                     const statusLabel = data.status || 'aberta';
-                    
+
                     // Prioridade
                     const p = data.prioridade || 'normal';
                     const pData = priorityMap[p] || priorityMap['normal'];
                     const prioridadeHtml = `<span class="badge ${pData.class}"><span class="icone">${pData.icon}</span> ${pData.label}</span>`;
+
+                    // Direcionado (Grupo ou Personagem)
+                    let targetHtml = '';
+                    if (data.direcionado_para && data.direcionado_para.startsWith('group:')) {
+                        // É um GRUPO
+                        targetHtml = `<span class="badge badge-grupo"><span class="icone">👥</span> ${data.direcionado_para_nome || 'Grupo'}</span>`;
+                    } else {
+                        // É um PERSONAGEM específico
+                        targetHtml = `<span class="badge badge-personagem"><span class="icone">👤</span> ${data.direcionado_para_nome || '—'}</span>`;
+                    }
 
                     html += `
                         <tr onclick="window.location.href='os-detalhe.html?id=${id}'" style="cursor:pointer;">
                             <td><strong>${data.numero || 'N/A'}</strong></td>
                             <td>${data.titulo || 'Sem título'}</td>
                             <td>${data.aberto_por_nome || '—'}</td>
-                            <td>${data.direcionado_para_nome || '—'}</td>
+                            <td>${targetHtml}</td>
                             <td>${prioridadeHtml}</td>
                             <td><span class="badge ${statusClass}">${statusLabel.replace('_',' ').toUpperCase()}</span></td>
                             <td>${data.criado_em ? new Date(data.criado_em).toLocaleString('pt-BR') : '—'}</td>
@@ -150,6 +167,7 @@
         carregarOS(status, busca);
     });
 
+    // Carregar inicial
     auth.onAuthStateChanged((user) => {
         if (user) {
             carregarOS('não_concluidas', '');

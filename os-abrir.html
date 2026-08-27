@@ -18,8 +18,6 @@
         .btn:hover { background: #1b5e20; }
         .btn-success { background: #388e3c; }
         .btn-success:hover { background: #2e7d32; }
-        .btn-danger { background: #c62828; }
-        .btn-danger:hover { background: #b71c1c; }
         .btn-voltar { background: #558b2f; margin-bottom: 20px; }
         .btn-voltar:hover { background: #33691e; }
         .form-group { margin-bottom: 16px; }
@@ -31,8 +29,10 @@
         .message { margin-top: 16px; padding: 12px; border-radius: 8px; display: none; }
         .message.error { display: block; background: #ffebee; color: #b71c1c; border: 1px solid #ef9a9a; }
         .message.success { display: block; background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
-        .hidden { display: none; }
         @media (max-width: 600px) { .container { padding: 20px 15px; } .form-row { grid-template-columns: 1fr; gap: 0; } .logo-area h1 { font-size: 22px; } }
+        /* Estilo para os optgroups no select (funciona na maioria dos navegadores) */
+        select optgroup { font-weight: bold; color: #2e7d32; }
+        select optgroup option { font-weight: normal; color: #000; padding-left: 10px; }
     </style>
 </head>
 <body>
@@ -65,8 +65,9 @@
         <div class="form-group">
             <label>Direcionar para</label>
             <select id="direcionadoPara" required>
-                <option value="">Carregando personagens...</option>
+                <option value="">Carregando...</option>
             </select>
+            <small style="color:#555;">👥 Grupos (todos recebem) | 👤 Personagens específicos</small>
         </div>
         <div class="form-group">
             <label>Prioridade</label>
@@ -106,34 +107,45 @@
 
     let currentUser = null;
     let currentUserNome = '';
-    let currentUserFuncao = '';
+    let personagensList = []; // Guarda a lista para usar no submit
 
-    // Carregar lista de personagens ativos (sem orderBy para evitar índice)
     function carregarPersonagens() {
         direcionadoSelect.innerHTML = '<option value="">Carregando...</option>';
         db.collection('usuarios')
             .where('status', '==', 'ativo')
             .get()
             .then(snapshot => {
-                if (snapshot.empty) {
-                    direcionadoSelect.innerHTML = '<option value="">Nenhum personagem ativo disponível</option>';
-                    return;
-                }
                 const lista = [];
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    if (doc.id === currentUser.uid) return;
+                    if (doc.id === currentUser.uid) return; // remove o próprio
                     lista.push({ id: doc.id, nome: data.nome, funcao: data.funcao });
                 });
                 lista.sort((a, b) => a.nome.localeCompare(b.nome));
+                personagensList = lista;
 
-                direcionadoSelect.innerHTML = '<option value="">Selecione um personagem...</option>';
-                lista.forEach(item => {
-                    const option = document.createElement('option');
-                    option.value = item.id;
-                    option.textContent = `${item.nome} (${item.funcao})`;
-                    direcionadoSelect.appendChild(option);
-                });
+                let html = '<option value="">Selecione um destino...</option>';
+
+                // ========== GRUPOS (com ícone 👥) ==========
+                html += '<optgroup label="📋 Grupos">';
+                html += '<option value="group:admin">👥 Administradores</option>';
+                html += '<option value="group:diretor">👥 Diretores</option>';
+                html += '</optgroup>';
+
+                // ========== PERSONAGENS INDIVIDUAIS (com ícone 👤) ==========
+                if (lista.length > 0) {
+                    html += '<optgroup label="👤 Personagens">';
+                    lista.forEach(item => {
+                        html += `<option value="${item.id}">👤 ${item.nome} (${item.funcao})</option>`;
+                    });
+                    html += '</optgroup>';
+                } else {
+                    html += '<optgroup label="👤 Personagens">';
+                    html += '<option value="" disabled>Nenhum outro personagem ativo</option>';
+                    html += '</optgroup>';
+                }
+
+                direcionadoSelect.innerHTML = html;
             })
             .catch(err => {
                 console.error('Erro ao carregar personagens:', err);
@@ -159,14 +171,14 @@
         const descricao = descricaoInput.value.trim();
         const quadra = quadraInput.value.trim();
         const lote = loteInput.value.trim();
-        const direcionadoPara = direcionadoSelect.value;
+        const valSelecionado = direcionadoSelect.value;
         const prioridade = prioridadeSelect.value;
 
         if (!titulo || !descricao) {
             showMessage(formMsg, 'Preencha título e descrição.', 'error');
             return;
         }
-        if (!direcionadoPara) {
+        if (!valSelecionado) {
             showMessage(formMsg, 'Selecione para quem direcionar a OS.', 'error');
             return;
         }
@@ -174,41 +186,56 @@
         btnAbrir.disabled = true;
         btnAbrir.textContent = 'Abrindo...';
 
-        db.collection('usuarios').doc(direcionadoPara).get()
-            .then(doc => {
-                if (!doc.exists) throw new Error('Personagem não encontrado.');
-                const dadosDirecionado = doc.data();
-                const nomeDirecionado = dadosDirecionado.nome || 'Desconhecido';
+        // Determinar o nome e o ID do direcionado
+        let direcionadoPara = valSelecionado;
+        let direcionadoParaNome = '';
 
-                return gerarNumeroOS().then(numero => {
-                    const agora = new Date();
-                    const timestampISO = agora.toISOString();
+        if (valSelecionado === 'group:admin') {
+            direcionadoParaNome = 'Administradores';
+        } else if (valSelecionado === 'group:diretor') {
+            direcionadoParaNome = 'Diretores';
+        } else {
+            // É um personagem específico
+            const found = personagensList.find(p => p.id === valSelecionado);
+            if (!found) {
+                showMessage(formMsg, 'Personagem selecionado não encontrado.', 'error');
+                btnAbrir.disabled = false;
+                btnAbrir.textContent = 'Abrir OS';
+                return;
+            }
+            direcionadoParaNome = found.nome;
+        }
 
-                    const osData = {
-                        numero: numero,
-                        titulo: titulo,
-                        descricao: descricao,
-                        quadra: quadra || null,
-                        lote: lote || null,
-                        prioridade: prioridade,
-                        status: 'aberta',
-                        aberto_por: currentUser.uid,
-                        aberto_por_nome: currentUserNome,
-                        direcionado_para: direcionadoPara,
-                        direcionado_para_nome: nomeDirecionado,
-                        historico: [{
-                            data: timestampISO,
-                            acao: 'abertura',
-                            usuario: currentUserNome,
-                            mensagem: `OS aberta por ${currentUserNome}`,
-                            direcionado_para: nomeDirecionado
-                        }],
-                        criado_em: timestampISO,
-                        atualizado_em: timestampISO
-                    };
+        // Gerar número e salvar
+        gerarNumeroOS()
+            .then(numero => {
+                const agora = new Date();
+                const timestampISO = agora.toISOString();
 
-                    return db.collection('ordens_servico').add(osData);
-                });
+                const osData = {
+                    numero: numero,
+                    titulo: titulo,
+                    descricao: descricao,
+                    quadra: quadra || null,
+                    lote: lote || null,
+                    prioridade: prioridade,
+                    status: 'aberta',
+                    aberto_por: currentUser.uid,
+                    aberto_por_nome: currentUserNome,
+                    direcionado_para: direcionadoPara,
+                    direcionado_para_nome: direcionadoParaNome,
+                    historico: [{
+                        data: timestampISO,
+                        acao: 'abertura',
+                        usuario: currentUserNome,
+                        mensagem: `OS aberta por ${currentUserNome}`,
+                        direcionado_para: direcionadoParaNome
+                    }],
+                    criado_em: timestampISO,
+                    atualizado_em: timestampISO
+                };
+
+                return db.collection('ordens_servico').add(osData);
             })
             .then((docRef) => {
                 showMessage(formMsg, `✅ OS #${docRef.id} aberta com sucesso!`, 'success');
@@ -239,18 +266,14 @@
             db.collection('usuarios').doc(user.uid).get()
                 .then(doc => {
                     if (doc.exists) {
-                        const data = doc.data();
-                        currentUserNome = data.nome || user.displayName || 'Usuário';
-                        currentUserFuncao = data.funcao || 'tecnico';
+                        currentUserNome = doc.data().nome || user.displayName || 'Usuário';
                     } else {
                         currentUserNome = user.displayName || 'Usuário';
-                        currentUserFuncao = 'tecnico';
                     }
                     carregarPersonagens();
                 })
                 .catch(() => {
                     currentUserNome = user.displayName || 'Usuário';
-                    currentUserFuncao = 'tecnico';
                     carregarPersonagens();
                 });
         } else {
