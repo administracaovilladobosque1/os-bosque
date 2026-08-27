@@ -18,42 +18,21 @@
         .btn:hover { background: #1b5e20; }
         .btn-success { background: #388e3c; }
         .btn-success:hover { background: #2e7d32; }
+        .btn-danger { background: #c62828; }
+        .btn-danger:hover { background: #b71c1c; }
         .btn-voltar { background: #558b2f; margin-bottom: 20px; }
         .btn-voltar:hover { background: #33691e; }
         .form-group { margin-bottom: 16px; }
         label { display: block; font-weight: 600; font-size: 14px; color: #1b5e20; margin-bottom: 4px; }
-        input, select, textarea {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid #a5d6a7;
-            border-radius: 10px;
-            font-size: 16px;
-            background: #fafffe;
-        }
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: #2e7d32;
-            box-shadow: 0 0 0 3px rgba(46,125,50,0.2);
-        }
+        input, select, textarea { width: 100%; padding: 12px 15px; border: 1px solid #a5d6a7; border-radius: 10px; font-size: 16px; background: #fafffe; }
         textarea { resize: vertical; min-height: 80px; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #2e7d32; box-shadow: 0 0 0 3px rgba(46,125,50,0.2); }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .message { margin-top: 16px; padding: 12px; border-radius: 8px; display: none; }
         .message.error { display: block; background: #ffebee; color: #b71c1c; border: 1px solid #ef9a9a; }
         .message.success { display: block; background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
-
-        /* Diferenciação visual para os grupos no select */
-        select option.grupo {
-            background-color: #fff3cd;  /* amarelo claro */
-            font-weight: 600;
-        }
-        select option.personagem {
-            background-color: #ffffff;
-        }
-
-        @media (max-width: 600px) {
-            .container { padding: 20px 15px; }
-            .form-row { grid-template-columns: 1fr; gap: 0; }
-        }
+        .hidden { display: none; }
+        @media (max-width: 600px) { .container { padding: 20px 15px; } .form-row { grid-template-columns: 1fr; gap: 0; } .logo-area h1 { font-size: 22px; } }
     </style>
 </head>
 <body>
@@ -67,41 +46,38 @@
     <form id="osForm">
         <div class="form-group">
             <label>Título da OS</label>
-            <input type="text" id="titulo" placeholder="Ex: Excesso velocidade" required>
+            <input type="text" id="titulo" placeholder="Ex: Reclamação barulho" required>
         </div>
         <div class="form-group">
             <label>Descrição / Relato</label>
-            <textarea id="descricao" placeholder="Descreva o problema ou solicitação..." required></textarea>
+            <textarea id="descricao" placeholder="Descreva o problema ou solicitação" required></textarea>
         </div>
         <div class="form-row">
             <div class="form-group">
                 <label>Quadra (opcional)</label>
-                <input type="text" id="quadra" placeholder="Ex: C">
+                <input type="text" id="quadra" placeholder="Ex: J">
             </div>
             <div class="form-group">
                 <label>Lote (opcional)</label>
-                <input type="text" id="lote" placeholder="Ex: 09">
+                <input type="text" id="lote" placeholder="Ex: 1">
             </div>
         </div>
         <div class="form-group">
             <label>Direcionar para</label>
-            <select id="direcionarPara" required>
-                <option value="">Selecione...</option>
-                <!-- Os grupos serão inseridos com a classe "grupo" -->
-                <option value="grupo_admin" class="grupo">👥 Grupo: Administradores</option>
-                <option value="grupo_diretor" class="grupo">👥 Grupo: Diretores</option>
-                <!-- Os personagens serão inseridos dinamicamente com a classe "personagem" -->
+            <select id="direcionadoPara" required>
+                <option value="">Selecione um personagem...</option>
             </select>
         </div>
         <div class="form-group">
             <label>Prioridade</label>
             <select id="prioridade" required>
-                <option value="emergencial">🔴 Emergencial (resolver hoje)</option>
-                <option value="urgente">🟠 Urgente (resolver logo)</option>
-                <option value="normal">🟢 Normal (resolver)</option>
+                <option value="baixa">Baixa</option>
+                <option value="media" selected>Média</option>
+                <option value="alta">Alta</option>
+                <option value="urgente">Urgente</option>
             </select>
         </div>
-        <button type="submit" class="btn btn-success">Abrir OS</button>
+        <button type="submit" class="btn btn-success" id="btnAbrir">Abrir OS</button>
         <div id="formMessage" class="message"></div>
     </form>
 </div>
@@ -120,156 +96,166 @@
     const db = firebase.firestore();
 
     const form = document.getElementById('osForm');
-    const titulo = document.getElementById('titulo');
-    const descricao = document.getElementById('descricao');
-    const quadra = document.getElementById('quadra');
-    const lote = document.getElementById('lote');
-    const direcionarPara = document.getElementById('direcionarPara');
-    const prioridade = document.getElementById('prioridade');
+    const tituloInput = document.getElementById('titulo');
+    const descricaoInput = document.getElementById('descricao');
+    const quadraInput = document.getElementById('quadra');
+    const loteInput = document.getElementById('lote');
+    const direcionadoSelect = document.getElementById('direcionadoPara');
+    const prioridadeSelect = document.getElementById('prioridade');
     const formMsg = document.getElementById('formMessage');
+    const btnAbrir = document.getElementById('btnAbrir');
 
-    let personagens = [];
+    let currentUser = null;
+    let currentUserNome = '';
+    let currentUserFuncao = '';
 
-    // Carregar personagens ativos para o select
+    // Carregar lista de personagens ativos para o dropdown
     function carregarPersonagens() {
         db.collection('usuarios')
             .where('status', '==', 'ativo')
+            .orderBy('nome')
             .get()
             .then(snapshot => {
-                personagens = [];
-                // Remove opções antigas de personagens (mantém os grupos)
-                document.querySelectorAll('option.personagem').forEach(el => el.remove());
-
+                direcionadoSelect.innerHTML = '<option value="">Selecione um personagem...</option>';
+                if (snapshot.empty) {
+                    direcionadoSelect.innerHTML = '<option value="">Nenhum personagem ativo disponível</option>';
+                    return;
+                }
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    // Não adicionar o próprio Master como opção de direcionamento (opcional)
-                    // Se quiser incluir o Master, remova o filtro abaixo.
-                    if (data.email === 'administracaovilladobosque@gmail.com') return;
-                    personagens.push({
-                        uid: doc.id,
-                        nome: data.nome,
-                        email: data.email,
-                        funcao: data.funcao
-                    });
-                });
-
-                // Adiciona os personagens com a classe "personagem"
-                personagens.forEach(p => {
-                    const opt = document.createElement('option');
-                    opt.value = p.uid;
-                    opt.textContent = `👤 ${p.nome} (${p.funcao})`;
-                    opt.className = 'personagem';
-                    direcionarPara.appendChild(opt);
+                    // Não incluir o próprio usuário na lista de direcionamento
+                    if (doc.id === currentUser.uid) return;
+                    const option = document.createElement('option');
+                    option.value = doc.id;
+                    option.textContent = `${data.nome} (${data.funcao})`;
+                    direcionadoSelect.appendChild(option);
                 });
             })
-            .catch(err => console.error('Erro ao carregar personagens:', err));
+            .catch(err => {
+                console.error('Erro ao carregar personagens:', err);
+            });
     }
 
-    // Gerar número sequencial da OS
-    async function gerarNumeroOS() {
-        const snapshot = await db.collection('ordens_servico')
+    // Gerar número sequencial da OS (ex: 001, 002, ...)
+    function gerarNumeroOS() {
+        return db.collection('ordens_servico')
             .orderBy('numero', 'desc')
             .limit(1)
-            .get();
-        if (snapshot.empty) return 1;
-        const last = snapshot.docs[0].data().numero || 0;
-        return last + 1;
+            .get()
+            .then(snapshot => {
+                if (snapshot.empty) return 1;
+                const ultimo = snapshot.docs[0].data().numero || 0;
+                return ultimo + 1;
+            });
     }
 
-    form.addEventListener('submit', async (e) => {
+    form.addEventListener('submit', (e) => {
         e.preventDefault();
-        const tituloVal = titulo.value.trim();
-        const descricaoVal = descricao.value.trim();
-        const quadraVal = quadra.value.trim();
-        const loteVal = lote.value.trim();
-        const direcionarVal = direcionarPara.value;
-        const prioridadeVal = prioridade.value;
+        const titulo = tituloInput.value.trim();
+        const descricao = descricaoInput.value.trim();
+        const quadra = quadraInput.value.trim();
+        const lote = loteInput.value.trim();
+        const direcionadoPara = direcionadoSelect.value;
+        const prioridade = prioridadeSelect.value;
 
-        if (!tituloVal || !descricaoVal || !direcionarVal) {
-            showMessage(formMsg, 'Preencha todos os campos obrigatórios.', 'error');
+        if (!titulo || !descricao) {
+            showMessage(formMsg, 'Preencha título e descrição.', 'error');
+            return;
+        }
+        if (!direcionadoPara) {
+            showMessage(formMsg, 'Selecione para quem direcionar a OS.', 'error');
             return;
         }
 
-        const user = auth.currentUser;
-        if (!user) {
-            showMessage(formMsg, 'Você precisa estar logado.', 'error');
-            return;
-        }
+        btnAbrir.disabled = true;
+        btnAbrir.textContent = 'Abrindo...';
 
-        // Buscar nome do usuário atual
-        let nomeAbertoPor = user.displayName || 'Usuário';
-        try {
-            const doc = await db.collection('usuarios').doc(user.uid).get();
-            if (doc.exists) nomeAbertoPor = doc.data().nome || nomeAbertoPor;
-        } catch (e) {}
+        // Buscar nome do personagem direcionado
+        db.collection('usuarios').doc(direcionadoPara).get()
+            .then(doc => {
+                if (!doc.exists) throw new Error('Personagem não encontrado.');
+                const dadosDirecionado = doc.data();
+                const nomeDirecionado = dadosDirecionado.nome || 'Desconhecido';
 
-        // Determinar direcionamento
-        let direcionadoPara = '';
-        let direcionadoParaTipo = '';
-        let direcionadoParaId = '';
-        if (direcionarVal === 'grupo_admin') {
-            direcionadoPara = 'Administradores';
-            direcionadoParaTipo = 'grupo';
-        } else if (direcionarVal === 'grupo_diretor') {
-            direcionadoPara = 'Diretores';
-            direcionadoParaTipo = 'grupo';
-        } else {
-            const p = personagens.find(p => p.uid === direcionarVal);
-            if (p) {
-                direcionadoPara = p.nome;
-                direcionadoParaTipo = 'personagem';
-                direcionadoParaId = p.uid;
-            } else {
-                showMessage(formMsg, 'Personagem não encontrado.', 'error');
-                return;
-            }
-        }
+                // Gerar número da OS
+                return gerarNumeroOS().then(numero => {
+                    const agora = new Date();
+                    const timestampISO = agora.toISOString();
 
-        const numero = await gerarNumeroOS();
+                    // Dados da OS
+                    const osData = {
+                        numero: numero,
+                        titulo: titulo,
+                        descricao: descricao,
+                        quadra: quadra || null,
+                        lote: lote || null,
+                        prioridade: prioridade,
+                        status: 'aberta',
+                        aberto_por: currentUser.uid,
+                        aberto_por_nome: currentUserNome,
+                        direcionado_para: direcionadoPara,
+                        direcionado_para_nome: nomeDirecionado,
+                        // Usando string ISO em vez de serverTimestamp para o histórico
+                        historico: [{
+                            data: timestampISO,
+                            acao: 'abertura',
+                            usuario: currentUserNome,
+                            mensagem: `OS aberta por ${currentUserNome}`,
+                            direcionado_para: nomeDirecionado
+                        }],
+                        criado_em: new Date().toISOString(), // string ISO
+                        atualizado_em: new Date().toISOString()
+                    };
 
-        const dadosOS = {
-            numero: numero,
-            titulo: tituloVal,
-            descricao: descricaoVal,
-            quadra: quadraVal || null,
-            lote: loteVal || null,
-            prioridade: prioridadeVal,
-            status: 'aberta',
-            aberto_por: user.uid,
-            aberto_por_nome: nomeAbertoPor,
-            direcionado_para: direcionadoPara,
-            direcionado_para_tipo: direcionadoParaTipo,
-            direcionado_para_id: direcionadoParaId,
-            criado_em: firebase.firestore.FieldValue.serverTimestamp(),
-            historico: [{
-                tipo: 'abertura',
-                data: firebase.firestore.FieldValue.serverTimestamp(),
-                autor: user.uid,
-                autor_nome: nomeAbertoPor,
-                acao: 'abertura',
-                descricao: `OS aberta por ${nomeAbertoPor}. Relato: ${descricaoVal}`
-            }],
-            tempo_aberto: 0,
-            tempo_parado: 0
-        };
-
-        try {
-            await db.collection('ordens_servico').add(dadosOS);
-            showMessage(formMsg, `OS #${numero} aberta com sucesso!`, 'success');
-            form.reset();
-            setTimeout(() => {
-                window.location.href = 'os-list.html';
-            }, 2000);
-        } catch (error) {
-            showMessage(formMsg, 'Erro ao abrir OS: ' + error.message, 'error');
-        }
+                    // Salvar no Firestore
+                    return db.collection('ordens_servico').add(osData);
+                });
+            })
+            .then((docRef) => {
+                showMessage(formMsg, `✅ OS #${docRef.id} aberta com sucesso!`, 'success');
+                form.reset();
+                btnAbrir.disabled = false;
+                btnAbrir.textContent = 'Abrir OS';
+                // Recarregar lista de personagens
+                carregarPersonagens();
+                setTimeout(() => {
+                    window.location.href = 'os-list.html';
+                }, 2000);
+            })
+            .catch((error) => {
+                console.error('Erro ao abrir OS:', error);
+                showMessage(formMsg, `Erro ao abrir OS: ${error.message}`, 'error');
+                btnAbrir.disabled = false;
+                btnAbrir.textContent = 'Abrir OS';
+            });
     });
 
-    function showMessage(el, text, type) { el.textContent = text; el.className = 'message ' + type; }
+    function showMessage(el, text, type) {
+        el.textContent = text;
+        el.className = 'message ' + type;
+    }
 
     auth.onAuthStateChanged((user) => {
         if (user) {
-            carregarPersonagens();
+            currentUser = user;
+            // Buscar nome e função do usuário logado
+            db.collection('usuarios').doc(user.uid).get()
+                .then(doc => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        currentUserNome = data.nome || user.displayName || 'Usuário';
+                        currentUserFuncao = data.funcao || 'tecnico';
+                    } else {
+                        currentUserNome = user.displayName || 'Usuário';
+                        currentUserFuncao = 'tecnico';
+                    }
+                    carregarPersonagens();
+                })
+                .catch(() => {
+                    currentUserNome = user.displayName || 'Usuário';
+                    currentUserFuncao = 'tecnico';
+                    carregarPersonagens();
+                });
         } else {
             window.location.href = 'index.html';
         }
