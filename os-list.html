@@ -26,7 +26,7 @@
         .filtros {
             display: flex;
             flex-wrap: wrap;
-            gap: 12px;
+            gap: 8px;
             margin: 12px 0 16px;
             align-items: center;
         }
@@ -36,10 +36,22 @@
             border-radius: 6px;
             font-size: 14px;
             background: #fafffe;
-            flex: 0 1 160px;
+            flex: 0 1 auto;
+            min-width: 120px;
         }
-        .filtros input[type="text"] { flex: 1 1 200px; }
-        .filtros .btn-filtrar { background: #2e7d32; color: white; border: none; padding: 6px 16px; border-radius: 6px; cursor: pointer; }
+        .filtros input[type="text"] {
+            flex: 1 1 180px;
+            min-width: 120px;
+        }
+        .filtros .btn-filtrar {
+            background: #2e7d32;
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
         .table-responsive { overflow-x: auto; margin-top: 12px; }
         table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 900px; }
         th {
@@ -73,8 +85,27 @@
         @media (max-width: 600px) {
             .container { padding: 14px; }
             .logo-area h1 { font-size: 20px; }
-            .filtros { flex-direction: column; align-items: stretch; }
-            .filtros select, .filtros input { flex: 1 1 auto; }
+            .filtros {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                gap: 6px;
+                padding-bottom: 4px;
+            }
+            .filtros select, .filtros input {
+                flex: 0 0 auto;
+                min-width: 100px;
+                font-size: 13px;
+                padding: 5px 8px;
+            }
+            .filtros input[type="text"] {
+                flex: 1 1 120px;
+                min-width: 80px;
+            }
+            .filtros .btn-filtrar {
+                padding: 5px 12px;
+                font-size: 13px;
+                flex-shrink: 0;
+            }
             table { font-size: 13px; min-width: 600px; }
             th, td { padding: 6px 6px; }
         }
@@ -98,11 +129,11 @@
             <option value="fechado">Fechado</option>
         </select>
         <select id="filtroPendente">
-            <option value="todos">Pendente em: Todos</option>
+            <option value="todos">Pendente: Todos</option>
             <option value="diretoria">Diretoria</option>
             <option value="admin">Admin</option>
         </select>
-        <input type="text" id="filtroBusca" placeholder="Buscar por número, título ou responsável...">
+        <input type="text" id="filtroBusca" placeholder="Buscar...">
         <button class="btn-filtrar" id="btnFiltrar">Filtrar</button>
     </div>
 
@@ -128,9 +159,8 @@
     const filtroBusca = document.getElementById('filtroBusca');
     const btnFiltrar = document.getElementById('btnFiltrar');
 
-    // Estado da ordenação
     let sortField = 'numero';
-    let sortAsc = false; // false = decrescente (mais recente)
+    let sortAsc = false;
 
     const priorityMap = {
         'emergencial': { label: 'Emergencial', class: 'badge-emergencial', icon: '🔴' },
@@ -138,7 +168,6 @@
         'normal': { label: 'Normal', class: 'badge-normal', icon: '🟢' }
     };
 
-    // Função para calcular dias
     function calcularDias(dataISO) {
         if (!dataISO) return '—';
         const data = new Date(dataISO);
@@ -150,7 +179,6 @@
         return `${diffDias} dias`;
     }
 
-    // Função que retorna a data do último evento do histórico
     function getUltimaDataHistorico(data) {
         if (data.historico && data.historico.length > 0) {
             const ultimo = data.historico[data.historico.length - 1];
@@ -159,52 +187,50 @@
         return data.criado_em;
     }
 
-    // --- Funções de ordenação ---
+    // Função que determina se a OS está pendente em Diretoria ou Admin
+    function getPendenteCategoria(data) {
+        const target = data.direcionado_para;
+        const nome = (data.direcionado_para_nome || '').toLowerCase();
+        const funcao = data.direcionado_para_funcao || ''; // salvo ao criar
+
+        // Se for grupo
+        if (target === 'group:diretor') return 'diretoria';
+        if (target === 'group:admin') return 'admin';
+
+        // Se for personagem individual, usa a função salva
+        if (funcao === 'diretor') return 'diretoria';
+        if (funcao === 'admin') return 'admin';
+
+        // Fallback: verifica se o nome contém "diretor" ou "admin"
+        if (nome.includes('diretor')) return 'diretoria';
+        if (nome.includes('admin')) return 'admin';
+
+        return 'outros';
+    }
+
     function ordenarDados(docs) {
         docs.sort((a, b) => {
             let valA, valB;
             switch (sortField) {
-                case 'numero':
-                    valA = a.numero || 0;
-                    valB = b.numero || 0;
-                    break;
-                case 'titulo':
-                    valA = (a.titulo || '').toLowerCase();
-                    valB = (b.titulo || '').toLowerCase();
-                    break;
-                case 'aberto_por_nome':
-                    valA = (a.aberto_por_nome || '').toLowerCase();
-                    valB = (b.aberto_por_nome || '').toLowerCase();
-                    break;
-                case 'prioridade':
+                case 'numero': valA = a.numero || 0; valB = b.numero || 0; break;
+                case 'titulo': valA = (a.titulo || '').toLowerCase(); valB = (b.titulo || '').toLowerCase(); break;
+                case 'aberto_por_nome': valA = (a.aberto_por_nome || '').toLowerCase(); valB = (b.aberto_por_nome || '').toLowerCase(); break;
+                case 'prioridade': {
                     const prioOrder = { 'emergencial': 0, 'urgente': 1, 'normal': 2 };
                     valA = prioOrder[a.prioridade] !== undefined ? prioOrder[a.prioridade] : 99;
                     valB = prioOrder[b.prioridade] !== undefined ? prioOrder[b.prioridade] : 99;
                     break;
-                case 'status':
-                    valA = (a.status || '').toLowerCase();
-                    valB = (b.status || '').toLowerCase();
+                }
+                case 'status': valA = (a.status || '').toLowerCase(); valB = (b.status || '').toLowerCase(); break;
+                case 'criado_em': valA = a.criado_em ? new Date(a.criado_em).getTime() : 0; valB = b.criado_em ? new Date(b.criado_em).getTime() : 0; break;
+                case 'pendente_em': valA = (a.direcionado_para_nome || '').toLowerCase(); valB = (b.direcionado_para_nome || '').toLowerCase(); break;
+                case 'dias_pendente': {
+                    valA = getUltimaDataHistorico(a); valB = getUltimaDataHistorico(b);
+                    valA = valA ? new Date(valA).getTime() : 0; valB = valB ? new Date(valB).getTime() : 0;
                     break;
-                case 'criado_em':
-                    valA = a.criado_em ? new Date(a.criado_em).getTime() : 0;
-                    valB = b.criado_em ? new Date(b.criado_em).getTime() : 0;
-                    break;
-                case 'pendente_em':
-                    valA = (a.direcionado_para_nome || '').toLowerCase();
-                    valB = (b.direcionado_para_nome || '').toLowerCase();
-                    break;
-                case 'dias_pendente':
-                    valA = getUltimaDataHistorico(a);
-                    valB = getUltimaDataHistorico(b);
-                    valA = valA ? new Date(valA).getTime() : 0;
-                    valB = valB ? new Date(valB).getTime() : 0;
-                    break;
-                case 'dias_aberto':
-                    valA = a.criado_em ? new Date(a.criado_em).getTime() : 0;
-                    valB = b.criado_em ? new Date(b.criado_em).getTime() : 0;
-                    break;
-                default:
-                    valA = 0; valB = 0;
+                }
+                case 'dias_aberto': valA = a.criado_em ? new Date(a.criado_em).getTime() : 0; valB = b.criado_em ? new Date(b.criado_em).getTime() : 0; break;
+                default: valA = 0; valB = 0;
             }
             if (typeof valA === 'string') {
                 return sortAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
@@ -214,14 +240,12 @@
         return docs;
     }
 
-    // --- Renderização da tabela ---
     function renderizarTabela(docs) {
         if (!docs || docs.length === 0) {
             listaDiv.innerHTML = '<p class="empty-message">Nenhuma ordem encontrada com os filtros atuais.</p>';
             return;
         }
 
-        // Ordenar
         docs = ordenarDados(docs);
 
         let html = `<div class="table-responsive"><table>
@@ -276,56 +300,37 @@
         html += `</tbody></table></div>`;
         listaDiv.innerHTML = html;
 
-        // Adicionar event listeners nos cabeçalhos
         document.querySelectorAll('th[data-sort]').forEach(th => {
             th.addEventListener('click', () => {
                 const field = th.dataset.sort;
-                if (sortField === field) {
-                    sortAsc = !sortAsc;
-                } else {
-                    sortField = field;
-                    sortAsc = false; // inicia decrescente para os primeiros cliques (mais comum)
-                }
-                // Reaplica filtros e ordena
+                if (sortField === field) sortAsc = !sortAsc;
+                else { sortField = field; sortAsc = false; }
                 aplicarFiltros();
             });
         });
     }
 
-    // --- Função principal de filtragem ---
     function aplicarFiltros() {
-        const statusFiltro = filtroStatus.value;
-        const pendenteFiltro = filtroPendente.value;
-        const busca = filtroBusca.value.trim().toLowerCase();
-
-        // Usa os dados brutos armazenados na variável global `allDocs`
         let docs = window.allDocs || [];
 
-        // Filtro de Status
+        // Filtro Status
+        const statusFiltro = filtroStatus.value;
         if (statusFiltro === 'aberto') {
             docs = docs.filter(d => d.status === 'aberta' || d.status === 'em_andamento');
         } else if (statusFiltro === 'fechado') {
             docs = docs.filter(d => d.status === 'concluida' || d.status === 'cancelada');
         }
 
-        // Filtro de "Pendente em"
+        // Filtro Pendente em
+        const pendenteFiltro = filtroPendente.value;
         if (pendenteFiltro === 'diretoria') {
-            docs = docs.filter(d => {
-                const nome = (d.direcionado_para_nome || '').toLowerCase();
-                const isDiretor = (d.direcionado_para && d.direcionado_para.startsWith('group:diretor')) ||
-                                  (d.direcionado_para && !d.direcionado_para.startsWith('group:') && d.direcionado_para_nome && nome.includes('diretor'));
-                return isDiretor;
-            });
+            docs = docs.filter(d => getPendenteCategoria(d) === 'diretoria');
         } else if (pendenteFiltro === 'admin') {
-            docs = docs.filter(d => {
-                const nome = (d.direcionado_para_nome || '').toLowerCase();
-                const isAdmin = (d.direcionado_para && d.direcionado_para.startsWith('group:admin')) ||
-                                (d.direcionado_para && !d.direcionado_para.startsWith('group:') && d.direcionado_para_nome && nome.includes('admin'));
-                return isAdmin;
-            });
+            docs = docs.filter(d => getPendenteCategoria(d) === 'admin');
         }
 
-        // Filtro de busca textual
+        // Busca
+        const busca = filtroBusca.value.trim().toLowerCase();
         if (busca) {
             docs = docs.filter(d => {
                 const num = d.numero ? String(d.numero) : '';
@@ -338,13 +343,9 @@
         renderizarTabela(docs);
     }
 
-    // --- Carregar dados do Firestore ---
     function carregarOS() {
         listaDiv.innerHTML = '<p class="empty-message">Carregando ordens de serviço...</p>';
-        let query = db.collection('ordens_servico');
-
-        // Busca todos (sem filtro de status no backend, faremos no front)
-        query.get()
+        db.collection('ordens_servico').get()
             .then(snapshot => {
                 if (snapshot.empty) {
                     window.allDocs = [];
@@ -356,7 +357,6 @@
                     docs.push({ id: doc.id, ...doc.data() });
                 });
                 window.allDocs = docs;
-                // Aplica filtros iniciais (default: Aberto)
                 aplicarFiltros();
             })
             .catch(err => {
@@ -365,29 +365,17 @@
             });
     }
 
-    // --- Event listeners ---
-    btnFiltrar.addEventListener('click', () => {
-        aplicarFiltros();
-    });
-
-    // Ao mudar os selects, já aplica automaticamente (opcional)
-    [filtroStatus, filtroPendente].forEach(el => {
-        el.addEventListener('change', aplicarFiltros);
-    });
-    // Busca com delay (após 300ms de inatividade)
+    btnFiltrar.addEventListener('click', aplicarFiltros);
+    [filtroStatus, filtroPendente].forEach(el => el.addEventListener('change', aplicarFiltros));
     let timeoutBusca;
     filtroBusca.addEventListener('input', () => {
         clearTimeout(timeoutBusca);
         timeoutBusca = setTimeout(aplicarFiltros, 300);
     });
 
-    // --- Autenticação ---
     auth.onAuthStateChanged((user) => {
-        if (user) {
-            carregarOS();
-        } else {
-            window.location.href = 'index.html';
-        }
+        if (user) carregarOS();
+        else window.location.href = 'index.html';
     });
 </script>
 </body>
