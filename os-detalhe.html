@@ -74,11 +74,9 @@
         .badge-emergencial { background: #ffcdd2; color: #b71c1c; font-weight: bold; }
         .badge-urgente { background: #fff9c4; color: #f57f17; font-weight: bold; }
         .badge-normal { background: #c8e6c9; color: #1b5e20; font-weight: bold; }
-        /* Cores para badges de perfil (iguais ao os-list) */
         .badge-grupo { background: #ced4da; color: #000; }
         .badge-admin { background: #ffe082; color: #000; }
         .badge-diretor { background: #a5d6a7; color: #000; }
-        .badge-outros { background: #ced4da; color: #000; }
         .badge .icone { margin-right: 4px; }
 
         /* HISTÓRICO - CARDS */
@@ -95,7 +93,7 @@
         .card-diretor { border-left-color: #a5d6a7; background: #f1f8e9; }
         .card-master { border-left-color: #ffcc80; background: #fff8e1; }
         .card-outros { border-left-color: #ced4da; background: #f8f9fa; }
-        .card-ultimo { border-left-color: #2e7d32; background: #f1f8e9; border: 2px solid #a5d6a7; }
+        .card-ultimo { border-left-color: #c62828; background: #ffebee; border: 2px solid #ef9a9a; }
 
         .card .card-header {
             display: flex;
@@ -305,7 +303,7 @@
     }
 
     // ================================================================
-    // FUNÇÕES PARA BADGE COM ÍCONE (igual ao os-list)
+    // FUNÇÕES PARA BADGE (SEM DUPLICAÇÃO DE ÍCONE)
     // ================================================================
     function getBadgeDirecionado(data) {
         const target = data.direcionado_para;
@@ -323,11 +321,10 @@
             else if (funcao === 'diretor') classe = 'badge-diretor';
             else classe = 'badge-grupo';
         } else {
-            // Fallback: verifica se o nome contém admin/diretor
             const nome = (data.direcionado_para_nome || '').toLowerCase();
             if (nome.includes('admin')) { classe = 'badge-admin'; icone = '👤'; }
             else if (nome.includes('diretor')) { classe = 'badge-diretor'; icone = '👤'; }
-            else { classe = 'badge-grupo'; icone = '👥'; }
+            else { classe = 'badge-grupo'; icone = '👤'; }
         }
 
         return `<span class="badge ${classe}"><span class="icone">${icone}</span> ${texto}</span>`;
@@ -345,7 +342,6 @@
             else if (funcao === 'master') classe = 'badge-grupo';
             else classe = 'badge-grupo';
         } else {
-            // Fallback
             const nomeLower = (nome || '').toLowerCase();
             if (nomeLower.includes('admin')) classe = 'badge-admin';
             else if (nomeLower.includes('diretor')) classe = 'badge-diretor';
@@ -423,10 +419,8 @@
         };
         const prioridadeLabel = prioridadeMap[osData.prioridade] || osData.prioridade;
 
-        // "Aberto por" com badge (com ícone)
+        // Badges com ícone único
         const abertoPorBadge = getBadgeAbertoPor(osData.aberto_por, nomeAbertura);
-
-        // "Direcionado para" com badge (com ícone)
         const direcionadoBadge = getBadgeDirecionado(osData);
 
         const campos = [
@@ -523,7 +517,7 @@
                 `;
             });
 
-            // ---- ÚLTIMO CARD ----
+            // ---- ÚLTIMO CARD (fundo vermelho opaco) ----
             html += `<div class="card card-ultimo">`;
             html += `<div class="card-header"><span class="usuario" style="font-size:15px;">➕ Adicionar Ação</span></div>`;
             html += `<div class="card-body">`;

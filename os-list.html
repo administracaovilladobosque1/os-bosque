@@ -19,111 +19,66 @@
         .btn-success:hover { background: #2e7d32; }
         .btn-voltar { background: #558b2f; }
         .btn-voltar:hover { background: #33691e; }
-
-        /* ===== FILTROS ===== */
         .filtros {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 8px;
             margin: 12px 0 16px;
             align-items: center;
         }
-        .filtros select,
-        .filtros input[type="text"] {
-            padding: 8px 12px;
+        .filtros select, .filtros input {
+            padding: 6px 10px;
             border: 1px solid #a5d6a7;
             border-radius: 6px;
             font-size: 14px;
             background: #fafffe;
-            flex: 1 1 160px;
+            flex: 0 1 auto;
             min-width: 120px;
+        }
+        .filtros input[type="text"] {
+            flex: 1 1 150px;
+            min-width: 100px;
         }
         .filtros .btn-filtrar {
             background: #2e7d32;
             color: white;
             border: none;
-            padding: 8px 20px;
+            padding: 6px 16px;
             border-radius: 6px;
             cursor: pointer;
             font-size: 14px;
-            font-weight: 600;
-            flex: 0 1 auto;
         }
         .filtros .grupo-filtro {
             display: flex;
-            flex-wrap: wrap;
             align-items: center;
-            gap: 4px 8px;
-            flex: 1 1 200px;
+            gap: 4px;
+            flex-wrap: wrap;
         }
         .filtros .grupo-filtro label {
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
             color: #1b5e20;
             margin-right: 2px;
-            flex: 0 0 auto;
         }
         .filtros .grupo-filtro input {
-            flex: 1 1 70px;
-            min-width: 60px;
-            padding: 6px 8px;
-            border: 1px solid #a5d6a7;
-            border-radius: 6px;
-            font-size: 14px;
+            min-width: 70px;
+            flex: 0 1 80px;
         }
-
-        /* ===== TABELA (desktop) ===== */
         .table-responsive { overflow-x: auto; margin-top: 12px; }
         table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 1000px; }
         th { background: #c8e6c9; padding: 10px 8px; text-align: left; color: #1b5e20; border-bottom: 2px solid #81c784; white-space: nowrap; cursor: pointer; user-select: none; position: relative; }
         th:hover { background: #b8d9b9; }
         th .sorter { display: inline-block; margin-left: 4px; font-size: 12px; }
         td { padding: 10px 8px; border-bottom: 1px solid #c8e6c9; vertical-align: middle; }
-
-        /* ===== CARDS (mobile) ===== */
-        .cards-container {
-            display: none;
-            flex-direction: column;
-            gap: 12px;
-            margin-top: 12px;
-        }
-        .card {
-            background: #fff;
-            border: 1px solid #a5d6a7;
-            border-radius: 12px;
-            padding: 14px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .card:active { background: #f1f8e9; }
-        .card .card-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 4px 0;
-            border-bottom: 1px solid #e8f5e9;
-        }
-        .card .card-row:last-child { border-bottom: none; }
-        .card .card-label {
-            font-weight: 600;
-            color: #1b5e20;
-            font-size: 13px;
-            flex: 0 0 80px;
-        }
-        .card .card-value {
-            font-size: 14px;
-            text-align: right;
-            word-break: break-word;
-            flex: 1;
-        }
-        .card .card-value .badge {
+        .badge {
             display: inline-block;
-            padding: 2px 10px;
+            padding: 3px 10px;
             border-radius: 20px;
             font-size: 12px;
             font-weight: 600;
+            white-space: nowrap;
         }
+        .badge .icone { margin-right: 4px; }
         .badge-aberta { background: #e3f2fd; color: #0d47a1; }
         .badge-em_andamento { background: #fff3e0; color: #e65100; }
         .badge-concluida { background: #c8e6c9; color: #1b5e20; }
@@ -131,53 +86,21 @@
         .badge-emergencial { background: #ffcdd2; color: #b71c1c; font-weight: bold; }
         .badge-urgente { background: #fff9c4; color: #f57f17; font-weight: bold; }
         .badge-normal { background: #c8e6c9; color: #1b5e20; font-weight: bold; }
+        .badge-grupo { background: #ced4da; color: #000; }
+        .badge-admin { background: #ffe082; color: #000; }
+        .badge-diretor { background: #a5d6a7; color: #000; }
         .dias-numero { font-weight: 700; color: #1b5e20; }
         .dias-hoje { color: #558b2f; }
         .empty-message { text-align: center; color: #555; padding: 30px 0; }
-
-        /* ===== RESPONSIVO ===== */
-        @media (max-width: 768px) {
-            .table-responsive { display: none; }
-            .cards-container { display: flex; }
+        @media (max-width: 600px) {
             .container { padding: 14px; }
-            .page-title { font-size: 20px; }
-
-            /* FILTROS EM COLUNA */
-            .filtros {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 10px;
-            }
-            .filtros select,
-            .filtros input[type="text"] {
-                flex: 1 1 auto;
-                width: 100%;
-                min-width: unset;
-                padding: 12px;
-                font-size: 16px;
-            }
-            .filtros .grupo-filtro {
-                flex: 1 1 auto;
-                width: 100%;
-                flex-wrap: wrap;
-                gap: 6px;
-            }
-            .filtros .grupo-filtro label {
-                flex: 0 0 100%;
-                margin-bottom: 2px;
-            }
-            .filtros .grupo-filtro input {
-                flex: 1 1 calc(50% - 4px);
-                min-width: 60px;
-                padding: 12px 10px;
-                font-size: 16px;
-            }
-            .filtros .btn-filtrar {
-                width: 100%;
-                padding: 14px;
-                font-size: 16px;
-                text-align: center;
-            }
+            .filtros { flex-wrap: nowrap; overflow-x: auto; gap: 6px; padding-bottom: 4px; }
+            .filtros select, .filtros input { flex: 0 0 auto; min-width: 100px; font-size: 13px; padding: 5px 8px; }
+            .filtros input[type="text"] { flex: 1 1 120px; min-width: 80px; }
+            .filtros .grupo-filtro input { min-width: 60px; flex: 0 1 70px; }
+            .filtros .btn-filtrar { padding: 5px 12px; font-size: 13px; flex-shrink: 0; }
+            table { font-size: 13px; min-width: 700px; }
+            th, td { padding: 6px 6px; }
         }
     </style>
 </head>
@@ -200,7 +123,6 @@
             <option value="diretoria">Diretoria</option>
             <option value="admin">Admin</option>
         </select>
-
         <span class="grupo-filtro">
             <label>Reclamante:</label>
             <input type="text" id="filtroQuadraReclamante" placeholder="Quadra">
@@ -211,16 +133,11 @@
             <input type="text" id="filtroQuadraReclamada" placeholder="Quadra">
             <input type="text" id="filtroLoteReclamada" placeholder="Lote">
         </span>
-
         <input type="text" id="filtroBusca" placeholder="Buscar...">
         <button class="btn-filtrar" id="btnFiltrar">Filtrar</button>
     </div>
 
-    <!-- Tabela (desktop) -->
-    <div id="listaContainerTabela"><p class="empty-message">Carregando ordens de serviço...</p></div>
-
-    <!-- Cards (mobile) -->
-    <div id="listaContainerCards" class="cards-container"><p class="empty-message">Carregando...</p></div>
+    <div id="listaContainer"><p class="empty-message">Carregando ordens de serviço...</p></div>
 </div>
 
 <script>
@@ -272,8 +189,7 @@
     // ================================================================
     // ELEMENTOS
     // ================================================================
-    const listaTabela = document.getElementById('listaContainerTabela');
-    const listaCards = document.getElementById('listaContainerCards');
+    const listaDiv = document.getElementById('listaContainer');
     const filtroStatus = document.getElementById('filtroStatus');
     const filtroPendente = document.getElementById('filtroPendente');
     const filtroBusca = document.getElementById('filtroBusca');
@@ -368,20 +284,17 @@
     }
 
     // ================================================================
-    // RENDERIZAR (tabela + cards)
+    // RENDERIZAR TABELA (OS LIST)
     // ================================================================
-    function renderizar(docs) {
+    function renderizarTabela(docs) {
         if (!docs || docs.length === 0) {
-            const msg = '<p class="empty-message">Nenhuma ordem encontrada com os filtros atuais.</p>';
-            listaTabela.innerHTML = msg;
-            listaCards.innerHTML = msg;
+            listaDiv.innerHTML = '<p class="empty-message">Nenhuma ordem encontrada com os filtros atuais.</p>';
             return;
         }
 
         docs = ordenarDados(docs);
 
-        // ----- TABELA (desktop) -----
-        let htmlTabela = `<div class="table-responsive"><table>
+        let html = `<div class="table-responsive"><table>
             <thead><tr>
                 <th data-sort="numero">Nº <span class="sorter">${sortField === 'numero' ? (sortAsc ? '▲' : '▼') : '⇅'}</span></th>
                 <th data-sort="titulo">Título <span class="sorter">${sortField === 'titulo' ? (sortAsc ? '▲' : '▼') : '⇅'}</span></th>
@@ -394,9 +307,6 @@
                 <th data-sort="dias_aberto">Dias aberto <span class="sorter">${sortField === 'dias_aberto' ? (sortAsc ? '▲' : '▼') : '⇅'}</span></th>
             </tr></thead><tbody>`;
 
-        // ----- CARDS (mobile) -----
-        let htmlCards = '';
-
         docs.forEach(data => {
             const id = data.id;
             const statusClass = `badge-${data.status || 'aberta'}`;
@@ -406,15 +316,14 @@
             const pData = priorityMap[p] || priorityMap['normal'];
             const prioridadeHtml = `<span class="badge ${pData.class}"><span class="icone">${pData.icon}</span> ${pData.label}</span>`;
 
-            // Pendente em – cores
+            // ---- PENDENTE EM (COM BADGE E ÍCONE, SEM DUPLICAÇÃO) ----
             let pendenteCor = '#ced4da';
             let icone = '👥';
             let texto = data.direcionado_para_nome || '—';
+
             if (data.direcionado_para && data.direcionado_para.startsWith('group:')) {
-                if (data.direcionado_para === 'group:admin' || data.direcionado_para === 'group:diretor') {
-                    pendenteCor = '#ced4da';
-                }
                 icone = '👥';
+                pendenteCor = '#ced4da';
             } else {
                 const uid = data.direcionado_para;
                 icone = '👤';
@@ -424,30 +333,23 @@
                     else if (funcao === 'diretor') pendenteCor = '#a5d6a7';
                     else pendenteCor = '#ced4da';
                 } else {
-                    pendenteCor = '#ced4da';
+                    const nome = (data.direcionado_para_nome || '').toLowerCase();
+                    if (nome.includes('admin')) { pendenteCor = '#ffe082'; icone = '👤'; }
+                    else if (nome.includes('diretor')) { pendenteCor = '#a5d6a7'; icone = '👤'; }
+                    else { pendenteCor = '#ced4da'; icone = '👤'; }
                 }
             }
+
+            // Badge único (sem duplicação de ícone)
             const pendenteHtml = `<span class="badge" style="background-color:${pendenteCor}; color:#000;"><span class="icone">${icone}</span> ${texto}</span>`;
 
-            // Data/Hora sem segundos
-            let dataHora = '—';
-            if (data.criado_em) {
-                const d = new Date(data.criado_em);
-                const dia = String(d.getDate()).padStart(2, '0');
-                const mes = String(d.getMonth() + 1).padStart(2, '0');
-                const ano = d.getFullYear();
-                const hora = String(d.getHours()).padStart(2, '0');
-                const min = String(d.getMinutes()).padStart(2, '0');
-                dataHora = `${dia}/${mes}/${ano} ${hora}:${min}`;
-            }
-
+            const dataHora = data.criado_em ? new Date(data.criado_em).toLocaleString('pt-BR') : '—';
             const diasAberto = data.criado_em ? calcularDias(data.criado_em) : '—';
             let diasPendente = '—';
             const ultData = getUltimaDataHistorico(data);
             if (ultData) diasPendente = calcularDias(ultData);
 
-            // --- LINHA DA TABELA ---
-            htmlTabela += `
+            html += `
                 <tr onclick="window.location.href='os-detalhe.html?id=${id}'" style="cursor:pointer;">
                     <td><strong>${data.numero || 'N/A'}</strong></td>
                     <td>${data.titulo || 'Sem título'}</td>
@@ -460,55 +362,10 @@
                     <td><span class="dias-numero">${diasAberto}</span></td>
                 </tr>
             `;
-
-            // --- CARD (mobile) ---
-            htmlCards += `
-                <div class="card" onclick="window.location.href='os-detalhe.html?id=${id}'">
-                    <div class="card-row">
-                        <span class="card-label">Nº</span>
-                        <span class="card-value"><strong>${data.numero || 'N/A'}</strong></span>
-                    </div>
-                    <div class="card-row">
-                        <span class="card-label">Título</span>
-                        <span class="card-value">${data.titulo || 'Sem título'}</span>
-                    </div>
-                    <div class="card-row">
-                        <span class="card-label">Aberto por</span>
-                        <span class="card-value">${data.aberto_por_nome || '—'}</span>
-                    </div>
-                    <div class="card-row">
-                        <span class="card-label">Prioridade</span>
-                        <span class="card-value">${prioridadeHtml}</span>
-                    </div>
-                    <div class="card-row">
-                        <span class="card-label">Status</span>
-                        <span class="card-value"><span class="badge ${statusClass}">${statusLabel.replace('_',' ').toUpperCase()}</span></span>
-                    </div>
-                    <div class="card-row">
-                        <span class="card-label">Data/Hora</span>
-                        <span class="card-value">${dataHora}</span>
-                    </div>
-                    <div class="card-row">
-                        <span class="card-label">Pendente em</span>
-                        <span class="card-value">${pendenteHtml}</span>
-                    </div>
-                    <div class="card-row">
-                        <span class="card-label">Dias pendente</span>
-                        <span class="card-value"><span class="dias-numero">${diasPendente}</span></span>
-                    </div>
-                    <div class="card-row">
-                        <span class="card-label">Dias aberto</span>
-                        <span class="card-value"><span class="dias-numero">${diasAberto}</span></span>
-                    </div>
-                </div>
-            `;
         });
+        html += `</tbody></table></div>`;
+        listaDiv.innerHTML = html;
 
-        htmlTabela += `</tbody></table></div>`;
-        listaTabela.innerHTML = htmlTabela;
-        listaCards.innerHTML = htmlCards;
-
-        // Event listeners para ordenação na tabela (desktop)
         document.querySelectorAll('th[data-sort]').forEach(th => {
             th.addEventListener('click', () => {
                 const field = th.dataset.sort;
@@ -525,6 +382,7 @@
     function aplicarFiltros() {
         let docs = window.allDocs || [];
 
+        // Status
         const statusFiltro = filtroStatus.value;
         if (statusFiltro === 'aberto') {
             docs = docs.filter(d => d.status === 'aberta' || d.status === 'em_andamento');
@@ -532,6 +390,7 @@
             docs = docs.filter(d => d.status === 'concluida' || d.status === 'cancelada');
         }
 
+        // Pendente
         const pendenteFiltro = filtroPendente.value;
         if (pendenteFiltro === 'diretoria') {
             docs = docs.filter(d => getPendenteCategoria(d) === 'diretoria');
@@ -539,16 +398,19 @@
             docs = docs.filter(d => getPendenteCategoria(d) === 'admin');
         }
 
+        // Reclamante
         const qReclamante = filtroQuadraReclamante.value.trim().toLowerCase();
         const lReclamante = filtroLoteReclamante.value.trim().toLowerCase();
         if (qReclamante) docs = docs.filter(d => (d.quadra_reclamante || '').toLowerCase().includes(qReclamante));
         if (lReclamante) docs = docs.filter(d => (d.lote_reclamante || '').toLowerCase().includes(lReclamante));
 
+        // Reclamado
         const qReclamada = filtroQuadraReclamada.value.trim().toLowerCase();
         const lReclamada = filtroLoteReclamada.value.trim().toLowerCase();
         if (qReclamada) docs = docs.filter(d => (d.quadra_reclamada || '').toLowerCase().includes(qReclamada));
         if (lReclamada) docs = docs.filter(d => (d.lote_reclamada || '').toLowerCase().includes(lReclamada));
 
+        // Busca
         const busca = filtroBusca.value.trim().toLowerCase();
         if (busca) {
             docs = docs.filter(d => {
@@ -559,15 +421,14 @@
             });
         }
 
-        renderizar(docs);
+        renderizarTabela(docs);
     }
 
     // ================================================================
     // CARREGAR DADOS
     // ================================================================
     function carregarOS() {
-        listaTabela.innerHTML = '<p class="empty-message">Carregando ordens de serviço...</p>';
-        listaCards.innerHTML = '<p class="empty-message">Carregando...</p>';
+        listaDiv.innerHTML = '<p class="empty-message">Carregando ordens de serviço...</p>';
         db.collection('usuarios').where('status', '==', 'ativo').get()
             .then(snapshot => {
                 userMap = {};
@@ -580,9 +441,7 @@
             .then(snapshot => {
                 if (snapshot.empty) {
                     window.allDocs = [];
-                    const msg = '<p class="empty-message">Nenhuma ordem de serviço encontrada.</p>';
-                    listaTabela.innerHTML = msg;
-                    listaCards.innerHTML = msg;
+                    listaDiv.innerHTML = '<p class="empty-message">Nenhuma ordem de serviço encontrada.</p>';
                     return;
                 }
                 let docs = [];
@@ -594,9 +453,7 @@
             })
             .catch(err => {
                 console.error('Erro ao carregar OS:', err);
-                const msg = `<p style="color:red;">Erro ao carregar: ${err.message}</p>`;
-                listaTabela.innerHTML = msg;
-                listaCards.innerHTML = msg;
+                listaDiv.innerHTML = `<p style="color:red;">Erro ao carregar: ${err.message}</p>`;
             });
     }
 
