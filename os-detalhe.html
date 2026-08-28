@@ -67,14 +67,10 @@
             white-space: nowrap;
         }
         .badge .icone { margin-right: 4px; }
-
-        /* Cores dos badges */
         .badge-grupo { background: #ced4da; color: #000; }
         .badge-admin { background: #ffe082; color: #000; }
         .badge-diretor { background: #a5d6a7; color: #000; }
         .badge-master { background: #ffcc80; color: #000; }
-
-        /* Status badges */
         .badge-aberta { background: #e3f2fd; color: #0d47a1; }
         .badge-em_andamento { background: #fff3e0; color: #e65100; }
         .badge-concluida { background: #c8e6c9; color: #1b5e20; }
@@ -93,7 +89,6 @@
             border-left-width: 4px;
             border-left-style: solid;
         }
-        /* Fundos dos cards conforme perfil */
         .card-admin { background: #fffde7; border-left-color: #ffe082; }
         .card-diretor { background: #f1f8e9; border-left-color: #a5d6a7; }
         .card-master { background: #fff8e1; border-left-color: #ffcc80; }
@@ -312,7 +307,6 @@
             else if (funcao === 'master') { classe = 'badge-master'; icone = '👤'; }
             else { classe = 'badge-grupo'; icone = '👤'; }
         } else {
-            // Fallback: inferir pelo nome
             const nomeLower = (nome || '').toLowerCase();
             if (nomeLower.includes('admin')) { classe = 'badge-admin'; icone = '👤'; }
             else if (nomeLower.includes('diretor')) { classe = 'badge-diretor'; icone = '👤'; }
@@ -461,7 +455,6 @@
         });
 
         osInfoContainer.innerHTML = infoHTML;
-        // Cor de fundo da área de informações (quem abriu)
         const funcaoAbertura = getFuncao(osData.aberto_por);
         const corAbertura = funcaoAbertura === 'admin' ? '#ffe082' :
                             funcaoAbertura === 'diretor' ? '#a5d6a7' :
@@ -474,12 +467,13 @@
         if (historico.length === 0) {
             historicoContainer.innerHTML = '<p>Nenhuma ação registrada.</p>';
         } else {
-            // Ordena por data crescente (mais antigo primeiro)
             historico.sort((a, b) => (a.data || '').localeCompare(b.data || ''));
             let html = '';
             let dataAnterior = null;
+            // Data de abertura da OS para comparar com o primeiro card
+            const dataAbertura = osData.criado_em;
 
-            historico.forEach((item) => {
+            historico.forEach((item, index) => {
                 if (item.acao === 'abertura') return;
 
                 const uid = item.usuario_uid;
@@ -498,20 +492,36 @@
 
                 let direcionadoHtml = '';
                 if (item.direcionado_para) {
-                    const destino = item.direcionado_para_nome || item.direcionado_para;
-                    direcionadoHtml = `<div class="direcionado">🎯 Direcionado para: ${destino}</div>`;
+                    // Usa a mesma função para exibir badge do direcionado
+                    const direcionadoData = {
+                        direcionado_para: item.direcionado_para,
+                        direcionado_para_nome: item.direcionado_para_nome || item.direcionado_para
+                    };
+                    direcionadoHtml = `<div class="direcionado">🎯 Direcionado para: ${getBadgeDirecionado(direcionadoData)}</div>`;
                 }
 
-                // Cálculo de horas desde o card anterior
+                // Cálculo de horas decorridas
                 let horasDecorridas = '';
-                if (dataAnterior !== null) {
-                    const diffMs = new Date(item.data) - new Date(dataAnterior);
-                    const diffHoras = Math.round(diffMs / (1000 * 60 * 60));
-                    if (diffHoras === 0) horasDecorridas = ' (menos de 1 hora depois)';
-                    else if (diffHoras === 1) horasDecorridas = ' (1 hora depois)';
-                    else horasDecorridas = ` (${diffHoras} horas depois)`;
+                if (index === 0) {
+                    // Primeiro card: calcula desde a abertura da OS
+                    if (dataAbertura) {
+                        const diffMs = new Date(item.data) - new Date(dataAbertura);
+                        const diffHoras = Math.round(diffMs / (1000 * 60 * 60));
+                        if (diffHoras === 0) horasDecorridas = ' (menos de 1 hora depois)';
+                        else if (diffHoras === 1) horasDecorridas = ' (1 hora depois)';
+                        else horasDecorridas = ` (${diffHoras} horas depois)`;
+                    } else {
+                        horasDecorridas = ' (primeira resposta)';
+                    }
                 } else {
-                    horasDecorridas = ' (primeira resposta)';
+                    // Demais cards: calcula desde o card anterior
+                    if (dataAnterior !== null) {
+                        const diffMs = new Date(item.data) - new Date(dataAnterior);
+                        const diffHoras = Math.round(diffMs / (1000 * 60 * 60));
+                        if (diffHoras === 0) horasDecorridas = ' (menos de 1 hora depois)';
+                        else if (diffHoras === 1) horasDecorridas = ' (1 hora depois)';
+                        else horasDecorridas = ` (${diffHoras} horas depois)`;
+                    }
                 }
                 dataAnterior = item.data;
 
