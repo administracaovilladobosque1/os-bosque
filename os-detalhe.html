@@ -283,7 +283,7 @@
     }
 
     // ================================================================
-    // FUNÇÕES PARA BADGE (COM ÍCONE ÚNICO)
+    // FUNÇÕES DE BADGE (garantindo um único ícone)
     // ================================================================
     function getBadgePerfil(uid, nome) {
         let texto = nome || '—';
@@ -329,7 +329,6 @@
             else { classe = 'badge-grupo'; icone = '👤'; }
         }
 
-        // Retorna APENAS o badge, sem texto extra
         return `<span class="badge ${classe}"><span class="icone">${icone}</span> ${texto}</span>`;
     }
 
@@ -369,7 +368,7 @@
     }
 
     // ================================================================
-    // RENDERIZAR DETALHE
+    // RENDERIZAR DETALHE (refeito do zero)
     // ================================================================
     function renderizarDetalhe() {
         if (!osData) return;
@@ -387,7 +386,7 @@
         osStatusBadge.textContent = statusLabel;
         osStatusBadge.className = `badge badge-${osData.status || 'aberta'}`;
 
-        // ---- INFORMAÇÕES ----
+        // ---- INFORMAÇÕES DA OS ----
         const nomeAbertura = getNome(osData.aberto_por);
         const abertoPorBadge = getBadgePerfil(osData.aberto_por, nomeAbertura);
         const direcionadoBadge = getBadgeDirecionado(osData);
@@ -458,12 +457,15 @@
             return;
         }
 
+        // Ordena por data crescente
         historico.sort((a, b) => (a.data || '').localeCompare(b.data || ''));
+
         let html = '';
         let dataAnterior = null;
         const dataAbertura = osData.criado_em;
 
         historico.forEach((item, index) => {
+            // Ignora o evento de abertura
             if (item.acao === 'abertura') return;
 
             const uid = item.usuario_uid;
@@ -480,7 +482,7 @@
                 mensagem = `<span style="text-decoration:line-through; color:#999; font-style:italic;">${antigo}</span> → ${novo} <span style="color:#999; font-size:12px;">(edit em ${formatarDataCurta(item.data)})</span>`;
             }
 
-            // ----- DIREcionado (apenas badge, sem texto extra) -----
+            // ---------- DIRECIONADO (apenas o badge, sem ícone extra) ----------
             let direcionadoHtml = '';
             if (item.direcionado_para) {
                 const direcionadoData = {
@@ -490,11 +492,11 @@
                 direcionadoHtml = `<div class="direcionado">🎯 Direcionado para: ${getBadgeDirecionado(direcionadoData)}</div>`;
             }
 
-            // ----- CÁLCULO DE HORAS -----
+            // ---------- CÁLCULO DE HORAS ----------
             let horasDecorridas = '';
             const dataItem = new Date(item.data);
             if (index === 0) {
-                // Primeiro card: compara com a abertura
+                // Primeiro card: calcula desde a abertura
                 if (dataAbertura) {
                     const diffMs = dataItem - new Date(dataAbertura);
                     const diffHoras = Math.round(diffMs / (1000 * 60 * 60));
@@ -505,7 +507,7 @@
                     horasDecorridas = ' (primeira resposta)';
                 }
             } else {
-                // Demais cards: compara com o card anterior
+                // Demais cards: calcula desde o card anterior
                 if (dataAnterior !== null) {
                     const diffMs = dataItem - new Date(dataAnterior);
                     const diffHoras = Math.round(diffMs / (1000 * 60 * 60));
@@ -516,7 +518,7 @@
             }
             dataAnterior = item.data;
 
-            // Badge do autor (consistente)
+            // Badge do autor
             const autorBadge = getBadgePerfil(uid, nome);
 
             let cardClass = 'card-outros';
@@ -539,7 +541,7 @@
             `;
         });
 
-        // ---- ÚLTIMO CARD ----
+        // ---- ÚLTIMO CARD (Adicionar Ação) ----
         html += `<div class="card card-ultimo">`;
         html += `<div class="card-header"><span class="usuario" style="font-size:15px;">➕ Adicionar Ação</span></div>`;
         html += `<div class="card-body">`;
@@ -581,7 +583,6 @@
 
         document.getElementById('btnConcluir')?.addEventListener('click', concluirOS);
         document.getElementById('btnReabrir')?.addEventListener('click', reabrirOS);
-
         popularDirecionamento();
 
         document.getElementById('formNovaAcao').addEventListener('submit', (e) => {
