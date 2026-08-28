@@ -463,9 +463,9 @@
         let html = '';
         let dataAnterior = null;
         const dataAbertura = osData.criado_em;
+        let respostaIndex = 0; // contador apenas para cards de resposta
 
-        historico.forEach((item, index) => {
-            // Ignora o evento de abertura
+        historico.forEach((item) => {
             if (item.acao === 'abertura') return;
 
             const uid = item.usuario_uid;
@@ -495,14 +495,14 @@
             // ---------- CÁLCULO DE HORAS ----------
             let horasDecorridas = '';
             const dataItem = new Date(item.data);
-            if (index === 0) {
-                // Primeiro card: calcula desde a abertura
+            if (respostaIndex === 0) {
+                // Primeiro card de resposta: calcula desde a abertura
                 if (dataAbertura) {
                     const diffMs = dataItem - new Date(dataAbertura);
                     const diffHoras = Math.round(diffMs / (1000 * 60 * 60));
-                    if (diffHoras === 0) horasDecorridas = ' (menos de 1 hora depois)';
-                    else if (diffHoras === 1) horasDecorridas = ' (1 hora depois)';
-                    else horasDecorridas = ` (${diffHoras} horas depois)`;
+                    if (diffHoras === 0) horasDecorridas = ` (menos de 1 hora depois do início da OS)`;
+                    else if (diffHoras === 1) horasDecorridas = ` (1 hora depois do início da OS)`;
+                    else horasDecorridas = ` (${diffHoras} horas depois do início da OS)`;
                 } else {
                     horasDecorridas = ' (primeira resposta)';
                 }
@@ -517,6 +517,7 @@
                 }
             }
             dataAnterior = item.data;
+            respostaIndex++; // incrementa após processar este card
 
             // Badge do autor
             const autorBadge = getBadgePerfil(uid, nome);
