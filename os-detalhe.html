@@ -8,7 +8,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
-        /* ===== ESTILOS (mantido) ===== */
         * { margin:0; padding:0; box-sizing:border-box; font-family: 'Calibri', 'Segoe UI', Tahoma, sans-serif; }
         body { background: #e8f5e9; padding: 16px 12px; display: flex; justify-content: center; min-height: 100vh; }
         .container { background: #fff; max-width: 900px; width: 100%; padding: 20px; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,80,0,0.12); border: 1px solid #a5d6a7; }
@@ -338,7 +337,7 @@
     }
 
     // ================================================================
-    // OBTER HISTÓRICO DE EDIÇÕES DE UM CAMPO
+    // EXIBIR HISTÓRICO DE EDIÇÕES (inline)
     // ================================================================
     function getHistoricoEdicoes(campo) {
         if (!osData.edicoes) return null;
@@ -356,6 +355,20 @@
         const data = formatarDataHora(ultima.data);
         const antigo = ultima.valor_antigo || '';
         return `<span class="edit-historico">(edit ${data}: ${antigo})</span>`;
+    }
+
+    // Mapa para exibir nomes amigáveis de prioridade
+    const prioridadeMap = {
+        'emergencial': '🔴 Emergencial',
+        'urgente': '🟡 Urgente',
+        'normal': '🟢 Normal'
+    };
+
+    function getValorExibicao(campo, valor) {
+        if (campo === 'prioridade' && valor && prioridadeMap[valor]) {
+            return prioridadeMap[valor];
+        }
+        return valor;
     }
 
     // ================================================================
@@ -385,7 +398,6 @@
                     return;
                 }
                 osData = { id: doc.id, ...doc.data() };
-                // Inicializar campo edicoes se não existir
                 if (!osData.edicoes) osData.edicoes = {};
                 renderizarDetalhe();
             })
@@ -424,25 +436,7 @@
             tipoCapitalizado = tipoCapitalizado.charAt(0).toUpperCase() + tipoCapitalizado.slice(1);
         }
 
-        const prioridadeMap = {
-            'emergencial': `🔴 Emergencial`,
-            'urgente': `🟡 Urgente`,
-            'normal': `🟢 Normal`
-        };
-        const prioridadeLabel = prioridadeMap[osData.prioridade] || osData.prioridade;
-
-        // Função para construir o valor de um campo com histórico inline
-        function construirValor(campo, valorAtual, editField = false) {
-            let html = `<span id="display-${campo}">${valorAtual}</span>`;
-            const historicoEdicao = exibirHistoricoEdicao(campo);
-            if (historicoEdicao) html += historicoEdicao;
-            if (editField) {
-                html += `<span class="edit-field">
-                    <button class="btn-edit" data-campo="${campo}" data-valor="${valorAtual}">✏️</button>
-                </span>`;
-            }
-            return html;
-        }
+        const prioridadeLabel = getValorExibicao('prioridade', osData.prioridade) || osData.prioridade;
 
         const campos = [
             { label: 'Título', value: osData.titulo || '—', campo: 'titulo', edit: true },
@@ -471,20 +465,23 @@
         let infoHTML = '';
         campos.forEach(campo => {
             let valor = campo.value;
+            // SEMPRE adicionar histórico inline (independente de permissão)
+            if (campo.campo) {
+                const historicoEdicao = exibirHistoricoEdicao(campo.campo);
+                if (historicoEdicao) valor += historicoEdicao;
+            }
+            if (campo.campo2) {
+                const historicoEdicao = exibirHistoricoEdicao(campo.campo2);
+                if (historicoEdicao) valor += ' ' + historicoEdicao;
+            }
+
             let editHtml = '';
             if (campo.edit && podeEditar) {
                 if (campo.campo2) {
-                    // Edição dupla (quadra+lote)
                     editHtml = `<span class="edit-field">
                         <button class="btn-edit" data-campo="${campo.campo}" data-campo2="${campo.campo2}" data-valor="${campo.value}">✏️</button>
                     </span>`;
-                    // Exibir histórico inline para ambos os campos (vamos exibir para o campo principal)
-                    const historicoEdicao = exibirHistoricoEdicao(campo.campo) || exibirHistoricoEdicao(campo.campo2);
-                    if (historicoEdicao) valor += historicoEdicao;
                 } else {
-                    // Edição simples
-                    const historicoEdicao = exibirHistoricoEdicao(campo.campo);
-                    if (historicoEdicao) valor += historicoEdicao;
                     editHtml = `<span class="edit-field">
                         <button class="btn-edit" data-campo="${campo.campo}" data-valor="${campo.value}">✏️</button>
                     </span>`;
@@ -523,7 +520,7 @@
         let cardIndex = 0;
 
         historico.forEach((item) => {
-            if (item.acao === 'abertura') return; // não exibir abertura
+            if (item.acao === 'abertura') return;
 
             const uid = item.usuario_uid;
             const nome = getNome(uid) || item.usuario || 'Anônimo';
@@ -532,8 +529,7 @@
             const acao = item.acao || 'ação';
             let mensagem = item.mensagem || '';
 
-            // Não há mais cards de edição, então ignoramos edições aqui
-            if (acao === 'edicao') return; // edições são exibidas inline
+            if (acao === 'edicao') return; // edições são inline
 
             let direcionadoHtml = '';
             if (item.direcionado_para) {
@@ -582,7 +578,7 @@
             `;
         });
 
-        // ---- ÚLTIMO CARD (Adicionar Ação) ----
+        // ---- ÚLTIMO CARD ----
         html += `<div class="card card-ultimo">`;
         html += `<div class="card-header"><span class="usuario" style="font-size:15px;">➕ Adicionar Ação</span></div>`;
         html += `<div class="card-body">`;
@@ -681,7 +677,6 @@
         wrapper.className = 'edit-field-wrapper';
 
         if (campo2) {
-            // Edição dupla (quadra + lote)
             const input1 = document.createElement('input');
             input1.type = 'text';
             input1.placeholder = 'Quadra';
@@ -813,9 +808,6 @@
             valor_novo: valorNovo
         });
         updateData.edicoes = edicoes;
-
-        // Não adicionar ao histórico principal (pois não queremos criar cards)
-        // Mas atualizar a data de modificação
         updateData.atualizado_em = new Date().toISOString();
 
         db.collection('ordens_servico').doc(osId).update(updateData)
@@ -836,7 +828,6 @@
         updateData[campo2] = novo2;
 
         const edicoes = osData.edicoes || {};
-        // Registrar edição para cada campo
         if (!edicoes[campo1]) edicoes[campo1] = [];
         edicoes[campo1].push({
             data: new Date().toISOString(),
