@@ -29,7 +29,6 @@
         .btn-edit:hover { background: #e8f5e9; }
         .header-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; align-items: center; }
 
-        /* INFORMAÇÕES DA OS */
         .os-info {
             background: #f8f9fa;
             border-radius: 12px;
@@ -58,7 +57,8 @@
             align-items: center;
             justify-content: space-between;
         }
-        .os-info .info-value .badge {
+        .os-info .info-value .badge,
+        .card .badge {
             display: inline-block;
             padding: 3px 10px;
             border-radius: 20px;
@@ -79,7 +79,6 @@
         .badge-urgente { background: #fff9c4; color: #f57f17; font-weight: bold; }
         .badge-normal { background: #c8e6c9; color: #1b5e20; font-weight: bold; }
 
-        /* HISTÓRICO - CARDS */
         .historico-container { margin: 20px 0; display: flex; flex-direction: column; gap: 12px; }
         .historico-container .card {
             border-radius: 8px;
@@ -125,7 +124,6 @@
             margin-top: 4px;
         }
 
-        /* FORMULÁRIO DE AÇÃO (dentro do último card) */
         .nova-acao .form-group { margin-bottom: 10px; }
         .nova-acao label { font-weight: 600; font-size: 13px; color: #1b5e20; display: block; margin-bottom: 2px; }
         .nova-acao textarea, .nova-acao select {
@@ -149,7 +147,6 @@
         .message.error { display: block; background: #ffebee; color: #b71c1c; border: 1px solid #ef9a9a; }
         .message.success { display: block; background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
 
-        /* EDIÇÃO */
         .edit-field {
             display: inline-flex;
             align-items: center;
@@ -183,15 +180,8 @@
 
     <h1 class="page-title" id="osTitulo">📋 OS #<span id="osNumero">---</span></h1>
 
-    <!-- INFORMAÇÕES DA OS -->
-    <div class="os-info" id="osInfoContainer">
-        <!-- preenchido via JS -->
-    </div>
-
-    <!-- HISTÓRICO (cards) -->
-    <div id="historicoContainer" class="historico-container">
-        <p>Carregando...</p>
-    </div>
+    <div class="os-info" id="osInfoContainer"></div>
+    <div id="historicoContainer" class="historico-container"><p>Carregando...</p></div>
 </div>
 
 <script>
@@ -339,6 +329,7 @@
             else { classe = 'badge-grupo'; icone = '👤'; }
         }
 
+        // Retorna APENAS o badge, sem texto extra
         return `<span class="badge ${classe}"><span class="icone">${icone}</span> ${texto}</span>`;
     }
 
@@ -383,11 +374,9 @@
     function renderizarDetalhe() {
         if (!osData) return;
 
-        // Número e título
         osNumero.textContent = osData.numero || '---';
         osTitulo.textContent = `📋 OS #${osData.numero || '---'}`;
 
-        // Status badge
         const statusMap = {
             'aberta': 'Aberta',
             'em_andamento': 'Em andamento',
@@ -466,145 +455,143 @@
         const historico = osData.historico || [];
         if (historico.length === 0) {
             historicoContainer.innerHTML = '<p>Nenhuma ação registrada.</p>';
-        } else {
-            historico.sort((a, b) => (a.data || '').localeCompare(b.data || ''));
-            let html = '';
-            let dataAnterior = null;
-            // Data de abertura da OS para comparar com o primeiro card
-            const dataAbertura = osData.criado_em;
-
-            historico.forEach((item, index) => {
-                if (item.acao === 'abertura') return;
-
-                const uid = item.usuario_uid;
-                const nome = getNome(uid) || item.usuario || 'Anônimo';
-                const funcao = getFuncao(uid) || 'outros';
-                const dataFormat = formatarDataHora(item.data);
-                const acao = item.acao || 'ação';
-                let mensagem = item.mensagem || '';
-
-                if (acao === 'edicao') {
-                    const detalhes = item.detalhes || {};
-                    const antigo = detalhes.valor_antigo || '';
-                    const novo = detalhes.valor_novo || '';
-                    mensagem = `<span style="text-decoration:line-through; color:#999; font-style:italic;">${antigo}</span> → ${novo} <span style="color:#999; font-size:12px;">(edit em ${formatarDataCurta(item.data)})</span>`;
-                }
-
-                let direcionadoHtml = '';
-                if (item.direcionado_para) {
-                    // Usa a mesma função para exibir badge do direcionado
-                    const direcionadoData = {
-                        direcionado_para: item.direcionado_para,
-                        direcionado_para_nome: item.direcionado_para_nome || item.direcionado_para
-                    };
-                    direcionadoHtml = `<div class="direcionado">🎯 Direcionado para: ${getBadgeDirecionado(direcionadoData)}</div>`;
-                }
-
-                // Cálculo de horas decorridas
-                let horasDecorridas = '';
-                if (index === 0) {
-                    // Primeiro card: calcula desde a abertura da OS
-                    if (dataAbertura) {
-                        const diffMs = new Date(item.data) - new Date(dataAbertura);
-                        const diffHoras = Math.round(diffMs / (1000 * 60 * 60));
-                        if (diffHoras === 0) horasDecorridas = ' (menos de 1 hora depois)';
-                        else if (diffHoras === 1) horasDecorridas = ' (1 hora depois)';
-                        else horasDecorridas = ` (${diffHoras} horas depois)`;
-                    } else {
-                        horasDecorridas = ' (primeira resposta)';
-                    }
-                } else {
-                    // Demais cards: calcula desde o card anterior
-                    if (dataAnterior !== null) {
-                        const diffMs = new Date(item.data) - new Date(dataAnterior);
-                        const diffHoras = Math.round(diffMs / (1000 * 60 * 60));
-                        if (diffHoras === 0) horasDecorridas = ' (menos de 1 hora depois)';
-                        else if (diffHoras === 1) horasDecorridas = ' (1 hora depois)';
-                        else horasDecorridas = ` (${diffHoras} horas depois)`;
-                    }
-                }
-                dataAnterior = item.data;
-
-                // Badge do autor (consistente)
-                const autorBadge = getBadgePerfil(uid, nome);
-
-                // Classe do card conforme perfil
-                let cardClass = 'card-outros';
-                if (funcao === 'admin') cardClass = 'card-admin';
-                else if (funcao === 'diretor') cardClass = 'card-diretor';
-                else if (funcao === 'master') cardClass = 'card-master';
-
-                html += `
-                    <div class="card ${cardClass}">
-                        <div class="card-header">
-                            <span class="usuario">Resposta por ${autorBadge}</span>
-                            <span class="tempo">${dataFormat}${horasDecorridas}</span>
-                        </div>
-                        <div class="card-body">
-                            <strong>${acao.toUpperCase()}</strong>
-                            ${direcionadoHtml}
-                            <div class="mensagem">${mensagem}</div>
-                        </div>
-                    </div>
-                `;
-            });
-
-            // ---- ÚLTIMO CARD (fundo vermelho opaco) ----
-            html += `<div class="card card-ultimo">`;
-            html += `<div class="card-header"><span class="usuario" style="font-size:15px;">➕ Adicionar Ação</span></div>`;
-            html += `<div class="card-body">`;
-            html += `
-                <form id="formNovaAcao" class="nova-acao">
-                    <div class="form-group">
-                        <label for="acaoDescricao">Descrição da ação *</label>
-                        <textarea id="acaoDescricao" placeholder="Descreva a ação realizada..." required></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="acaoDirecionar">Direcionar para (opcional)</label>
-                        <select id="acaoDirecionar">
-                            <option value="">Manter destino atual</option>
-                        </select>
-                    </div>
-                    <div class="acoes-rodape">
-                        <button type="submit" class="btn btn-success">➕ Adicionar Ação</button>
-            `;
-            const funcaoUsuario = currentUserData?.funcao || 'tecnico';
-            const isDiretor = (funcaoUsuario === 'diretor');
-            const isAdmin = (funcaoUsuario === 'admin');
-            const isMaster = (currentUser && currentUser.email === MASTER_EMAIL);
-            const podeConcluir = isDiretor || isMaster;
-            const podeReabrir = isDiretor || isAdmin || isMaster;
-            const statusConcluida = (osData.status === 'concluida');
-
-            if (!statusConcluida && podeConcluir) {
-                html += `<button type="button" class="btn btn-success" id="btnConcluir">✅ Concluir OS</button>`;
-            }
-            if (statusConcluida && podeReabrir) {
-                html += `<button type="button" class="btn btn-warning" id="btnReabrir">🔄 Reabrir OS</button>`;
-            }
-            html += `</div>`;
-            html += `<div id="acaoMessage" class="message"></div>`;
-            html += `</form>`;
-            html += `</div></div>`;
-
-            historicoContainer.innerHTML = html;
-
-            document.getElementById('btnConcluir')?.addEventListener('click', concluirOS);
-            document.getElementById('btnReabrir')?.addEventListener('click', reabrirOS);
-
-            popularDirecionamento();
-
-            document.getElementById('formNovaAcao').addEventListener('submit', (e) => {
-                e.preventDefault();
-                const descricao = document.getElementById('acaoDescricao').value.trim();
-                if (!descricao) {
-                    mostrarMensagemAcao('A descrição é obrigatória.', 'error');
-                    return;
-                }
-                const direcionarPara = document.getElementById('acaoDirecionar').value;
-                adicionarAcao(descricao, direcionarPara);
-            });
+            return;
         }
+
+        historico.sort((a, b) => (a.data || '').localeCompare(b.data || ''));
+        let html = '';
+        let dataAnterior = null;
+        const dataAbertura = osData.criado_em;
+
+        historico.forEach((item, index) => {
+            if (item.acao === 'abertura') return;
+
+            const uid = item.usuario_uid;
+            const nome = getNome(uid) || item.usuario || 'Anônimo';
+            const funcao = getFuncao(uid) || 'outros';
+            const dataFormat = formatarDataHora(item.data);
+            const acao = item.acao || 'ação';
+            let mensagem = item.mensagem || '';
+
+            if (acao === 'edicao') {
+                const detalhes = item.detalhes || {};
+                const antigo = detalhes.valor_antigo || '';
+                const novo = detalhes.valor_novo || '';
+                mensagem = `<span style="text-decoration:line-through; color:#999; font-style:italic;">${antigo}</span> → ${novo} <span style="color:#999; font-size:12px;">(edit em ${formatarDataCurta(item.data)})</span>`;
+            }
+
+            // Direcionado (usa a mesma função, sem duplicação)
+            let direcionadoHtml = '';
+            if (item.direcionado_para) {
+                const direcionadoData = {
+                    direcionado_para: item.direcionado_para,
+                    direcionado_para_nome: item.direcionado_para_nome || item.direcionado_para
+                };
+                direcionadoHtml = `<div class="direcionado">🎯 Direcionado para: ${getBadgeDirecionado(direcionadoData)}</div>`;
+            }
+
+            // Cálculo de horas
+            let horasDecorridas = '';
+            if (index === 0) {
+                // Primeiro card: calcula desde a abertura
+                if (dataAbertura) {
+                    const diffMs = new Date(item.data) - new Date(dataAbertura);
+                    const diffHoras = Math.round(diffMs / (1000 * 60 * 60));
+                    if (diffHoras === 0) horasDecorridas = ' (menos de 1 hora depois)';
+                    else if (diffHoras === 1) horasDecorridas = ' (1 hora depois)';
+                    else horasDecorridas = ` (${diffHoras} horas depois)`;
+                } else {
+                    horasDecorridas = ' (primeira resposta)';
+                }
+            } else {
+                if (dataAnterior !== null) {
+                    const diffMs = new Date(item.data) - new Date(dataAnterior);
+                    const diffHoras = Math.round(diffMs / (1000 * 60 * 60));
+                    if (diffHoras === 0) horasDecorridas = ' (menos de 1 hora depois)';
+                    else if (diffHoras === 1) horasDecorridas = ' (1 hora depois)';
+                    else horasDecorridas = ` (${diffHoras} horas depois)`;
+                }
+            }
+            dataAnterior = item.data;
+
+            // Badge do autor (consistente)
+            const autorBadge = getBadgePerfil(uid, nome);
+
+            let cardClass = 'card-outros';
+            if (funcao === 'admin') cardClass = 'card-admin';
+            else if (funcao === 'diretor') cardClass = 'card-diretor';
+            else if (funcao === 'master') cardClass = 'card-master';
+
+            html += `
+                <div class="card ${cardClass}">
+                    <div class="card-header">
+                        <span class="usuario">Resposta por ${autorBadge}</span>
+                        <span class="tempo">${dataFormat}${horasDecorridas}</span>
+                    </div>
+                    <div class="card-body">
+                        <strong>${acao.toUpperCase()}</strong>
+                        ${direcionadoHtml}
+                        <div class="mensagem">${mensagem}</div>
+                    </div>
+                </div>
+            `;
+        });
+
+        // ---- ÚLTIMO CARD ----
+        html += `<div class="card card-ultimo">`;
+        html += `<div class="card-header"><span class="usuario" style="font-size:15px;">➕ Adicionar Ação</span></div>`;
+        html += `<div class="card-body">`;
+        html += `
+            <form id="formNovaAcao" class="nova-acao">
+                <div class="form-group">
+                    <label for="acaoDescricao">Descrição da ação *</label>
+                    <textarea id="acaoDescricao" placeholder="Descreva a ação realizada..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="acaoDirecionar">Direcionar para (opcional)</label>
+                    <select id="acaoDirecionar">
+                        <option value="">Manter destino atual</option>
+                    </select>
+                </div>
+                <div class="acoes-rodape">
+                    <button type="submit" class="btn btn-success">➕ Adicionar Ação</button>
+        `;
+        const funcaoUsuario = currentUserData?.funcao || 'tecnico';
+        const isDiretor = (funcaoUsuario === 'diretor');
+        const isAdmin = (funcaoUsuario === 'admin');
+        const isMaster = (currentUser && currentUser.email === MASTER_EMAIL);
+        const podeConcluir = isDiretor || isMaster;
+        const podeReabrir = isDiretor || isAdmin || isMaster;
+        const statusConcluida = (osData.status === 'concluida');
+
+        if (!statusConcluida && podeConcluir) {
+            html += `<button type="button" class="btn btn-success" id="btnConcluir">✅ Concluir OS</button>`;
+        }
+        if (statusConcluida && podeReabrir) {
+            html += `<button type="button" class="btn btn-warning" id="btnReabrir">🔄 Reabrir OS</button>`;
+        }
+        html += `</div>`;
+        html += `<div id="acaoMessage" class="message"></div>`;
+        html += `</form>`;
+        html += `</div></div>`;
+
+        historicoContainer.innerHTML = html;
+
+        document.getElementById('btnConcluir')?.addEventListener('click', concluirOS);
+        document.getElementById('btnReabrir')?.addEventListener('click', reabrirOS);
+
+        popularDirecionamento();
+
+        document.getElementById('formNovaAcao').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const descricao = document.getElementById('acaoDescricao').value.trim();
+            if (!descricao) {
+                mostrarMensagemAcao('A descrição é obrigatória.', 'error');
+                return;
+            }
+            const direcionarPara = document.getElementById('acaoDirecionar').value;
+            adicionarAcao(descricao, direcionarPara);
+        });
 
         document.querySelectorAll('.btn-edit').forEach(btn => {
             btn.addEventListener('click', (e) => {
