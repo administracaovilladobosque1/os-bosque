@@ -379,9 +379,12 @@
     }
 
     // ================================================================
-    // PERMISSÃO DE EDIÇÃO
+    // PERMISSÃO DE EDIÇÃO – AGORA BLOQUEIA SE CONCLUÍDA
     // ================================================================
     function podeEditarOS() {
+        // Se a OS já foi concluída, ninguém edita
+        if (osData && osData.status === 'concluida') return false;
+
         if (!currentUser || !osData) return false;
         if (currentUser.email === MASTER_EMAIL) return true;
 
@@ -476,7 +479,6 @@
         const prioridadeLabel = getValorExibicao('prioridade', osData.prioridade) || osData.prioridade;
 
         // ---- Direcionado original (sempre fixo) ----
-        // Usamos o campo original, e se não existir (OS antiga), usamos o atual como fallback
         const dirOriginal = osData.direcionado_para_original || osData.direcionado_para || '—';
         const dirNomeOriginal = osData.direcionado_para_nome_original || osData.direcionado_para_nome || '—';
         const dirBadgeOriginal = getBadgeDirecionado({
