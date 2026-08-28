@@ -8,6 +8,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
+        /* ... estilos mantidos iguais ao anterior ... */
         * { margin:0; padding:0; box-sizing:border-box; font-family: 'Calibri', 'Segoe UI', Tahoma, sans-serif; }
         body { background: #e8f5e9; padding: 16px 12px; display: flex; justify-content: center; min-height: 100vh; }
         .container { background: #fff; max-width: 900px; width: 100%; padding: 20px; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,80,0,0.12); border: 1px solid #a5d6a7; }
@@ -90,7 +91,6 @@
             margin-left: 6px;
         }
 
-        /* Estilos para o select de direcionamento nas ações */
         select option.grupo { background-color: #ced4da; }
         select option.admin { background-color: #ffe082; }
         select option.diretor { background-color: #a5d6a7; }
@@ -379,13 +379,16 @@
     }
 
     // ================================================================
-    // PERMISSÃO DE EDIÇÃO – AGORA BLOQUEIA SE CONCLUÍDA
+    // PERMISSÃO DE EDIÇÃO – BLOQUEIO DEFINITIVO PARA CONCLUÍDA
     // ================================================================
     function podeEditarOS() {
-        // Se a OS já foi concluída, ninguém edita
-        if (osData && osData.status === 'concluida') return false;
+        // Verifica se OS está concluída (independente de maiúsculas)
+        if (!osData) return false;
+        if (osData.status && osData.status.toLowerCase() === 'concluida') {
+            return false;
+        }
 
-        if (!currentUser || !osData) return false;
+        if (!currentUser) return false;
         if (currentUser.email === MASTER_EMAIL) return true;
 
         const funcaoUsuario = currentUserData?.funcao;
@@ -509,6 +512,7 @@
             { label: 'Direcionado para', value: dirBadgeOriginal, campo: 'direcionado_original', edit: false }
         );
 
+        // Verifica permissão de edição (considerando status concluída)
         const podeEditar = podeEditarOS();
 
         let infoHTML = '';
@@ -656,7 +660,7 @@
         const isMaster = (currentUser && currentUser.email === MASTER_EMAIL);
         const podeConcluir = isDiretor || isMaster;
         const podeReabrir = isDiretor || isAdmin || isMaster;
-        const statusConcluida = (osData.status === 'concluida');
+        const statusConcluida = (osData.status && osData.status.toLowerCase() === 'concluida');
 
         if (!statusConcluida && podeConcluir) {
             html += `<button type="button" class="btn btn-success" id="btnConcluir">✅ Concluir OS</button>`;
@@ -932,7 +936,6 @@
         const select = document.getElementById('acaoDirecionar');
         if (!select) return;
 
-        // Limpa e adiciona opções com classes para cores
         select.innerHTML = '';
 
         const optDefault = document.createElement('option');
@@ -940,7 +943,6 @@
         optDefault.textContent = 'Manter destino atual';
         select.appendChild(optDefault);
 
-        // Grupo Administradores
         const optGroupAdmin = document.createElement('option');
         optGroupAdmin.value = 'group:admin';
         optGroupAdmin.textContent = 'GRUPO: Administradores';
@@ -948,7 +950,6 @@
         optGroupAdmin.style.backgroundColor = '#ced4da';
         select.appendChild(optGroupAdmin);
 
-        // Grupo Diretores
         const optGroupDiretor = document.createElement('option');
         optGroupDiretor.value = 'group:diretor';
         optGroupDiretor.textContent = 'GRUPO: Diretores';
@@ -956,7 +957,6 @@
         optGroupDiretor.style.backgroundColor = '#ced4da';
         select.appendChild(optGroupDiretor);
 
-        // Lista de Admins
         const admins = [], diretores = [];
         Object.keys(userMap).forEach(uid => {
             const u = userMap[uid];
