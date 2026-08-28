@@ -100,16 +100,12 @@
         }
         .card .card-header .usuario { font-weight: 600; color: #1b5e20; }
         .card .card-body { font-size: 14px; }
-        .card .card-footer {
-            font-size: 12px;
-            color: #888;
-            margin-top: 6px;
-            border-top: 1px solid #e8f5e9;
-            padding-top: 6px;
-        }
         .card .card-body .direcionado {
             font-size: 13px;
             color: #555;
+            margin-top: 4px;
+        }
+        .card .card-body .mensagem {
             margin-top: 4px;
         }
 
@@ -130,10 +126,9 @@
             flex-wrap: wrap;
             gap: 10px;
             margin-top: 12px;
-            justify-content: flex-start;
             align-items: center;
         }
-        .acoes-rodape .btn { margin-right: 8px; }
+        .acoes-rodape .btn { margin-right: 0; }
         .message { margin-top: 8px; padding: 6px 10px; border-radius: 6px; display: none; font-size: 13px; }
         .message.error { display: block; background: #ffebee; color: #b71c1c; border: 1px solid #ef9a9a; }
         .message.success { display: block; background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
@@ -158,6 +153,7 @@
             .os-info .info-value { font-size: 13px; flex-wrap: wrap; }
             .acoes-rodape { flex-direction: column; align-items: stretch; }
             .acoes-rodape .btn { width: 100%; text-align: center; }
+            .card .card-header { flex-direction: column; align-items: flex-start; gap: 4px; }
         }
     </style>
 </head>
@@ -236,7 +232,7 @@
     let currentUserData = null;
     let osId = null;
     let osData = null;
-    let userMap = {}; // uid -> { nome, funcao }
+    let userMap = {};
     let editando = { campo: null, original: null };
 
     // ================================================================
@@ -422,12 +418,9 @@
         if (historico.length === 0) {
             historicoContainer.innerHTML = '<p>Nenhuma ação registrada.</p>';
         } else {
-            // Ordena por data crescente (mais antigo primeiro)
             historico.sort((a, b) => (a.data || '').localeCompare(b.data || ''));
             let html = '';
-            let cardIndex = 0;
             historico.forEach(item => {
-                cardIndex++;
                 const funcao = getFuncao(item.usuario_uid) || 'outros';
                 const cor = getCorPerfil(funcao);
                 const classe = getClasseCard(funcao);
@@ -436,7 +429,6 @@
                 const acao = item.acao || 'ação';
                 let mensagem = item.mensagem || '';
 
-                // Se for edição, formata com tachado
                 if (acao === 'edicao') {
                     const detalhes = item.detalhes || {};
                     const antigo = detalhes.valor_antigo || '';
@@ -444,7 +436,6 @@
                     mensagem = `<span style="text-decoration:line-through; color:#999; font-style:italic;">${antigo}</span> → ${novo} <span style="color:#999; font-size:12px;">(edit em ${formatarDataCurta(item.data)})</span>`;
                 }
 
-                // Direcionado para (se houver)
                 let direcionadoHtml = '';
                 if (item.direcionado_para) {
                     const destino = item.direcionado_para_nome || item.direcionado_para;
@@ -460,7 +451,7 @@
                         <div class="card-body">
                             <strong>${acao.toUpperCase()}</strong>
                             ${direcionadoHtml}
-                            <div>${mensagem}</div>
+                            <div class="mensagem">${mensagem}</div>
                         </div>
                     </div>
                 `;
@@ -468,16 +459,16 @@
 
             // ---- ÚLTIMO CARD: formulário + botões ----
             html += `<div class="card card-ultimo">`;
-            html += `<div class="card-header"><span class="usuario">➕ Adicionar Ação</span></div>`;
+            html += `<div class="card-header"><span class="usuario" style="font-size:15px;">➕ Adicionar Ação</span></div>`;
             html += `<div class="card-body">`;
             html += `
-                <form id="formNovaAcao">
+                <form id="formNovaAcao" class="nova-acao">
                     <div class="form-group">
-                        <label>Descrição da ação *</label>
+                        <label for="acaoDescricao">Descrição da ação *</label>
                         <textarea id="acaoDescricao" placeholder="Descreva a ação realizada..." required></textarea>
                     </div>
                     <div class="form-group">
-                        <label>Direcionar para (opcional)</label>
+                        <label for="acaoDirecionar">Direcionar para (opcional)</label>
                         <select id="acaoDirecionar">
                             <option value="">Manter destino atual</option>
                         </select>
@@ -511,10 +502,8 @@
             document.getElementById('btnConcluir')?.addEventListener('click', concluirOS);
             document.getElementById('btnReabrir')?.addEventListener('click', reabrirOS);
 
-            // Popular dropdown de direcionamento
             popularDirecionamento();
 
-            // Form de ação
             document.getElementById('formNovaAcao').addEventListener('submit', (e) => {
                 e.preventDefault();
                 const descricao = document.getElementById('acaoDescricao').value.trim();
@@ -627,7 +616,7 @@
                 });
             } else if (campo === 'direcionado_para') {
                 input = document.createElement('select');
-                input.innerHTML = document.getElementById('acaoDirecionar').innerHTML;
+                input.innerHTML = document.getElementById('acaoDirecionar')?.innerHTML || '';
                 const opt = input.querySelector(`option[value="${osData.direcionado_para || ''}"]`);
                 if (opt) opt.selected = true;
             } else {
