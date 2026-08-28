@@ -90,7 +90,7 @@
                 </div>
                 <div class="form-group">
                     <label>Lote (opcional)</label>
-                    <input type="text" id="loteReclamante" placeholder="Ex: 09">
+                    <input type="text" id="loteReclamante" placeholder="Ex: 09" maxlength="2" pattern="\d{1,2}">
                 </div>
             </div>
         </div>
@@ -104,7 +104,7 @@
                 </div>
                 <div class="form-group">
                     <label>Lote (opcional)</label>
-                    <input type="text" id="loteReclamado" placeholder="Ex: 12">
+                    <input type="text" id="loteReclamado" placeholder="Ex: 12" maxlength="2" pattern="\d{1,2}">
                 </div>
             </div>
         </div>
@@ -192,6 +192,33 @@
     let personagensList = [];
 
     // ============================================================
+    // FUNÇÃO PARA FORMATAR LOTE COM 2 DÍGITOS
+    // ============================================================
+    function formatarLote(valor) {
+        if (!valor) return '';
+        // Remove espaços e converte para número
+        const num = parseInt(valor.trim(), 10);
+        if (isNaN(num) || num < 1) return valor.trim(); // se não for número válido, mantém original
+        // Se for > 99, trunca para 2 dígitos
+        const limitado = Math.min(num, 99);
+        return String(limitado).padStart(2, '0');
+    }
+
+    // Aplica formatação ao perder o foco (blur) e ao submeter
+    function aplicarFormatacaoLotes() {
+        if (loteReclamante.value.trim()) {
+            loteReclamante.value = formatarLote(loteReclamante.value);
+        }
+        if (loteReclamado.value.trim()) {
+            loteReclamado.value = formatarLote(loteReclamado.value);
+        }
+    }
+
+    // Eventos blur para formatação automática
+    loteReclamante.addEventListener('blur', aplicarFormatacaoLotes);
+    loteReclamado.addEventListener('blur', aplicarFormatacaoLotes);
+
+    // ============================================================
     // CARREGAR PERSONAGENS (apenas Admin e Diretor)
     // ============================================================
     function carregarPersonagens() {
@@ -261,10 +288,14 @@
     }
 
     // ============================================================
-    // SUBMIT
+    // SUBMIT – com formatação de lotes
     // ============================================================
     form.addEventListener('submit', (e) => {
         e.preventDefault();
+
+        // Formata os lotes antes de validar
+        aplicarFormatacaoLotes();
+
         const titulo = tituloInput.value.trim();
         const descricao = descricaoInput.value.trim();
         const tipo = tipoSelect.value;
@@ -320,9 +351,9 @@
                     descricao: descricao,
                     tipo: tipo,
                     quadra_reclamante: qReclamante || null,
-                    lote_reclamante: lReclamante || null,
+                    lote_reclamante: lReclamante || null,  // já formatado
                     quadra_reclamada: qReclamada || null,
-                    lote_reclamada: lReclamada || null,
+                    lote_reclamada: lReclamada || null,    // já formatado
                     prioridade: prioridade,
                     status: 'aberta',
                     aberto_por: currentUser.uid,
