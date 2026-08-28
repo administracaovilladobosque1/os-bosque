@@ -59,6 +59,10 @@
             gap: 8px;
             flex-wrap: wrap;
         }
+        .os-info .info-value .edit-field {
+            margin-left: auto;
+            flex-shrink: 0;
+        }
         .os-info .info-value .badge,
         .card .badge {
             display: inline-block;
@@ -337,7 +341,7 @@
     }
 
     // ================================================================
-    // EXIBIR HISTÓRICO DE EDIÇÕES (inline)
+    // EXIBIR HISTÓRICO DE EDIÇÕES (inline) – Última edição
     // ================================================================
     function getHistoricoEdicoes(campo) {
         if (!osData.edicoes) return null;
@@ -367,6 +371,39 @@
             return prioridadeMap[valor];
         }
         return valor;
+    }
+
+    // ================================================================
+    // PERMISSÃO DE EDIÇÃO (Nova lógica)
+    // ================================================================
+    function podeEditarOS() {
+        if (!currentUser || !osData) return false;
+        if (currentUser.email === MASTER_EMAIL) return true;
+
+        const funcaoUsuario = currentUserData?.funcao;
+        if (!funcaoUsuario) return false;
+
+        // Verifica o direcionado_para e a função do destinatário
+        const direcionadoPara = osData.direcionado_para;
+        const funcaoDestino = osData.direcionado_para_funcao;
+        const criadorFuncao = getFuncao(osData.aberto_por);
+
+        if (funcaoUsuario === 'admin') {
+            // Pode editar se for grupo admin, admin específico ou criador admin
+            if (direcionadoPara === 'group:admin') return true;
+            if (funcaoDestino === 'admin') return true;
+            if (criadorFuncao === 'admin') return true;
+            return false;
+        }
+
+        if (funcaoUsuario === 'diretor') {
+            if (direcionadoPara === 'group:diretor') return true;
+            if (funcaoDestino === 'diretor') return true;
+            if (criadorFuncao === 'diretor') return true;
+            return false;
+        }
+
+        return false;
     }
 
     // ================================================================
@@ -406,7 +443,7 @@
     }
 
     // ================================================================
-    // RENDERIZAR DETALHE – Com ABERTURA como primeira informação
+    // RENDERIZAR DETALHE
     // ================================================================
     function renderizarDetalhe() {
         if (!osData) return;
@@ -435,7 +472,7 @@
 
         const prioridadeLabel = getValorExibicao('prioridade', osData.prioridade) || osData.prioridade;
 
-        // ==== ORDEM ALTERADA: Abertura agora é o primeiro campo ====
+        // Campos – Abertura agora é o primeiro
         const campos = [
             { label: 'Abertura', value: formatarDataHora(osData.criado_em), campo: 'criado_em', edit: false },
             { label: 'Título', value: osData.titulo || '—', campo: 'titulo', edit: true },
@@ -443,7 +480,6 @@
             { label: 'Tipo', value: tipoCapitalizado, campo: 'tipo', edit: true },
             { label: 'Prioridade', value: prioridadeLabel, campo: 'prioridade', edit: true },
             { label: 'Aberto por', value: abertoPorBadge, campo: 'aberto_por', edit: false },
-            // Os campos "Reclamante" e "Reclamado" serão adicionados depois
         ];
 
         const reclamante = osData.quadra_reclamante && osData.lote_reclamante
@@ -463,9 +499,10 @@
         let infoHTML = '';
         campos.forEach(campo => {
             let valor = campo.value;
+            // Adiciona histórico de edição (última alteração) se houver
             if (campo.campo) {
                 const hist = exibirHistoricoEdicao(campo.campo);
-                if (hist) valor += hist;
+                if (hist) valor += ' ' + hist;
             }
             if (campo.campo2) {
                 const hist = exibirHistoricoEdicao(campo.campo2);
@@ -638,20 +675,6 @@
                 iniciarEdicao(campo, campo2, valorAtual, btn);
             });
         });
-    }
-
-    // ================================================================
-    // PERMISSÃO DE EDIÇÃO
-    // ================================================================
-    function podeEditarOS() {
-        if (!currentUser || !osData) return false;
-        if (currentUser.email === MASTER_EMAIL) return true;
-        const criadorUid = osData.aberto_por;
-        const funcaoCriador = getFuncao(criadorUid);
-        const funcaoUsuario = currentUserData?.funcao;
-        if (funcaoCriador === 'admin' && funcaoUsuario === 'admin') return true;
-        if (funcaoCriador === 'diretor' && funcaoUsuario === 'diretor') return true;
-        return false;
     }
 
     // ================================================================
