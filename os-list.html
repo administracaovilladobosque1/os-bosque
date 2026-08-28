@@ -64,21 +64,61 @@
             min-width: 70px;
             flex: 0 1 80px;
         }
+
+        /* ===== TABELA (desktop) ===== */
         .table-responsive { overflow-x: auto; margin-top: 12px; }
         table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 1000px; }
         th { background: #c8e6c9; padding: 10px 8px; text-align: left; color: #1b5e20; border-bottom: 2px solid #81c784; white-space: nowrap; cursor: pointer; user-select: none; position: relative; }
         th:hover { background: #b8d9b9; }
         th .sorter { display: inline-block; margin-left: 4px; font-size: 12px; }
         td { padding: 10px 8px; border-bottom: 1px solid #c8e6c9; vertical-align: middle; }
-        .badge {
+
+        /* ===== CARDS (mobile) ===== */
+        .cards-container {
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 12px;
+        }
+        .card {
+            background: #fff;
+            border: 1px solid #a5d6a7;
+            border-radius: 12px;
+            padding: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .card:active { background: #f1f8e9; }
+        .card .card-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 0;
+            border-bottom: 1px solid #e8f5e9;
+        }
+        .card .card-row:last-child { border-bottom: none; }
+        .card .card-label {
+            font-weight: 600;
+            color: #1b5e20;
+            font-size: 13px;
+            flex: 0 0 80px;
+        }
+        .card .card-value {
+            font-size: 14px;
+            text-align: right;
+            word-break: break-word;
+            flex: 1;
+        }
+        .card .card-value .badge {
             display: inline-block;
-            padding: 3px 10px;
+            padding: 2px 10px;
             border-radius: 20px;
             font-size: 12px;
             font-weight: 600;
-            white-space: nowrap;
         }
-        .badge .icone { margin-right: 4px; }
+        .card .card-value .badge .icone { margin-right: 4px; }
+
         .badge-aberta { background: #e3f2fd; color: #0d47a1; }
         .badge-em_andamento { background: #fff3e0; color: #e65100; }
         .badge-concluida { background: #c8e6c9; color: #1b5e20; }
@@ -86,18 +126,22 @@
         .badge-emergencial { background: #ffcdd2; color: #b71c1c; font-weight: bold; }
         .badge-urgente { background: #fff9c4; color: #f57f17; font-weight: bold; }
         .badge-normal { background: #c8e6c9; color: #1b5e20; font-weight: bold; }
+
         .dias-numero { font-weight: 700; color: #1b5e20; }
         .dias-hoje { color: #558b2f; }
         .empty-message { text-align: center; color: #555; padding: 30px 0; }
-        @media (max-width: 600px) {
-            .container { padding: 14px; }
+
+        /* ===== RESPONSIVO ===== */
+        @media (max-width: 768px) {
+            .table-responsive { display: none; }
+            .cards-container { display: flex; }
             .filtros { flex-wrap: nowrap; overflow-x: auto; gap: 6px; padding-bottom: 4px; }
             .filtros select, .filtros input { flex: 0 0 auto; min-width: 100px; font-size: 13px; padding: 5px 8px; }
             .filtros input[type="text"] { flex: 1 1 120px; min-width: 80px; }
             .filtros .grupo-filtro input { min-width: 60px; flex: 0 1 70px; }
             .filtros .btn-filtrar { padding: 5px 12px; font-size: 13px; flex-shrink: 0; }
-            table { font-size: 13px; min-width: 700px; }
-            th, td { padding: 6px 6px; }
+            .container { padding: 14px; }
+            .page-title { font-size: 20px; }
         }
     </style>
 </head>
@@ -134,7 +178,11 @@
         <button class="btn-filtrar" id="btnFiltrar">Filtrar</button>
     </div>
 
-    <div id="listaContainer"><p class="empty-message">Carregando ordens de serviço...</p></div>
+    <!-- Tabela (desktop) -->
+    <div id="listaContainerTabela"><p class="empty-message">Carregando ordens de serviço...</p></div>
+
+    <!-- Cards (mobile) -->
+    <div id="listaContainerCards" class="cards-container"><p class="empty-message">Carregando...</p></div>
 </div>
 
 <script>
@@ -186,7 +234,8 @@
     // ================================================================
     // ELEMENTOS
     // ================================================================
-    const listaDiv = document.getElementById('listaContainer');
+    const listaTabela = document.getElementById('listaContainerTabela');
+    const listaCards = document.getElementById('listaContainerCards');
     const filtroStatus = document.getElementById('filtroStatus');
     const filtroPendente = document.getElementById('filtroPendente');
     const filtroBusca = document.getElementById('filtroBusca');
@@ -281,17 +330,20 @@
     }
 
     // ================================================================
-    // RENDERIZAÇÃO
+    // RENDERIZAR (tabela + cards)
     // ================================================================
-    function renderizarTabela(docs) {
+    function renderizar(docs) {
         if (!docs || docs.length === 0) {
-            listaDiv.innerHTML = '<p class="empty-message">Nenhuma ordem encontrada com os filtros atuais.</p>';
+            const msg = '<p class="empty-message">Nenhuma ordem encontrada com os filtros atuais.</p>';
+            listaTabela.innerHTML = msg;
+            listaCards.innerHTML = msg;
             return;
         }
 
         docs = ordenarDados(docs);
 
-        let html = `<div class="table-responsive"><table>
+        // ----- TABELA (desktop) -----
+        let htmlTabela = `<div class="table-responsive"><table>
             <thead><tr>
                 <th data-sort="numero">Nº <span class="sorter">${sortField === 'numero' ? (sortAsc ? '▲' : '▼') : '⇅'}</span></th>
                 <th data-sort="titulo">Título <span class="sorter">${sortField === 'titulo' ? (sortAsc ? '▲' : '▼') : '⇅'}</span></th>
@@ -304,6 +356,9 @@
                 <th data-sort="dias_aberto">Dias aberto <span class="sorter">${sortField === 'dias_aberto' ? (sortAsc ? '▲' : '▼') : '⇅'}</span></th>
             </tr></thead><tbody>`;
 
+        // ----- CARDS (mobile) -----
+        let htmlCards = '';
+
         docs.forEach(data => {
             const id = data.id;
             const statusClass = `badge-${data.status || 'aberta'}`;
@@ -313,11 +368,10 @@
             const pData = priorityMap[p] || priorityMap['normal'];
             const prioridadeHtml = `<span class="badge ${pData.class}"><span class="icone">${pData.icon}</span> ${pData.label}</span>`;
 
-            // PENDENTE EM – cores dinâmicas
+            // Pendente em – cores
             let pendenteCor = '#ced4da';
             let icone = '👥';
             let texto = data.direcionado_para_nome || '—';
-
             if (data.direcionado_para && data.direcionado_para.startsWith('group:')) {
                 if (data.direcionado_para === 'group:admin' || data.direcionado_para === 'group:diretor') {
                     pendenteCor = '#ced4da';
@@ -328,23 +382,16 @@
                 icone = '👤';
                 if (uid && userMap[uid]) {
                     const funcao = userMap[uid].funcao;
-                    if (funcao === 'admin') {
-                        pendenteCor = '#ffe082';
-                    } else if (funcao === 'diretor') {
-                        pendenteCor = '#a5d6a7';
-                    } else {
-                        pendenteCor = '#ced4da';
-                    }
+                    if (funcao === 'admin') pendenteCor = '#ffe082';
+                    else if (funcao === 'diretor') pendenteCor = '#a5d6a7';
+                    else pendenteCor = '#ced4da';
                 } else {
                     pendenteCor = '#ced4da';
                 }
             }
-
             const pendenteHtml = `<span class="badge" style="background-color:${pendenteCor}; color:#000;"><span class="icone">${icone}</span> ${texto}</span>`;
 
-            // ============================================================
-            // DATA/HORA SEM SEGUNDOS
-            // ============================================================
+            // Data/Hora sem segundos
             let dataHora = '—';
             if (data.criado_em) {
                 const d = new Date(data.criado_em);
@@ -361,7 +408,8 @@
             const ultData = getUltimaDataHistorico(data);
             if (ultData) diasPendente = calcularDias(ultData);
 
-            html += `
+            // --- LINHA DA TABELA ---
+            htmlTabela += `
                 <tr onclick="window.location.href='os-detalhe.html?id=${id}'" style="cursor:pointer;">
                     <td><strong>${data.numero || 'N/A'}</strong></td>
                     <td>${data.titulo || 'Sem título'}</td>
@@ -374,10 +422,55 @@
                     <td><span class="dias-numero">${diasAberto}</span></td>
                 </tr>
             `;
-        });
-        html += `</tbody></table></div>`;
-        listaDiv.innerHTML = html;
 
+            // --- CARD (mobile) ---
+            htmlCards += `
+                <div class="card" onclick="window.location.href='os-detalhe.html?id=${id}'">
+                    <div class="card-row">
+                        <span class="card-label">Nº</span>
+                        <span class="card-value"><strong>${data.numero || 'N/A'}</strong></span>
+                    </div>
+                    <div class="card-row">
+                        <span class="card-label">Título</span>
+                        <span class="card-value">${data.titulo || 'Sem título'}</span>
+                    </div>
+                    <div class="card-row">
+                        <span class="card-label">Aberto por</span>
+                        <span class="card-value">${data.aberto_por_nome || '—'}</span>
+                    </div>
+                    <div class="card-row">
+                        <span class="card-label">Prioridade</span>
+                        <span class="card-value">${prioridadeHtml}</span>
+                    </div>
+                    <div class="card-row">
+                        <span class="card-label">Status</span>
+                        <span class="card-value"><span class="badge ${statusClass}">${statusLabel.replace('_',' ').toUpperCase()}</span></span>
+                    </div>
+                    <div class="card-row">
+                        <span class="card-label">Data/Hora</span>
+                        <span class="card-value">${dataHora}</span>
+                    </div>
+                    <div class="card-row">
+                        <span class="card-label">Pendente em</span>
+                        <span class="card-value">${pendenteHtml}</span>
+                    </div>
+                    <div class="card-row">
+                        <span class="card-label">Dias pendente</span>
+                        <span class="card-value"><span class="dias-numero">${diasPendente}</span></span>
+                    </div>
+                    <div class="card-row">
+                        <span class="card-label">Dias aberto</span>
+                        <span class="card-value"><span class="dias-numero">${diasAberto}</span></span>
+                    </div>
+                </div>
+            `;
+        });
+
+        htmlTabela += `</tbody></table></div>`;
+        listaTabela.innerHTML = htmlTabela;
+        listaCards.innerHTML = htmlCards;
+
+        // Event listeners para ordenação na tabela (desktop)
         document.querySelectorAll('th[data-sort]').forEach(th => {
             th.addEventListener('click', () => {
                 const field = th.dataset.sort;
@@ -428,14 +521,15 @@
             });
         }
 
-        renderizarTabela(docs);
+        renderizar(docs);
     }
 
     // ================================================================
     // CARREGAR DADOS
     // ================================================================
     function carregarOS() {
-        listaDiv.innerHTML = '<p class="empty-message">Carregando ordens de serviço...</p>';
+        listaTabela.innerHTML = '<p class="empty-message">Carregando ordens de serviço...</p>';
+        listaCards.innerHTML = '<p class="empty-message">Carregando...</p>';
         db.collection('usuarios').where('status', '==', 'ativo').get()
             .then(snapshot => {
                 userMap = {};
@@ -448,7 +542,9 @@
             .then(snapshot => {
                 if (snapshot.empty) {
                     window.allDocs = [];
-                    listaDiv.innerHTML = '<p class="empty-message">Nenhuma ordem de serviço encontrada.</p>';
+                    const msg = '<p class="empty-message">Nenhuma ordem de serviço encontrada.</p>';
+                    listaTabela.innerHTML = msg;
+                    listaCards.innerHTML = msg;
                     return;
                 }
                 let docs = [];
@@ -460,7 +556,9 @@
             })
             .catch(err => {
                 console.error('Erro ao carregar OS:', err);
-                listaDiv.innerHTML = `<p style="color:red;">Erro ao carregar: ${err.message}</p>`;
+                const msg = `<p style="color:red;">Erro ao carregar: ${err.message}</p>`;
+                listaTabela.innerHTML = msg;
+                listaCards.innerHTML = msg;
             });
     }
 
