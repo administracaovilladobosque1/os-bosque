@@ -57,6 +57,8 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 8px;
+            flex-wrap: wrap;
         }
         .os-info .info-value .badge,
         .card .badge {
@@ -78,6 +80,12 @@
         .badge-emergencial { background: #ffcdd2; color: #b71c1c; font-weight: bold; }
         .badge-urgente { background: #fff9c4; color: #f57f17; font-weight: bold; }
         .badge-normal { background: #c8e6c9; color: #1b5e20; font-weight: bold; }
+        .edit-historico {
+            font-size: 12px;
+            color: #888;
+            font-style: italic;
+            margin-left: 6px;
+        }
 
         .historico-container { margin: 20px 0; display: flex; flex-direction: column; gap: 12px; }
         .historico-container .card {
@@ -122,14 +130,6 @@
         }
         .card .card-body .mensagem {
             margin-top: 4px;
-        }
-        .card .card-body .edicao {
-            font-size: 13px;
-            color: #999;
-            font-style: italic;
-            margin-top: 4px;
-            padding-top: 4px;
-            border-top: 1px dashed #e0e0e0;
         }
 
         .nova-acao .form-group { margin-bottom: 10px; }
@@ -338,6 +338,27 @@
     }
 
     // ================================================================
+    // OBTER HISTÓRICO DE EDIÇÕES DE UM CAMPO
+    // ================================================================
+    function getHistoricoEdicoes(campo) {
+        if (!osData.edicoes) return null;
+        const edicoes = osData.edicoes[campo];
+        if (!edicoes || edicoes.length === 0) return null;
+        return edicoes;
+    }
+
+    function exibirHistoricoEdicao(campo) {
+        const edicoes = getHistoricoEdicoes(campo);
+        if (!edicoes) return '';
+        // Pega a última edição
+        const ultima = edicoes[edicoes.length - 1];
+        if (!ultima) return '';
+        const data = formatarDataHora(ultima.data);
+        const antigo = ultima.valor_antigo || '';
+        return `<span class="edit-historico">(edit ${data}: ${antigo})</span>`;
+    }
+
+    // ================================================================
     // CARREGAR USUÁRIOS
     // ================================================================
     function carregarUsuarios() {
@@ -364,6 +385,8 @@
                     return;
                 }
                 osData = { id: doc.id, ...doc.data() };
+                // Inicializar campo edicoes se não existir
+                if (!osData.edicoes) osData.edicoes = {};
                 renderizarDetalhe();
             })
             .catch(err => {
@@ -373,7 +396,7 @@
     }
 
     // ================================================================
-    // RENDERIZAR DETALHE (REFATORADO)
+    // RENDERIZAR DETALHE
     // ================================================================
     function renderizarDetalhe() {
         if (!osData) return;
@@ -408,14 +431,27 @@
         };
         const prioridadeLabel = prioridadeMap[osData.prioridade] || osData.prioridade;
 
+        // Função para construir o valor de um campo com histórico inline
+        function construirValor(campo, valorAtual, editField = false) {
+            let html = `<span id="display-${campo}">${valorAtual}</span>`;
+            const historicoEdicao = exibirHistoricoEdicao(campo);
+            if (historicoEdicao) html += historicoEdicao;
+            if (editField) {
+                html += `<span class="edit-field">
+                    <button class="btn-edit" data-campo="${campo}" data-valor="${valorAtual}">✏️</button>
+                </span>`;
+            }
+            return html;
+        }
+
         const campos = [
-            { label: 'Título', value: osData.titulo || '—', edit: 'titulo' },
-            { label: 'Descrição', value: osData.descricao || '—', edit: 'descricao' },
-            { label: 'Tipo', value: tipoCapitalizado, edit: 'tipo' },
-            { label: 'Prioridade', value: prioridadeLabel, edit: 'prioridade' },
-            { label: 'Aberto por', value: abertoPorBadge },
-            { label: 'Abertura', value: formatarDataHora(osData.criado_em) },
-            { label: 'Direcionado para', value: direcionadoBadge, edit: 'direcionado_para' },
+            { label: 'Título', value: osData.titulo || '—', campo: 'titulo', edit: true },
+            { label: 'Descrição', value: osData.descricao || '—', campo: 'descricao', edit: true },
+            { label: 'Tipo', value: tipoCapitalizado, campo: 'tipo', edit: true },
+            { label: 'Prioridade', value: prioridadeLabel, campo: 'prioridade', edit: true },
+            { label: 'Aberto por', value: abertoPorBadge, campo: 'aberto_por', edit: false },
+            { label: 'Abertura', value: formatarDataHora(osData.criado_em), campo: 'criado_em', edit: false },
+            { label: 'Direcionado para', value: direcionadoBadge, campo: 'direcionado_para', edit: true },
         ];
 
         const reclamante = osData.quadra_reclamante && osData.lote_reclamante
@@ -426,8 +462,8 @@
             : (osData.quadra_reclamada || osData.lote_reclamada || '—');
 
         campos.push(
-            { label: 'Reclamante', value: reclamante, edit: 'quadra_reclamante', edit2: 'lote_reclamante' },
-            { label: 'Reclamado', value: reclamado, edit: 'quadra_reclamada', edit2: 'lote_reclamada' }
+            { label: 'Reclamante', value: reclamante, campo: 'quadra_reclamante', campo2: 'lote_reclamante', edit: true },
+            { label: 'Reclamado', value: reclamado, campo: 'quadra_reclamada', campo2: 'lote_reclamada', edit: true }
         );
 
         const podeEditar = podeEditarOS();
@@ -436,16 +472,29 @@
         campos.forEach(campo => {
             let valor = campo.value;
             let editHtml = '';
-            if ((campo.edit || campo.edit2) && podeEditar) {
-                editHtml = `<span class="edit-field">
-                    <button class="btn-edit" data-campo="${campo.edit || ''}" data-campo2="${campo.edit2 || ''}" data-valor="${campo.value || ''}">✏️</button>
-                </span>`;
+            if (campo.edit && podeEditar) {
+                if (campo.campo2) {
+                    // Edição dupla (quadra+lote)
+                    editHtml = `<span class="edit-field">
+                        <button class="btn-edit" data-campo="${campo.campo}" data-campo2="${campo.campo2}" data-valor="${campo.value}">✏️</button>
+                    </span>`;
+                    // Exibir histórico inline para ambos os campos (vamos exibir para o campo principal)
+                    const historicoEdicao = exibirHistoricoEdicao(campo.campo) || exibirHistoricoEdicao(campo.campo2);
+                    if (historicoEdicao) valor += historicoEdicao;
+                } else {
+                    // Edição simples
+                    const historicoEdicao = exibirHistoricoEdicao(campo.campo);
+                    if (historicoEdicao) valor += historicoEdicao;
+                    editHtml = `<span class="edit-field">
+                        <button class="btn-edit" data-campo="${campo.campo}" data-valor="${campo.value}">✏️</button>
+                    </span>`;
+                }
             }
             infoHTML += `
                 <div class="info-row">
                     <div class="info-label">${campo.label}</div>
-                    <div class="info-value" id="info-${campo.edit || campo.edit2 || 'static'}">
-                        <span id="display-${campo.edit || campo.edit2 || 'static'}">${valor}</span>
+                    <div class="info-value" id="info-${campo.campo || 'static'}">
+                        <span id="display-${campo.campo || 'static'}">${valor}</span>
                         ${editHtml}
                     </div>
                 </div>
@@ -467,36 +516,36 @@
             return;
         }
 
-        // Ordenar por data crescente
         historico.sort((a, b) => (a.data || '').localeCompare(b.data || ''));
 
         let html = '';
         let dataAnterior = null;
-        let cardIndex = 0; // contador de cards de resposta (exclui abertura)
-        let ultimoCard = null; // guarda o último card de ação para anexar edições
+        let cardIndex = 0;
 
-        // Função para criar um card de ação
-        function criarCard(acaoItem, edicoes = []) {
-            const uid = acaoItem.usuario_uid;
-            const nome = getNome(uid) || acaoItem.usuario || 'Anônimo';
+        historico.forEach((item) => {
+            if (item.acao === 'abertura') return; // não exibir abertura
+
+            const uid = item.usuario_uid;
+            const nome = getNome(uid) || item.usuario || 'Anônimo';
             const funcao = getFuncao(uid) || 'outros';
-            const dataFormat = formatarDataHora(acaoItem.data);
-            const acao = acaoItem.acao || 'ação';
-            let mensagem = acaoItem.mensagem || '';
+            const dataFormat = formatarDataHora(item.data);
+            const acao = item.acao || 'ação';
+            let mensagem = item.mensagem || '';
 
-            // Direcionado (usa o valor do item, não o atual da OS)
+            // Não há mais cards de edição, então ignoramos edições aqui
+            if (acao === 'edicao') return; // edições são exibidas inline
+
             let direcionadoHtml = '';
-            if (acaoItem.direcionado_para) {
+            if (item.direcionado_para) {
                 const direcionadoData = {
-                    direcionado_para: acaoItem.direcionado_para,
-                    direcionado_para_nome: acaoItem.direcionado_para_nome || acaoItem.direcionado_para
+                    direcionado_para: item.direcionado_para,
+                    direcionado_para_nome: item.direcionado_para_nome || item.direcionado_para
                 };
                 direcionadoHtml = `<div class="direcionado">Direcionado para: ${getBadgeDirecionado(direcionadoData)}</div>`;
             }
 
-            // Cálculo de horas
             let horasDecorridas = '';
-            const dataItem = new Date(acaoItem.data);
+            const dataItem = new Date(item.data);
             if (cardIndex === 0) {
                 horasDecorridas = ' (primeira resposta)';
             } else {
@@ -508,7 +557,7 @@
                     else horasDecorridas = ` (${diffHoras} horas depois)`;
                 }
             }
-            dataAnterior = acaoItem.data;
+            dataAnterior = item.data;
             cardIndex++;
 
             const autorBadge = getBadgePerfil(uid, nome);
@@ -518,19 +567,7 @@
             else if (funcao === 'diretor') cardClass = 'card-diretor';
             else if (funcao === 'master') cardClass = 'card-master';
 
-            let edicoesHtml = '';
-            if (edicoes.length > 0) {
-                edicoesHtml = '<div class="edicao">✏️ Edições:<br>';
-                edicoes.forEach(ed => {
-                    const detalhes = ed.detalhes || {};
-                    const antigo = detalhes.valor_antigo || '';
-                    const novo = detalhes.valor_novo || '';
-                    edicoesHtml += `<span style="text-decoration:line-through; color:#999; font-style:italic;">${antigo}</span> → ${novo} <span style="color:#999; font-size:12px;">(edit em ${formatarDataCurta(ed.data)})</span><br>`;
-                });
-                edicoesHtml += '</div>';
-            }
-
-            return `
+            html += `
                 <div class="card ${cardClass}">
                     <div class="card-header">
                         <span class="usuario">Resposta por ${autorBadge}</span>
@@ -540,72 +577,10 @@
                         <strong>${acao.toUpperCase()}</strong>
                         ${direcionadoHtml}
                         <div class="mensagem">${mensagem}</div>
-                        ${edicoesHtml}
                     </div>
                 </div>
             `;
-        }
-
-        // Percorrer histórico, coletando edições para anexar ao card seguinte
-        let edicoesPendentes = [];
-        let ultimoItemAcao = null;
-
-        historico.forEach((item) => {
-            if (item.acao === 'abertura') return;
-
-            if (item.acao === 'edicao') {
-                // Guarda a edição para anexar ao próximo card de ação
-                edicoesPendentes.push(item);
-                return;
-            }
-
-            // É uma ação (não edição)
-            // Se houver edições pendentes, anexa ao card que vamos criar
-            if (edicoesPendentes.length > 0) {
-                // Cria o card com as edições
-                html += criarCard(item, edicoesPendentes);
-                edicoesPendentes = [];
-            } else {
-                html += criarCard(item);
-            }
         });
-
-        // Se sobraram edições pendentes (nenhuma ação depois), cria um card especial para elas
-        if (edicoesPendentes.length > 0) {
-            // Cria um card de "Edição" sem ação principal
-            const primeiraEdicao = edicoesPendentes[0];
-            const uid = primeiraEdicao.usuario_uid;
-            const nome = getNome(uid) || primeiraEdicao.usuario || 'Anônimo';
-            const funcao = getFuncao(uid) || 'outros';
-            const dataFormat = formatarDataHora(primeiraEdicao.data);
-            let edicoesHtml = '<div class="edicao">✏️ Edições:<br>';
-            edicoesPendentes.forEach(ed => {
-                const detalhes = ed.detalhes || {};
-                const antigo = detalhes.valor_antigo || '';
-                const novo = detalhes.valor_novo || '';
-                edicoesHtml += `<span style="text-decoration:line-through; color:#999; font-style:italic;">${antigo}</span> → ${novo} <span style="color:#999; font-size:12px;">(edit em ${formatarDataCurta(ed.data)})</span><br>`;
-            });
-            edicoesHtml += '</div>';
-
-            const autorBadge = getBadgePerfil(uid, nome);
-            let cardClass = 'card-outros';
-            if (funcao === 'admin') cardClass = 'card-admin';
-            else if (funcao === 'diretor') cardClass = 'card-diretor';
-            else if (funcao === 'master') cardClass = 'card-master';
-
-            html += `
-                <div class="card ${cardClass}">
-                    <div class="card-header">
-                        <span class="usuario">Resposta por ${autorBadge}</span>
-                        <span class="tempo">${dataFormat} (edição)</span>
-                    </div>
-                    <div class="card-body">
-                        <strong>EDIÇÃO</strong>
-                        <div class="mensagem">${edicoesHtml}</div>
-                    </div>
-                </div>
-            `;
-        }
 
         // ---- ÚLTIMO CARD (Adicionar Ação) ----
         html += `<div class="card card-ultimo">`;
@@ -687,7 +662,7 @@
     }
 
     // ================================================================
-    // EDIÇÃO DE CAMPO
+    // EDIÇÃO DE CAMPO (SEM CRIAR NOVO CARD)
     // ================================================================
     function iniciarEdicao(campo, campo2, valorAtual, btn) {
         if (editando.campo) cancelarEdicao();
@@ -706,6 +681,7 @@
         wrapper.className = 'edit-field-wrapper';
 
         if (campo2) {
+            // Edição dupla (quadra + lote)
             const input1 = document.createElement('input');
             input1.type = 'text';
             input1.placeholder = 'Quadra';
@@ -827,22 +803,25 @@
         }
         const updateData = {};
         updateData[campo] = valorNovo;
-        const historico = osData.historico || [];
-        historico.push({
+
+        // Registrar edição no objeto edicoes
+        const edicoes = osData.edicoes || {};
+        if (!edicoes[campo]) edicoes[campo] = [];
+        edicoes[campo].push({
             data: new Date().toISOString(),
-            acao: 'edicao',
-            usuario_uid: currentUser.uid,
-            usuario: currentUserData?.nome || 'Usuário',
-            mensagem: `Editou ${campo}`,
-            detalhes: { campo, valor_antigo: valorAntigo, valor_novo: valorNovo }
+            valor_antigo: valorAntigo,
+            valor_novo: valorNovo
         });
-        updateData.historico = historico;
+        updateData.edicoes = edicoes;
+
+        // Não adicionar ao histórico principal (pois não queremos criar cards)
+        // Mas atualizar a data de modificação
         updateData.atualizado_em = new Date().toISOString();
 
         db.collection('ordens_servico').doc(osId).update(updateData)
             .then(() => {
                 osData[campo] = valorNovo;
-                osData.historico = historico;
+                osData.edicoes = edicoes;
                 osData.atualizado_em = new Date().toISOString();
                 cancelarEdicao();
                 renderizarDetalhe();
@@ -855,23 +834,29 @@
         const updateData = {};
         updateData[campo1] = novo1;
         updateData[campo2] = novo2;
-        const historico = osData.historico || [];
-        historico.push({
+
+        const edicoes = osData.edicoes || {};
+        // Registrar edição para cada campo
+        if (!edicoes[campo1]) edicoes[campo1] = [];
+        edicoes[campo1].push({
             data: new Date().toISOString(),
-            acao: 'edicao',
-            usuario_uid: currentUser.uid,
-            usuario: currentUserData?.nome || 'Usuário',
-            mensagem: `Editou ${campo1} e ${campo2}`,
-            detalhes: { campo: `${campo1}, ${campo2}`, valor_antigo: `${antigo1} ${antigo2}`, valor_novo: `${novo1} ${novo2}` }
+            valor_antigo: antigo1,
+            valor_novo: novo1
         });
-        updateData.historico = historico;
+        if (!edicoes[campo2]) edicoes[campo2] = [];
+        edicoes[campo2].push({
+            data: new Date().toISOString(),
+            valor_antigo: antigo2,
+            valor_novo: novo2
+        });
+        updateData.edicoes = edicoes;
         updateData.atualizado_em = new Date().toISOString();
 
         db.collection('ordens_servico').doc(osId).update(updateData)
             .then(() => {
                 osData[campo1] = novo1;
                 osData[campo2] = novo2;
-                osData.historico = historico;
+                osData.edicoes = edicoes;
                 osData.atualizado_em = new Date().toISOString();
                 cancelarEdicao();
                 renderizarDetalhe();
