@@ -43,6 +43,7 @@
             flex-wrap: wrap;
             padding: 4px 0;
             border-bottom: 1px solid #e8f5e9;
+            align-items: center;
         }
         .os-info .info-row:last-child { border-bottom: none; }
         .os-info .info-label {
@@ -54,6 +55,9 @@
         .os-info .info-value {
             flex: 1;
             word-break: break-word;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
         .os-info .info-value .badge {
             display: inline-block;
@@ -69,11 +73,10 @@
         .badge-emergencial { background: #ffcdd2; color: #b71c1c; font-weight: bold; }
         .badge-urgente { background: #fff9c4; color: #f57f17; font-weight: bold; }
         .badge-normal { background: #c8e6c9; color: #1b5e20; font-weight: bold; }
+        .badge-info { background: #c8e6c9; color: #1b5e20; }
 
         /* HISTÓRICO - CARDS */
-        .historico-container {
-            margin: 20px 0;
-        }
+        .historico-container { margin: 20px 0; }
         .historico-container .card {
             background: #fff;
             border-left: 4px solid #a5d6a7;
@@ -107,8 +110,9 @@
 
         /* EDIÇÃO */
         .edit-field {
-            display: inline-block;
-            margin-left: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
         }
         .edit-field input, .edit-field select {
             padding: 2px 6px;
@@ -116,7 +120,7 @@
             border-radius: 4px;
             font-size: 14px;
         }
-        .edit-field .btn-sm { margin-left: 4px; }
+        .edit-field .btn-sm { margin-left: 2px; }
 
         /* FORMULÁRIO DE AÇÃO */
         .nova-acao {
@@ -152,7 +156,7 @@
             .container { padding: 14px; }
             .page-title { font-size: 20px; }
             .os-info .info-label { width: 100px; }
-            .os-info .info-value { font-size: 13px; }
+            .os-info .info-value { font-size: 13px; flex-wrap: wrap; }
             .acoes-rodape { flex-direction: column; align-items: stretch; }
             .acoes-rodape .btn { width: 100%; text-align: center; }
         }
@@ -259,7 +263,7 @@
     let osId = null;
     let osData = null;
     let userMap = {}; // uid -> { nome, funcao }
-    let editando = { campo: null, original: null };
+    let editando = { campo: null, original: null, el: null };
 
     // ================================================================
     // ELEMENTOS
@@ -321,6 +325,13 @@
         return 'card-outros';
     }
 
+    function emojiPrioridade(prio) {
+        if (prio === 'emergencial') return '🔴';
+        if (prio === 'urgente') return '🟡';
+        if (prio === 'normal') return '🟢';
+        return '⚪';
+    }
+
     // ================================================================
     // CARREGAR USUÁRIOS PARA MAPA
     // ================================================================
@@ -378,53 +389,73 @@
         osStatusBadge.className = `badge badge-${osData.status || 'aberta'}`;
 
         // ---- INFORMAÇÕES ----
-        let infoHTML = '';
+        const funcaoAbertura = getFuncao(osData.aberto_por);
+        const corAbertura = getCorPerfil(funcaoAbertura);
+        const nomeAbertura = getNome(osData.aberto_por);
+
+        const prioridadeMap = {
+            'emergencial': 'Emergencial',
+            'urgente': 'Urgente',
+            'normal': 'Normal'
+        };
+        const prioridadeLabel = prioridadeMap[osData.prioridade] || osData.prioridade;
+
+        // Monta os campos
         const campos = [
-            { label: 'Número', value: osData.numero || '—' },
-            { label: 'Título', value: osData.titulo || '—', edit: 'titulo' },
-            { label: 'Descrição', value: osData.descricao || '—', edit: 'descricao' },
-            { label: 'Tipo', value: osData.tipo || '—', edit: 'tipo' },
-            { label: 'Prioridade', value: osData.prioridade || 'normal', edit: 'prioridade' },
-            { label: 'Status', value: statusLabel },
-            { label: 'Aberto por', value: getNome(osData.aberto_por) },
-            { label: 'Data/Hora abertura', value: formatarDataHora(osData.criado_em) },
-            { label: 'Reclamante - Quadra', value: osData.quadra_reclamante || '—' },
-            { label: 'Reclamante - Lote', value: osData.lote_reclamante || '—' },
-            { label: 'Reclamado - Quadra', value: osData.quadra_reclamada || '—' },
-            { label: 'Reclamado - Lote', value: osData.lote_reclamada || '—' },
-            { label: 'Direcionado para', value: osData.direcionado_para_nome || '—' },
+            { label: '📝 Título', value: osData.titulo || '—', edit: 'titulo' },
+            { label: '📄 Descrição', value: osData.descricao || '—', edit: 'descricao' },
+            { label: '📂 Tipo', value: osData.tipo || '—', edit: 'tipo' },
+            { label: `${emojiPrioridade(osData.prioridade)} Prioridade`, value: prioridadeLabel, edit: 'prioridade' },
+            { label: '👤 Aberto por', value: nomeAbertura },
+            { label: '📅 Abertura', value: formatarDataHora(osData.criado_em) },
+            { label: '🎯 Direcionado para', value: osData.direcionado_para_nome || '—', edit: 'direcionado_para' },
         ];
 
-        // Determina se o usuário atual pode editar
+        // Reclamante e Reclamado como badges em sequência
+        const reclamante = osData.quadra_reclamante && osData.lote_reclamante
+            ? `${osData.quadra_reclamante} ${osData.lote_reclamante}`
+            : (osData.quadra_reclamante || osData.lote_reclamante || '—');
+        const reclamado = osData.quadra_reclamada && osData.lote_reclamada
+            ? `${osData.quadra_reclamada} ${osData.lote_reclamada}`
+            : (osData.quadra_reclamada || osData.lote_reclamada || '—');
+
+        campos.push(
+            { label: '📌 Reclamante', value: reclamante, edit: 'quadra_reclamante', edit2: 'lote_reclamante' },
+            { label: '📍 Reclamado', value: reclamado, edit: 'quadra_reclamada', edit2: 'lote_reclamada' }
+        );
+
         const podeEditar = podeEditarOS();
 
+        let infoHTML = '';
         campos.forEach(campo => {
             let valor = campo.value;
             let editHtml = '';
-            if (campo.edit && podeEditar) {
+            if ((campo.edit || campo.edit2) && podeEditar) {
                 editHtml = `<span class="edit-field">
-                    <button class="btn-edit" data-campo="${campo.edit}" data-valor="${campo.value || ''}">✏️</button>
+                    <button class="btn-edit" data-campo="${campo.edit || ''}" data-campo2="${campo.edit2 || ''}" data-valor="${campo.value || ''}">✏️</button>
                 </span>`;
             }
             infoHTML += `
                 <div class="info-row">
                     <div class="info-label">${campo.label}</div>
-                    <div class="info-value" id="info-${campo.edit || 'static'}">
-                        ${campo.edit ? `<span id="display-${campo.edit}">${valor}</span>` : valor}
+                    <div class="info-value" id="info-${campo.edit || campo.edit2 || 'static'}">
+                        <span id="display-${campo.edit || campo.edit2 || 'static'}">${valor}</span>
                         ${editHtml}
                     </div>
                 </div>
             `;
         });
 
+        // Cor de fundo do cabeçalho da OS (quem abriu)
         osInfoContainer.innerHTML = infoHTML;
+        osInfoContainer.style.borderLeft = `6px solid ${corAbertura}`;
+        osInfoContainer.style.backgroundColor = corAbertura + '22'; // transparente
 
         // ---- HISTÓRICO ----
         const historico = osData.historico || [];
         if (historico.length === 0) {
             historicoContainer.innerHTML = '<p>Nenhuma ação registrada.</p>';
         } else {
-            // Ordenar por data crescente (mais antigo primeiro)
             historico.sort((a, b) => (a.data || '').localeCompare(b.data || ''));
             let html = '';
             historico.forEach(item => {
@@ -437,7 +468,6 @@
                 const mensagem = item.mensagem || '';
                 let direcionado = item.direcionado_para ? ` → ${item.direcionado_para}` : '';
 
-                // Se for edição, exibe tachado
                 let corpo = mensagem;
                 if (acao === 'edicao') {
                     const detalhes = item.detalhes || {};
@@ -469,7 +499,7 @@
         const isAdmin = (funcaoUsuario === 'admin');
         const isMaster = (currentUser && currentUser.email === MASTER_EMAIL);
         const podeConcluir = isDiretor || isMaster;
-        const podeReabrir = isAdmin || isDiretor || isMaster;
+        const podeReabrir = isDiretor || isAdmin || isMaster;
         const statusConcluida = (osData.status === 'concluida');
 
         let rodapeHtml = '';
@@ -494,8 +524,9 @@
         document.querySelectorAll('.btn-edit').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const campo = btn.dataset.campo;
+                const campo2 = btn.dataset.campo2;
                 const valorAtual = btn.dataset.valor;
-                iniciarEdicao(campo, valorAtual);
+                iniciarEdicao(campo, campo2, valorAtual, btn);
             });
         });
     }
@@ -505,9 +536,7 @@
     // ================================================================
     function podeEditarOS() {
         if (!currentUser || !osData) return false;
-        // Master pode editar sempre
         if (currentUser.email === MASTER_EMAIL) return true;
-        // Se a OS foi criada por um admin, apenas admins podem editar
         const criadorUid = osData.aberto_por;
         const funcaoCriador = getFuncao(criadorUid);
         const funcaoUsuario = currentUserData?.funcao;
@@ -519,100 +548,150 @@
     // ================================================================
     // EDIÇÃO DE CAMPO
     // ================================================================
-    function iniciarEdicao(campo, valorAtual) {
-        if (editando.campo) {
-            cancelarEdicao();
-        }
-        editando.campo = campo;
-        editando.original = valorAtual;
+    function iniciarEdicao(campo, campo2, valorAtual, btn) {
+        // Cancelar edição anterior se houver
+        if (editando.campo) cancelarEdicao();
 
-        const displayEl = document.getElementById(`display-${campo}`);
+        editando.campo = campo;
+        editando.campo2 = campo2;
+        editando.original = valorAtual;
+        editando.el = btn;
+
+        const displayEl = btn.closest('.info-value').querySelector('span[id^="display-"]');
         if (!displayEl) return;
         const container = displayEl.parentElement;
 
-        let input;
-        if (campo === 'prioridade') {
-            input = document.createElement('select');
-            const opcoes = ['emergencial', 'urgente', 'normal'];
-            opcoes.forEach(opt => {
-                const option = document.createElement('option');
-                option.value = opt;
-                option.textContent = opt;
-                if (opt === valorAtual) option.selected = true;
-                input.appendChild(option);
-            });
-        } else if (campo === 'tipo') {
-            input = document.createElement('select');
-            const opcoes = ['serviço', 'reclamação', 'infração', 'análise'];
-            opcoes.forEach(opt => {
-                const option = document.createElement('option');
-                option.value = opt;
-                option.textContent = opt;
-                if (opt === valorAtual) option.selected = true;
-                input.appendChild(option);
-            });
-        } else {
-            input = document.createElement('input');
-            input.type = 'text';
-            input.value = valorAtual || '';
-        }
-        input.className = 'edit-field-input';
-        input.style.width = 'auto';
-        input.style.minWidth = '150px';
-
-        const salvarBtn = document.createElement('button');
-        salvarBtn.textContent = 'Salvar';
-        salvarBtn.className = 'btn btn-sm btn-success';
-        salvarBtn.style.marginLeft = '4px';
-
-        const cancelarBtn = document.createElement('button');
-        cancelarBtn.textContent = 'Cancelar';
-        cancelarBtn.className = 'btn btn-sm btn-secondary';
-        cancelarBtn.style.marginLeft = '4px';
-
+        // Esconde display e botão editar
         displayEl.style.display = 'none';
-        const editBtn = container.querySelector('.btn-edit');
-        if (editBtn) editBtn.style.display = 'none';
+        btn.style.display = 'none';
 
-        const wrapper = document.createElement('span');
+        // Cria input(s)
+        let wrapper = document.createElement('span');
         wrapper.className = 'edit-field-wrapper';
-        wrapper.appendChild(input);
-        wrapper.appendChild(salvarBtn);
-        wrapper.appendChild(cancelarBtn);
-        container.appendChild(wrapper);
 
-        salvarBtn.addEventListener('click', () => {
-            const novoValor = input.value.trim();
-            if (novoValor === '' && campo !== 'tipo' && campo !== 'prioridade') {
-                alert('O campo não pode ficar vazio.');
-                return;
+        if (campo2) {
+            // Dois campos (quadra e lote)
+            const input1 = document.createElement('input');
+            input1.type = 'text';
+            input1.placeholder = 'Quadra';
+            input1.value = osData[campo] || '';
+            input1.style.width = '60px';
+            const input2 = document.createElement('input');
+            input2.type = 'text';
+            input2.placeholder = 'Lote';
+            input2.value = osData[campo2] || '';
+            input2.style.width = '60px';
+            const salvarBtn = document.createElement('button');
+            salvarBtn.textContent = 'Salvar';
+            salvarBtn.className = 'btn btn-sm btn-success';
+            const cancelarBtn = document.createElement('button');
+            cancelarBtn.textContent = 'Cancelar';
+            cancelarBtn.className = 'btn btn-sm btn-secondary';
+
+            wrapper.appendChild(input1);
+            wrapper.appendChild(input2);
+            wrapper.appendChild(salvarBtn);
+            wrapper.appendChild(cancelarBtn);
+            container.appendChild(wrapper);
+
+            salvarBtn.addEventListener('click', () => {
+                const novo1 = input1.value.trim();
+                const novo2 = input2.value.trim();
+                if (novo1 === osData[campo] && novo2 === osData[campo2]) {
+                    cancelarEdicao();
+                    return;
+                }
+                salvarEdicaoDupla(campo, campo2, osData[campo], osData[campo2], novo1, novo2);
+            });
+            cancelarBtn.addEventListener('click', cancelarEdicao);
+        } else {
+            // Campo único
+            let input;
+            if (campo === 'prioridade') {
+                input = document.createElement('select');
+                const opcoes = ['emergencial', 'urgente', 'normal'];
+                opcoes.forEach(opt => {
+                    const option = document.createElement('option');
+                    option.value = opt;
+                    option.textContent = opt;
+                    if (opt === valorAtual) option.selected = true;
+                    input.appendChild(option);
+                });
+            } else if (campo === 'tipo') {
+                input = document.createElement('select');
+                const opcoes = ['serviço', 'reclamação', 'infração', 'análise'];
+                opcoes.forEach(opt => {
+                    const option = document.createElement('option');
+                    option.value = opt;
+                    option.textContent = opt;
+                    if (opt === valorAtual) option.selected = true;
+                    input.appendChild(option);
+                });
+            } else if (campo === 'direcionado_para') {
+                // Para direcionamento, usar dropdown com personagens
+                input = document.createElement('select');
+                input.innerHTML = acaoDirecionar.innerHTML; // reusa o mesmo
+                // Seleciona o valor atual
+                const opt = input.querySelector(`option[value="${osData.direcionado_para || ''}"]`);
+                if (opt) opt.selected = true;
+            } else {
+                input = document.createElement('input');
+                input.type = 'text';
+                input.value = valorAtual || '';
             }
-            if (novoValor === editando.original) {
-                cancelarEdicao();
-                return;
-            }
-            salvarEdicao(campo, editando.original, novoValor);
-        });
+            input.className = 'edit-field-input';
+            input.style.minWidth = '150px';
 
-        cancelarBtn.addEventListener('click', cancelarEdicao);
+            const salvarBtn = document.createElement('button');
+            salvarBtn.textContent = 'Salvar';
+            salvarBtn.className = 'btn btn-sm btn-success';
+            const cancelarBtn = document.createElement('button');
+            cancelarBtn.textContent = 'Cancelar';
+            cancelarBtn.className = 'btn btn-sm btn-secondary';
 
-        if (input.focus) input.focus();
+            wrapper.appendChild(input);
+            wrapper.appendChild(salvarBtn);
+            wrapper.appendChild(cancelarBtn);
+            container.appendChild(wrapper);
+
+            salvarBtn.addEventListener('click', () => {
+                let novoValor = input.value;
+                if (input.tagName === 'SELECT') {
+                    novoValor = input.value;
+                } else {
+                    novoValor = input.value.trim();
+                }
+                if (novoValor === '' && campo !== 'tipo' && campo !== 'prioridade' && campo !== 'direcionado_para') {
+                    alert('O campo não pode ficar vazio.');
+                    return;
+                }
+                if (novoValor === editando.original) {
+                    cancelarEdicao();
+                    return;
+                }
+                salvarEdicao(campo, editando.original, novoValor);
+            });
+            cancelarBtn.addEventListener('click', cancelarEdicao);
+        }
+        if (input && input.focus) input.focus();
     }
 
     function cancelarEdicao() {
-        if (!editando.campo) return;
-        const campo = editando.campo;
-        const displayEl = document.getElementById(`display-${campo}`);
+        if (!editando.campo && !editando.campo2) return;
+        const displayId = editando.campo2 ? editando.campo : editando.campo;
+        const displayEl = document.getElementById(`display-${displayId || 'static'}`);
         if (displayEl) {
             displayEl.style.display = 'inline';
             const container = displayEl.parentElement;
             const wrapper = container.querySelector('.edit-field-wrapper');
             if (wrapper) wrapper.remove();
-            const editBtn = container.querySelector('.btn-edit');
-            if (editBtn) editBtn.style.display = 'inline-block';
+            const btn = container.querySelector('.btn-edit');
+            if (btn) btn.style.display = 'inline-block';
         }
         editando.campo = null;
+        editando.campo2 = null;
         editando.original = null;
+        editando.el = null;
     }
 
     function salvarEdicao(campo, valorAntigo, valorNovo) {
@@ -632,7 +711,6 @@
                 valor_novo: valorNovo
             }
         });
-
         updateData.historico = historico;
         updateData.atualizado_em = new Date().toISOString();
 
@@ -649,13 +727,48 @@
             });
     }
 
+    function salvarEdicaoDupla(campo1, campo2, antigo1, antigo2, novo1, novo2) {
+        const updateData = {};
+        updateData[campo1] = novo1;
+        updateData[campo2] = novo2;
+
+        const historico = osData.historico || [];
+        historico.push({
+            data: new Date().toISOString(),
+            acao: 'edicao',
+            usuario_uid: currentUser.uid,
+            usuario: currentUserData?.nome || 'Usuário',
+            mensagem: `Editou ${campo1} e ${campo2}`,
+            detalhes: {
+                campo: `${campo1}, ${campo2}`,
+                valor_antigo: `${antigo1} ${antigo2}`,
+                valor_novo: `${novo1} ${novo2}`
+            }
+        });
+        updateData.historico = historico;
+        updateData.atualizado_em = new Date().toISOString();
+
+        db.collection('ordens_servico').doc(osId).update(updateData)
+            .then(() => {
+                osData[campo1] = novo1;
+                osData[campo2] = novo2;
+                osData.historico = historico;
+                osData.atualizado_em = new Date().toISOString();
+                cancelarEdicao();
+                renderizarDetalhe();
+            })
+            .catch(err => {
+                alert('Erro ao salvar: ' + err.message);
+            });
+    }
+
     // ================================================================
     // POPULAR DIRECIONAMENTO
     // ================================================================
     function popularDirecionamento() {
         acaoDirecionar.innerHTML = '<option value="">Manter destino atual</option>';
-        acaoDirecionar.innerHTML += `<option value="group:admin">GRUPO: Administradores</option>`;
-        acaoDirecionar.innerHTML += `<option value="group:diretor">GRUPO: Diretores</option>`;
+        acaoDirecionar.innerHTML += `<option value="group:admin">👥 Administradores</option>`;
+        acaoDirecionar.innerHTML += `<option value="group:diretor">👥 Diretores</option>`;
         const admins = [];
         const diretores = [];
         Object.keys(userMap).forEach(uid => {
@@ -705,6 +818,14 @@
             novaAcao.direcionado_para = direcionarPara;
             const destinoNome = acaoDirecionar.options[acaoDirecionar.selectedIndex]?.text || direcionarPara;
             novaAcao.direcionado_para_nome = destinoNome;
+            // Atualiza função do destino (se for personagem)
+            if (direcionarPara !== 'group:admin' && direcionarPara !== 'group:diretor' && userMap[direcionarPara]) {
+                novaAcao.direcionado_para_funcao = userMap[direcionarPara].funcao;
+            } else if (direcionarPara === 'group:admin') {
+                novaAcao.direcionado_para_funcao = 'admin';
+            } else if (direcionarPara === 'group:diretor') {
+                novaAcao.direcionado_para_funcao = 'diretor';
+            }
         }
 
         historico.push(novaAcao);
@@ -718,9 +839,8 @@
             updateData.direcionado_para = direcionarPara;
             const destinoNome = acaoDirecionar.options[acaoDirecionar.selectedIndex]?.text || direcionarPara;
             updateData.direcionado_para_nome = destinoNome;
-            const uid = direcionarPara;
-            if (uid && userMap[uid]) {
-                updateData.direcionado_para_funcao = userMap[uid].funcao;
+            if (direcionarPara !== 'group:admin' && direcionarPara !== 'group:diretor' && userMap[direcionarPara]) {
+                updateData.direcionado_para_funcao = userMap[direcionarPara].funcao;
             } else if (direcionarPara === 'group:admin') {
                 updateData.direcionado_para_funcao = 'admin';
             } else if (direcionarPara === 'group:diretor') {
@@ -739,7 +859,7 @@
                 osData.atualizado_em = agora;
                 acaoDescricao.value = '';
                 acaoDirecionar.value = '';
-                mostrarMensagemAcao('Ação adicionada com sucesso!', 'success');
+                mostrarMensagemAcao('✅ Ação adicionada com sucesso!', 'success');
                 renderizarDetalhe();
                 setTimeout(() => { esconderMensagemAcao(); }, 3000);
             })
@@ -789,7 +909,7 @@
     }
 
     // ================================================================
-    // REABRIR OS (Admin ou Diretor)
+    // REABRIR OS (Admin e Diretor)
     // ================================================================
     function reabrirOS() {
         if (!confirm('Deseja reabrir esta OS?')) return;
