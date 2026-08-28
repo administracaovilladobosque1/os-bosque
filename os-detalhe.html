@@ -309,20 +309,25 @@
     }
 
     function getBadgeDirecionado(data) {
+        // data pode ser um objeto com direcionado_para e direcionado_para_nome
         const target = data.direcionado_para;
         let texto = data.direcionado_para_nome || '—';
         let classe = 'badge-grupo';
+        // Determina classe com base no target
         if (target && target.startsWith('group:')) {
+            // É um grupo: sempre cinza
             classe = 'badge-grupo';
         } else if (target && userMap[target]) {
+            // É um personagem individual: usa a função
             const funcao = userMap[target].funcao;
             if (funcao === 'admin') classe = 'badge-admin';
             else if (funcao === 'diretor') classe = 'badge-diretor';
             else classe = 'badge-grupo';
         } else {
-            const nome = (data.direcionado_para_nome || '').toLowerCase();
-            if (nome.includes('admin')) classe = 'badge-admin';
-            else if (nome.includes('diretor')) classe = 'badge-diretor';
+            // Fallback: tenta inferir pelo nome
+            const nomeLower = (data.direcionado_para_nome || '').toLowerCase();
+            if (nomeLower.includes('admin')) classe = 'badge-admin';
+            else if (nomeLower.includes('diretor')) classe = 'badge-diretor';
             else classe = 'badge-grupo';
         }
         return `<span class="badge ${classe}">${texto}</span>`;
@@ -349,7 +354,6 @@
     function exibirHistoricoEdicao(campo) {
         const edicoes = getHistoricoEdicoes(campo);
         if (!edicoes) return '';
-        // Pega a última edição
         const ultima = edicoes[edicoes.length - 1];
         if (!ultima) return '';
         const data = formatarDataHora(ultima.data);
@@ -357,7 +361,6 @@
         return `<span class="edit-historico">(edit ${data}: ${antigo})</span>`;
     }
 
-    // Mapa para exibir nomes amigáveis de prioridade
     const prioridadeMap = {
         'emergencial': '🔴 Emergencial',
         'urgente': '🟡 Urgente',
@@ -429,6 +432,7 @@
         // ---- INFORMAÇÕES DA OS ----
         const nomeAbertura = getNome(osData.aberto_por);
         const abertoPorBadge = getBadgePerfil(osData.aberto_por, nomeAbertura);
+        // Direcionado: usa osData atual
         const direcionadoBadge = getBadgeDirecionado(osData);
 
         let tipoCapitalizado = osData.tipo || '—';
@@ -465,14 +469,14 @@
         let infoHTML = '';
         campos.forEach(campo => {
             let valor = campo.value;
-            // SEMPRE adicionar histórico inline (independente de permissão)
+            // Adiciona histórico inline para campos editáveis
             if (campo.campo) {
-                const historicoEdicao = exibirHistoricoEdicao(campo.campo);
-                if (historicoEdicao) valor += historicoEdicao;
+                const hist = exibirHistoricoEdicao(campo.campo);
+                if (hist) valor += hist;
             }
             if (campo.campo2) {
-                const historicoEdicao = exibirHistoricoEdicao(campo.campo2);
-                if (historicoEdicao) valor += ' ' + historicoEdicao;
+                const hist = exibirHistoricoEdicao(campo.campo2);
+                if (hist) valor += ' ' + hist;
             }
 
             let editHtml = '';
@@ -677,6 +681,7 @@
         wrapper.className = 'edit-field-wrapper';
 
         if (campo2) {
+            // Edição dupla (quadra + lote)
             const input1 = document.createElement('input');
             input1.type = 'text';
             input1.placeholder = 'Quadra';
@@ -712,6 +717,7 @@
             });
             cancelarBtn.addEventListener('click', cancelarEdicao);
         } else {
+            // Edição simples
             let input;
             if (campo === 'prioridade') {
                 input = document.createElement('select');
@@ -732,10 +738,21 @@
                     input.appendChild(option);
                 });
             } else if (campo === 'direcionado_para') {
-                input = document.createElement('select');
-                input.innerHTML = document.getElementById('acaoDirecionar')?.innerHTML || '';
-                const opt = input.querySelector(`option[value="${osData.direcionado_para || ''}"]`);
-                if (opt) opt.selected = true;
+                // Usa o mesmo conteúdo do select de "acaoDirecionar"
+                const selectAcao = document.getElementById('acaoDirecionar');
+                if (selectAcao) {
+                    input = document.createElement('select');
+                    input.innerHTML = selectAcao.innerHTML;
+                    // Seleciona a opção correspondente ao valor atual
+                    const opt = input.querySelector(`option[value="${osData.direcionado_para || ''}"]`);
+                    if (opt) opt.selected = true;
+                } else {
+                    // Fallback: cria opções básicas
+                    input = document.createElement('select');
+                    input.innerHTML = `<option value="">Manter destino atual</option>
+                        <option value="group:admin">Administradores</option>
+                        <option value="group:diretor">Diretores</option>`;
+                }
             } else {
                 input = document.createElement('input');
                 input.type = 'text';
@@ -799,6 +816,36 @@
         const updateData = {};
         updateData[campo] = valorNovo;
 
+        // Se for direcionado_para, também atualiza nome e função
+        if (campo === 'direcionado_para') {
+            // Determina nome e função
+            let nome = '';
+            let funcao = '';
+            if (valorNovo === 'group:admin') {
+                nome = 'Administradores';
+                funcao = 'admin';
+            } else if (valorNovo === 'group:diretor') {
+                nome = 'Diretores';
+                funcao = 'diretor';
+            } else {
+                // É um UID de personagem
+                const user = userMap[valorNovo];
+                if (user) {
+                    nome = user.nome;
+                    funcao = user.funcao;
+                } else {
+                    // Fallback: tenta usar o texto do select
+                    const select = document.querySelector('.edit-field-input');
+                    if (select && select.options) {
+                        const opt = select.options[select.selectedIndex];
+                        if (opt) nome = opt.text;
+                    }
+                }
+            }
+            updateData.direcionado_para_nome = nome || valorNovo;
+            updateData.direcionado_para_funcao = funcao || '';
+        }
+
         // Registrar edição no objeto edicoes
         const edicoes = osData.edicoes || {};
         if (!edicoes[campo]) edicoes[campo] = [];
@@ -815,6 +862,10 @@
                 osData[campo] = valorNovo;
                 osData.edicoes = edicoes;
                 osData.atualizado_em = new Date().toISOString();
+                if (campo === 'direcionado_para') {
+                    osData.direcionado_para_nome = updateData.direcionado_para_nome || '';
+                    osData.direcionado_para_funcao = updateData.direcionado_para_funcao || '';
+                }
                 cancelarEdicao();
                 renderizarDetalhe();
             })
