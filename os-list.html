@@ -70,7 +70,15 @@
         th:hover { background: #b8d9b9; }
         th .sorter { display: inline-block; margin-left: 4px; font-size: 12px; }
         td { padding: 10px 8px; border-bottom: 1px solid #c8e6c9; vertical-align: middle; }
-        .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .badge .icone { margin-right: 4px; }
         .badge-aberta { background: #e3f2fd; color: #0d47a1; }
         .badge-em_andamento { background: #fff3e0; color: #e65100; }
         .badge-concluida { background: #c8e6c9; color: #1b5e20; }
@@ -78,9 +86,6 @@
         .badge-emergencial { background: #ffcdd2; color: #b71c1c; font-weight: bold; }
         .badge-urgente { background: #fff9c4; color: #f57f17; font-weight: bold; }
         .badge-normal { background: #c8e6c9; color: #1b5e20; font-weight: bold; }
-        .badge-grupo { background: #e3f2fd; color: #0d47a1; font-weight: bold; }
-        .badge-personagem { background: #e8f5e9; color: #1b5e20; font-weight: bold; }
-        .badge .icone { margin-right: 4px; }
         .dias-numero { font-weight: 700; color: #1b5e20; }
         .dias-hoje { color: #558b2f; }
         .empty-message { text-align: center; color: #555; padding: 30px 0; }
@@ -149,7 +154,7 @@
     const db = firebase.firestore();
 
     // ================================================================
-    // TIMEOUT GLOBAL (sessionStorage)
+    // TIMEOUT GLOBAL
     // ================================================================
     const TIMEOUT_MS = 4 * 60 * 60 * 1000;
     function verificarTimeout() {
@@ -176,7 +181,6 @@
     ['click','mousemove','keydown','scroll','touchstart'].forEach(ev => {
         document.addEventListener(ev, resetTimeoutGlobal);
     });
-    // Verifica ao carregar
     verificarTimeout();
 
     // ================================================================
@@ -203,13 +207,12 @@
     };
 
     // ================================================================
-    // CÁLCULO DE DIAS CORRIGIDO (ignora horas)
+    // CÁLCULO DE DIAS
     // ================================================================
     function calcularDias(dataISO) {
         if (!dataISO) return '—';
         const data = new Date(dataISO);
         const agora = new Date();
-        // Zerar horas para comparar apenas datas
         const dataSemHora = new Date(data.getFullYear(), data.getMonth(), data.getDate());
         const agoraSemHora = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
         const diffMs = agoraSemHora - dataSemHora;
@@ -310,12 +313,39 @@
             const pData = priorityMap[p] || priorityMap['normal'];
             const prioridadeHtml = `<span class="badge ${pData.class}"><span class="icone">${pData.icon}</span> ${pData.label}</span>`;
 
-            let pendenteHtml = '';
+            // ============================================================
+            // DETERMINA A COR DO BADGE "PENDENTE EM"
+            // ============================================================
+            let pendenteCor = '#ced4da'; // cinza padrão (grupos)
+            let icone = '👥';
+            let texto = data.direcionado_para_nome || '—';
+
             if (data.direcionado_para && data.direcionado_para.startsWith('group:')) {
-                pendenteHtml = `<span class="badge badge-grupo"><span class="icone">👥</span> ${data.direcionado_para_nome || 'Grupo'}</span>`;
+                // É um grupo
+                if (data.direcionado_para === 'group:admin' || data.direcionado_para === 'group:diretor') {
+                    pendenteCor = '#ced4da'; // cinza para grupos
+                }
+                icone = '👥';
             } else {
-                pendenteHtml = `<span class="badge badge-personagem"><span class="icone">👤</span> ${data.direcionado_para_nome || '—'}</span>`;
+                // É um personagem individual
+                const uid = data.direcionado_para;
+                icone = '👤';
+                if (uid && userMap[uid]) {
+                    const funcao = userMap[uid].funcao;
+                    if (funcao === 'admin') {
+                        pendenteCor = '#ffe082'; // amarelo
+                    } else if (funcao === 'diretor') {
+                        pendenteCor = '#a5d6a7'; // verde
+                    } else {
+                        pendenteCor = '#ced4da'; // fallback cinza
+                    }
+                } else {
+                    // fallback se não encontrar o usuário
+                    pendenteCor = '#ced4da';
+                }
             }
+
+            const pendenteHtml = `<span class="badge" style="background-color:${pendenteCor}; color:#000;"><span class="icone">${icone}</span> ${texto}</span>`;
 
             const dataHora = data.criado_em ? new Date(data.criado_em).toLocaleString('pt-BR') : '—';
             const diasAberto = data.criado_em ? calcularDias(data.criado_em) : '—';
