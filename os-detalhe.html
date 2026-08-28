@@ -66,7 +66,6 @@
             font-weight: 600;
             white-space: nowrap;
         }
-        .badge .icone { margin-right: 4px; }
         .badge-grupo { background: #ced4da; color: #000; }
         .badge-admin { background: #ffe082; color: #000; }
         .badge-diretor { background: #a5d6a7; color: #000; }
@@ -283,53 +282,45 @@
     }
 
     // ================================================================
-    // FUNÇÕES DE BADGE (garantindo um único ícone)
+    // BADGES SEM ÍCONES (apenas cores)
     // ================================================================
     function getBadgePerfil(uid, nome) {
         let texto = nome || '—';
         let classe = 'badge-grupo';
-        let icone = '👤';
-
         if (uid && userMap[uid]) {
             const funcao = userMap[uid].funcao;
-            if (funcao === 'admin') { classe = 'badge-admin'; icone = '👤'; }
-            else if (funcao === 'diretor') { classe = 'badge-diretor'; icone = '👤'; }
-            else if (funcao === 'master') { classe = 'badge-master'; icone = '👤'; }
-            else { classe = 'badge-grupo'; icone = '👤'; }
+            if (funcao === 'admin') classe = 'badge-admin';
+            else if (funcao === 'diretor') classe = 'badge-diretor';
+            else if (funcao === 'master') classe = 'badge-master';
+            else classe = 'badge-grupo';
         } else {
             const nomeLower = (nome || '').toLowerCase();
-            if (nomeLower.includes('admin')) { classe = 'badge-admin'; icone = '👤'; }
-            else if (nomeLower.includes('diretor')) { classe = 'badge-diretor'; icone = '👤'; }
-            else if (nomeLower.includes('master')) { classe = 'badge-master'; icone = '👤'; }
-            else { classe = 'badge-grupo'; icone = '👤'; }
+            if (nomeLower.includes('admin')) classe = 'badge-admin';
+            else if (nomeLower.includes('diretor')) classe = 'badge-diretor';
+            else if (nomeLower.includes('master')) classe = 'badge-master';
+            else classe = 'badge-grupo';
         }
-
-        return `<span class="badge ${classe}"><span class="icone">${icone}</span> ${texto}</span>`;
+        return `<span class="badge ${classe}">${texto}</span>`;
     }
 
     function getBadgeDirecionado(data) {
         const target = data.direcionado_para;
         let texto = data.direcionado_para_nome || '—';
         let classe = 'badge-grupo';
-        let icone = '👥';
-
         if (target && target.startsWith('group:')) {
-            icone = '👥';
             classe = 'badge-grupo';
         } else if (target && userMap[target]) {
-            icone = '👤';
             const funcao = userMap[target].funcao;
             if (funcao === 'admin') classe = 'badge-admin';
             else if (funcao === 'diretor') classe = 'badge-diretor';
             else classe = 'badge-grupo';
         } else {
             const nome = (data.direcionado_para_nome || '').toLowerCase();
-            if (nome.includes('admin')) { classe = 'badge-admin'; icone = '👤'; }
-            else if (nome.includes('diretor')) { classe = 'badge-diretor'; icone = '👤'; }
-            else { classe = 'badge-grupo'; icone = '👤'; }
+            if (nome.includes('admin')) classe = 'badge-admin';
+            else if (nome.includes('diretor')) classe = 'badge-diretor';
+            else classe = 'badge-grupo';
         }
-
-        return `<span class="badge ${classe}"><span class="icone">${icone}</span> ${texto}</span>`;
+        return `<span class="badge ${classe}">${texto}</span>`;
     }
 
     // ================================================================
@@ -368,7 +359,7 @@
     }
 
     // ================================================================
-    // RENDERIZAR DETALHE (refeito do zero)
+    // RENDERIZAR DETALHE
     // ================================================================
     function renderizarDetalhe() {
         if (!osData) return;
@@ -457,13 +448,12 @@
             return;
         }
 
-        // Ordena por data crescente
         historico.sort((a, b) => (a.data || '').localeCompare(b.data || ''));
 
         let html = '';
         let dataAnterior = null;
         const dataAbertura = osData.criado_em;
-        let respostaIndex = 0; // contador apenas para cards de resposta
+        let respostaIndex = 0;
 
         historico.forEach((item) => {
             if (item.acao === 'abertura') return;
@@ -482,21 +472,20 @@
                 mensagem = `<span style="text-decoration:line-through; color:#999; font-style:italic;">${antigo}</span> → ${novo} <span style="color:#999; font-size:12px;">(edit em ${formatarDataCurta(item.data)})</span>`;
             }
 
-            // ---------- DIRECIONADO (apenas o badge, sem ícone extra) ----------
+            // ---------- DIRECIONADO (sem ícone) ----------
             let direcionadoHtml = '';
             if (item.direcionado_para) {
                 const direcionadoData = {
                     direcionado_para: item.direcionado_para,
                     direcionado_para_nome: item.direcionado_para_nome || item.direcionado_para
                 };
-                direcionadoHtml = `<div class="direcionado">🎯 Direcionado para: ${getBadgeDirecionado(direcionadoData)}</div>`;
+                direcionadoHtml = `<div class="direcionado">Direcionado para: ${getBadgeDirecionado(direcionadoData)}</div>`;
             }
 
             // ---------- CÁLCULO DE HORAS ----------
             let horasDecorridas = '';
             const dataItem = new Date(item.data);
             if (respostaIndex === 0) {
-                // Primeiro card de resposta: calcula desde a abertura
                 if (dataAbertura) {
                     const diffMs = dataItem - new Date(dataAbertura);
                     const diffHoras = Math.round(diffMs / (1000 * 60 * 60));
@@ -507,7 +496,6 @@
                     horasDecorridas = ' (primeira resposta)';
                 }
             } else {
-                // Demais cards: calcula desde o card anterior
                 if (dataAnterior !== null) {
                     const diffMs = dataItem - new Date(dataAnterior);
                     const diffHoras = Math.round(diffMs / (1000 * 60 * 60));
@@ -517,9 +505,9 @@
                 }
             }
             dataAnterior = item.data;
-            respostaIndex++; // incrementa após processar este card
+            respostaIndex++;
 
-            // Badge do autor
+            // Badge do autor (sem ícone)
             const autorBadge = getBadgePerfil(uid, nome);
 
             let cardClass = 'card-outros';
@@ -542,7 +530,7 @@
             `;
         });
 
-        // ---- ÚLTIMO CARD (Adicionar Ação) ----
+        // ---- ÚLTIMO CARD ----
         html += `<div class="card card-ultimo">`;
         html += `<div class="card-header"><span class="usuario" style="font-size:15px;">➕ Adicionar Ação</span></div>`;
         html += `<div class="card-body">`;
@@ -813,8 +801,8 @@
         const select = document.getElementById('acaoDirecionar');
         if (!select) return;
         select.innerHTML = '<option value="">Manter destino atual</option>';
-        select.innerHTML += `<option value="group:admin">👥 Administradores</option>`;
-        select.innerHTML += `<option value="group:diretor">👥 Diretores</option>`;
+        select.innerHTML += `<option value="group:admin">Administradores</option>`;
+        select.innerHTML += `<option value="group:diretor">Diretores</option>`;
         const admins = [], diretores = [];
         Object.keys(userMap).forEach(uid => {
             const u = userMap[uid];
@@ -826,13 +814,13 @@
         admins.forEach(a => {
             const opt = document.createElement('option');
             opt.value = a.uid;
-            opt.textContent = `👤 ${a.nome} (admin)`;
+            opt.textContent = `${a.nome} (admin)`;
             select.appendChild(opt);
         });
         diretores.forEach(d => {
             const opt = document.createElement('option');
             opt.value = d.uid;
-            opt.textContent = `👤 ${d.nome} (diretor)`;
+            opt.textContent = `${d.nome} (diretor)`;
             select.appendChild(opt);
         });
     }
