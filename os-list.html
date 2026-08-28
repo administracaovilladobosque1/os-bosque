@@ -313,41 +313,49 @@
             const pData = priorityMap[p] || priorityMap['normal'];
             const prioridadeHtml = `<span class="badge ${pData.class}"><span class="icone">${pData.icon}</span> ${pData.label}</span>`;
 
-            // ============================================================
-            // DETERMINA A COR DO BADGE "PENDENTE EM"
-            // ============================================================
-            let pendenteCor = '#ced4da'; // cinza padrão (grupos)
+            // PENDENTE EM – cores dinâmicas
+            let pendenteCor = '#ced4da';
             let icone = '👥';
             let texto = data.direcionado_para_nome || '—';
 
             if (data.direcionado_para && data.direcionado_para.startsWith('group:')) {
-                // É um grupo
                 if (data.direcionado_para === 'group:admin' || data.direcionado_para === 'group:diretor') {
-                    pendenteCor = '#ced4da'; // cinza para grupos
+                    pendenteCor = '#ced4da';
                 }
                 icone = '👥';
             } else {
-                // É um personagem individual
                 const uid = data.direcionado_para;
                 icone = '👤';
                 if (uid && userMap[uid]) {
                     const funcao = userMap[uid].funcao;
                     if (funcao === 'admin') {
-                        pendenteCor = '#ffe082'; // amarelo
+                        pendenteCor = '#ffe082';
                     } else if (funcao === 'diretor') {
-                        pendenteCor = '#a5d6a7'; // verde
+                        pendenteCor = '#a5d6a7';
                     } else {
-                        pendenteCor = '#ced4da'; // fallback cinza
+                        pendenteCor = '#ced4da';
                     }
                 } else {
-                    // fallback se não encontrar o usuário
                     pendenteCor = '#ced4da';
                 }
             }
 
             const pendenteHtml = `<span class="badge" style="background-color:${pendenteCor}; color:#000;"><span class="icone">${icone}</span> ${texto}</span>`;
 
-            const dataHora = data.criado_em ? new Date(data.criado_em).toLocaleString('pt-BR') : '—';
+            // ============================================================
+            // DATA/HORA SEM SEGUNDOS
+            // ============================================================
+            let dataHora = '—';
+            if (data.criado_em) {
+                const d = new Date(data.criado_em);
+                const dia = String(d.getDate()).padStart(2, '0');
+                const mes = String(d.getMonth() + 1).padStart(2, '0');
+                const ano = d.getFullYear();
+                const hora = String(d.getHours()).padStart(2, '0');
+                const min = String(d.getMinutes()).padStart(2, '0');
+                dataHora = `${dia}/${mes}/${ano} ${hora}:${min}`;
+            }
+
             const diasAberto = data.criado_em ? calcularDias(data.criado_em) : '—';
             let diasPendente = '—';
             const ultData = getUltimaDataHistorico(data);
@@ -386,7 +394,6 @@
     function aplicarFiltros() {
         let docs = window.allDocs || [];
 
-        // Status
         const statusFiltro = filtroStatus.value;
         if (statusFiltro === 'aberto') {
             docs = docs.filter(d => d.status === 'aberta' || d.status === 'em_andamento');
@@ -394,7 +401,6 @@
             docs = docs.filter(d => d.status === 'concluida' || d.status === 'cancelada');
         }
 
-        // Pendente
         const pendenteFiltro = filtroPendente.value;
         if (pendenteFiltro === 'diretoria') {
             docs = docs.filter(d => getPendenteCategoria(d) === 'diretoria');
@@ -402,19 +408,16 @@
             docs = docs.filter(d => getPendenteCategoria(d) === 'admin');
         }
 
-        // Reclamante
         const qReclamante = filtroQuadraReclamante.value.trim().toLowerCase();
         const lReclamante = filtroLoteReclamante.value.trim().toLowerCase();
         if (qReclamante) docs = docs.filter(d => (d.quadra_reclamante || '').toLowerCase().includes(qReclamante));
         if (lReclamante) docs = docs.filter(d => (d.lote_reclamante || '').toLowerCase().includes(lReclamante));
 
-        // Reclamado
         const qReclamada = filtroQuadraReclamada.value.trim().toLowerCase();
         const lReclamada = filtroLoteReclamada.value.trim().toLowerCase();
         if (qReclamada) docs = docs.filter(d => (d.quadra_reclamada || '').toLowerCase().includes(qReclamada));
         if (lReclamada) docs = docs.filter(d => (d.lote_reclamada || '').toLowerCase().includes(lReclamada));
 
-        // Busca
         const busca = filtroBusca.value.trim().toLowerCase();
         if (busca) {
             docs = docs.filter(d => {
