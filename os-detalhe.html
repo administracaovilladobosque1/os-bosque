@@ -8,6 +8,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
+        /* ===== ESTILOS (mesmo de antes, mantido) ===== */
         * { margin:0; padding:0; box-sizing:border-box; font-family: 'Calibri', 'Segoe UI', Tahoma, sans-serif; }
         body { background: #e8f5e9; padding: 16px 12px; display: flex; justify-content: center; min-height: 100vh; }
         .container { background: #fff; max-width: 900px; width: 100%; padding: 20px; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,80,0,0.12); border: 1px solid #a5d6a7; }
@@ -324,6 +325,17 @@
     }
 
     // ================================================================
+    // FUNÇÃO PARA FORMATAR LOTE (dois dígitos)
+    // ================================================================
+    function formatarLote(valor) {
+        if (!valor) return '';
+        const num = parseInt(valor.trim(), 10);
+        if (isNaN(num) || num < 1) return valor.trim();
+        const limitado = Math.min(num, 99);
+        return String(limitado).padStart(2, '0');
+    }
+
+    // ================================================================
     // CARREGAR USUÁRIOS PARA MAPA
     // ================================================================
     function carregarUsuarios() {
@@ -382,6 +394,12 @@
         const abertoPorBadge = getBadgePerfil(osData.aberto_por, nomeAbertura);
         const direcionadoBadge = getBadgeDirecionado(osData);
 
+        // Capitalizar tipo
+        let tipoCapitalizado = osData.tipo || '—';
+        if (tipoCapitalizado !== '—') {
+            tipoCapitalizado = tipoCapitalizado.charAt(0).toUpperCase() + tipoCapitalizado.slice(1);
+        }
+
         const prioridadeMap = {
             'emergencial': `🔴 Emergencial`,
             'urgente': `🟡 Urgente`,
@@ -392,7 +410,7 @@
         const campos = [
             { label: 'Título', value: osData.titulo || '—', edit: 'titulo' },
             { label: 'Descrição', value: osData.descricao || '—', edit: 'descricao' },
-            { label: 'Tipo', value: osData.tipo || '—', edit: 'tipo' },
+            { label: 'Tipo', value: tipoCapitalizado, edit: 'tipo' },
             { label: 'Prioridade', value: prioridadeLabel, edit: 'prioridade' },
             { label: 'Aberto por', value: abertoPorBadge },
             { label: 'Abertura', value: formatarDataHora(osData.criado_em) },
@@ -448,15 +466,20 @@
             return;
         }
 
+        // Ordenar por data crescente
         historico.sort((a, b) => (a.data || '').localeCompare(b.data || ''));
 
         let html = '';
         let dataAnterior = null;
-        const dataAbertura = osData.criado_em;
         let respostaIndex = 0;
 
-        historico.forEach((item) => {
-            if (item.acao === 'abertura') return;
+        historico.forEach((item, idx) => {
+            // Se for abertura, tratamos de forma especial
+            if (item.acao === 'abertura') {
+                // Card de abertura (não será exibido como "resposta", mas podemos exibir informações?)
+                // O usuário não quer ver card de abertura, então pulamos.
+                return;
+            }
 
             const uid = item.usuario_uid;
             const nome = getNome(uid) || item.usuario || 'Anônimo';
@@ -465,6 +488,7 @@
             const acao = item.acao || 'ação';
             let mensagem = item.mensagem || '';
 
+            // Se for edição, formata com tachado
             if (acao === 'edicao') {
                 const detalhes = item.detalhes || {};
                 const antigo = detalhes.valor_antigo || '';
@@ -472,7 +496,7 @@
                 mensagem = `<span style="text-decoration:line-through; color:#999; font-style:italic;">${antigo}</span> → ${novo} <span style="color:#999; font-size:12px;">(edit em ${formatarDataCurta(item.data)})</span>`;
             }
 
-            // ---------- DIRECIONADO (sem ícone) ----------
+            // Direcionado (sem ícone)
             let direcionadoHtml = '';
             if (item.direcionado_para) {
                 const direcionadoData = {
@@ -482,20 +506,14 @@
                 direcionadoHtml = `<div class="direcionado">Direcionado para: ${getBadgeDirecionado(direcionadoData)}</div>`;
             }
 
-            // ---------- CÁLCULO DE HORAS ----------
+            // Cálculo de horas (sempre comparando com o card anterior)
             let horasDecorridas = '';
             const dataItem = new Date(item.data);
             if (respostaIndex === 0) {
-                if (dataAbertura) {
-                    const diffMs = dataItem - new Date(dataAbertura);
-                    const diffHoras = Math.round(diffMs / (1000 * 60 * 60));
-                    if (diffHoras === 0) horasDecorridas = ` (menos de 1 hora depois do início da OS)`;
-                    else if (diffHoras === 1) horasDecorridas = ` (1 hora depois do início da OS)`;
-                    else horasDecorridas = ` (${diffHoras} horas depois do início da OS)`;
-                } else {
-                    horasDecorridas = ' (primeira resposta)';
-                }
+                // Primeiro card de resposta (após a abertura) – sempre "primeira resposta"
+                horasDecorridas = ' (primeira resposta)';
             } else {
+                // Demais cards: compara com o card anterior
                 if (dataAnterior !== null) {
                     const diffMs = dataItem - new Date(dataAnterior);
                     const diffHoras = Math.round(diffMs / (1000 * 60 * 60));
@@ -530,7 +548,7 @@
             `;
         });
 
-        // ---- ÚLTIMO CARD ----
+        // ---- ÚLTIMO CARD (Adicionar Ação) ----
         html += `<div class="card card-ultimo">`;
         html += `<div class="card-header"><span class="usuario" style="font-size:15px;">➕ Adicionar Ação</span></div>`;
         html += `<div class="card-body">`;
@@ -629,6 +647,7 @@
         wrapper.className = 'edit-field-wrapper';
 
         if (campo2) {
+            // Edição dupla (quadra + lote)
             const input1 = document.createElement('input');
             input1.type = 'text';
             input1.placeholder = 'Quadra';
@@ -653,8 +672,10 @@
             container.appendChild(wrapper);
 
             salvarBtn.addEventListener('click', () => {
-                const novo1 = input1.value.trim();
-                const novo2 = input2.value.trim();
+                let novo1 = input1.value.trim();
+                let novo2 = input2.value.trim();
+                // Formata lote (se não vazio)
+                if (novo2) novo2 = formatarLote(novo2);
                 if (novo1 === osData[campo] && novo2 === osData[campo2]) {
                     cancelarEdicao();
                     return;
@@ -663,6 +684,7 @@
             });
             cancelarBtn.addEventListener('click', cancelarEdicao);
         } else {
+            // Edição simples
             let input;
             if (campo === 'prioridade') {
                 input = document.createElement('select');
@@ -678,7 +700,7 @@
                 ['serviço', 'reclamação', 'infração', 'análise'].forEach(opt => {
                     const option = document.createElement('option');
                     option.value = opt;
-                    option.textContent = opt;
+                    option.textContent = opt.charAt(0).toUpperCase() + opt.slice(1);
                     if (opt === valorAtual) option.selected = true;
                     input.appendChild(option);
                 });
@@ -709,6 +731,10 @@
 
             salvarBtn.addEventListener('click', () => {
                 let novoValor = input.tagName === 'SELECT' ? input.value : input.value.trim();
+                if (campo === 'tipo' && novoValor) {
+                    // Capitaliza tipo
+                    novoValor = novoValor.charAt(0).toUpperCase() + novoValor.slice(1);
+                }
                 if (novoValor === '' && campo !== 'tipo' && campo !== 'prioridade' && campo !== 'direcionado_para') {
                     alert('O campo não pode ficar vazio.');
                     return;
@@ -741,6 +767,10 @@
     }
 
     function salvarEdicao(campo, valorAntigo, valorNovo) {
+        // Se for tipo, capitaliza
+        if (campo === 'tipo' && valorNovo) {
+            valorNovo = valorNovo.charAt(0).toUpperCase() + valorNovo.slice(1);
+        }
         const updateData = {};
         updateData[campo] = valorNovo;
         const historico = osData.historico || [];
@@ -767,6 +797,8 @@
     }
 
     function salvarEdicaoDupla(campo1, campo2, antigo1, antigo2, novo1, novo2) {
+        // Formata lote
+        if (novo2) novo2 = formatarLote(novo2);
         const updateData = {};
         updateData[campo1] = novo1;
         updateData[campo2] = novo2;
