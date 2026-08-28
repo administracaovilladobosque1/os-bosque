@@ -406,7 +406,7 @@
     }
 
     // ================================================================
-    // RENDERIZAR DETALHE – SEM "DIRECIONADO PARA" NO CARD INICIAL
+    // RENDERIZAR DETALHE – Com ABERTURA como primeira informação
     // ================================================================
     function renderizarDetalhe() {
         if (!osData) return;
@@ -424,7 +424,7 @@
         osStatusBadge.textContent = statusLabel;
         osStatusBadge.className = `badge badge-${osData.status || 'aberta'}`;
 
-        // ---- INFORMAÇÕES DA OS (sem "Direcionado para") ----
+        // ---- INFORMAÇÕES DA OS ----
         const nomeAbertura = getNome(osData.aberto_por);
         const abertoPorBadge = getBadgePerfil(osData.aberto_por, nomeAbertura);
 
@@ -435,15 +435,15 @@
 
         const prioridadeLabel = getValorExibicao('prioridade', osData.prioridade) || osData.prioridade;
 
-        // ==== LISTA DE CAMPOS (NÃO INCLUI "Direcionado para") ====
+        // ==== ORDEM ALTERADA: Abertura agora é o primeiro campo ====
         const campos = [
+            { label: 'Abertura', value: formatarDataHora(osData.criado_em), campo: 'criado_em', edit: false },
             { label: 'Título', value: osData.titulo || '—', campo: 'titulo', edit: true },
             { label: 'Descrição', value: osData.descricao || '—', campo: 'descricao', edit: true },
             { label: 'Tipo', value: tipoCapitalizado, campo: 'tipo', edit: true },
             { label: 'Prioridade', value: prioridadeLabel, campo: 'prioridade', edit: true },
             { label: 'Aberto por', value: abertoPorBadge, campo: 'aberto_por', edit: false },
-            { label: 'Abertura', value: formatarDataHora(osData.criado_em), campo: 'criado_em', edit: false },
-            // O CAMPO "DIRECIONADO PARA" FOI REMOVIDO AQUI
+            // Os campos "Reclamante" e "Reclamado" serão adicionados depois
         ];
 
         const reclamante = osData.quadra_reclamante && osData.lote_reclamante
