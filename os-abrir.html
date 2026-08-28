@@ -52,10 +52,10 @@
             .bloco { padding: 8px 10px 4px 10px; }
         }
 
-        /* ===== NOVAS CORES PARA O DROPDOWN ===== */
-        select option.grupo { background-color: #ced4da; }        /* cinza mais escuro */
-        select option.admin { background-color: #ffe082; }        /* amarelo mais vivo */
-        select option.diretor { background-color: #a5d6a7; }       /* verde mais vivo */
+        /* CORES DO DROPDOWN */
+        select option.grupo { background-color: #ced4da; }
+        select option.admin { background-color: #ffe082; }
+        select option.diretor { background-color: #a5d6a7; }
     </style>
 </head>
 <body>
@@ -192,10 +192,8 @@
     let currentUserNome = '';
     let personagensList = [];
 
-    const MASTER_EMAIL = 'administracaovilladobosque@gmail.com';
-
     // ============================================================
-    // CARREGAR PERSONAGENS (exclui o Master)
+    // CARREGAR PERSONAGENS (apenas Admin e Diretor)
     // ============================================================
     function carregarPersonagens() {
         direcionadoSelect.innerHTML = '<option value="">Carregando...</option>';
@@ -205,24 +203,21 @@
             .then(snapshot => {
                 const admins = [];
                 const diretores = [];
-                const outros = [];
 
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    // PULAR O MASTER
-                    if (data.email === MASTER_EMAIL) return;
+                    // SÓ PERMITE ADMIN E DIRETOR
+                    if (data.funcao !== 'admin' && data.funcao !== 'diretor') return;
 
                     const item = { id: doc.id, nome: data.nome, funcao: data.funcao };
                     if (data.funcao === 'admin') admins.push(item);
                     else if (data.funcao === 'diretor') diretores.push(item);
-                    else outros.push(item);
                 });
 
                 admins.sort((a, b) => a.nome.localeCompare(b.nome));
                 diretores.sort((a, b) => a.nome.localeCompare(b.nome));
-                outros.sort((a, b) => a.nome.localeCompare(b.nome));
 
-                personagensList = [...admins, ...diretores, ...outros];
+                personagensList = [...admins, ...diretores];
 
                 let html = '<option value="">Selecione um destino...</option>';
 
@@ -244,12 +239,10 @@
                     html += `<option value="${item.id}" class="diretor" style="background-color:#a5d6a7;">${label}</option>`;
                 });
 
-                // OUTROS (caso existam, fundo neutro)
-                outros.forEach(item => {
-                    const isMe = (item.id === currentUser.uid);
-                    const label = isMe ? `${item.nome} (você) (${item.funcao})` : `${item.nome} (${item.funcao})`;
-                    html += `<option value="${item.id}" style="background-color:#f8f9fa;">${label}</option>`;
-                });
+                // Se não houver ninguém, mostra mensagem
+                if (admins.length === 0 && diretores.length === 0) {
+                    html = '<option value="">Nenhum Administrador ou Diretor ativo</option>';
+                }
 
                 direcionadoSelect.innerHTML = html;
             })
