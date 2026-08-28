@@ -61,10 +61,11 @@
         }
         .os-info .info-value .badge {
             display: inline-block;
-            padding: 2px 10px;
+            padding: 3px 10px;
             border-radius: 20px;
             font-size: 12px;
             font-weight: 600;
+            white-space: nowrap;
         }
         .badge-aberta { background: #e3f2fd; color: #0d47a1; }
         .badge-em_andamento { background: #fff3e0; color: #e65100; }
@@ -73,6 +74,12 @@
         .badge-emergencial { background: #ffcdd2; color: #b71c1c; font-weight: bold; }
         .badge-urgente { background: #fff9c4; color: #f57f17; font-weight: bold; }
         .badge-normal { background: #c8e6c9; color: #1b5e20; font-weight: bold; }
+        /* Cores para badges de perfil (iguais ao os-list) */
+        .badge-grupo { background: #ced4da; color: #000; }
+        .badge-admin { background: #ffe082; color: #000; }
+        .badge-diretor { background: #a5d6a7; color: #000; }
+        .badge-outros { background: #ced4da; color: #000; }
+        .badge .icone { margin-right: 4px; }
 
         /* HISTÓRICO - CARDS */
         .historico-container { margin: 20px 0; display: flex; flex-direction: column; gap: 12px; }
@@ -145,11 +152,6 @@
             border-radius: 4px;
             font-size: 14px;
         }
-
-        /* Cores para o badge de direcionado */
-        .badge-direcionado-grupo { background: #ced4da; color: #000; }
-        .badge-direcionado-admin { background: #ffe082; color: #000; }
-        .badge-direcionado-diretor { background: #a5d6a7; color: #000; }
 
         @media (max-width: 600px) {
             .container { padding: 14px; }
@@ -302,19 +304,55 @@
         return '⚪';
     }
 
-    // Determina a classe do badge para "Direcionado para"
-    function getClasseDirecionado(data) {
+    // ================================================================
+    // FUNÇÕES PARA BADGE COM ÍCONE (igual ao os-list)
+    // ================================================================
+    function getBadgeDirecionado(data) {
         const target = data.direcionado_para;
-        if (target === 'group:admin' || target === 'group:diretor') {
-            return 'badge-direcionado-grupo';
+        let texto = data.direcionado_para_nome || '—';
+        let classe = 'badge-grupo';
+        let icone = '👥';
+
+        if (target && target.startsWith('group:')) {
+            icone = '👥';
+            classe = 'badge-grupo';
+        } else if (target && userMap[target]) {
+            icone = '👤';
+            const funcao = userMap[target].funcao;
+            if (funcao === 'admin') classe = 'badge-admin';
+            else if (funcao === 'diretor') classe = 'badge-diretor';
+            else classe = 'badge-grupo';
+        } else {
+            // Fallback: verifica se o nome contém admin/diretor
+            const nome = (data.direcionado_para_nome || '').toLowerCase();
+            if (nome.includes('admin')) { classe = 'badge-admin'; icone = '👤'; }
+            else if (nome.includes('diretor')) { classe = 'badge-diretor'; icone = '👤'; }
+            else { classe = 'badge-grupo'; icone = '👥'; }
         }
-        const uid = target;
+
+        return `<span class="badge ${classe}"><span class="icone">${icone}</span> ${texto}</span>`;
+    }
+
+    function getBadgeAbertoPor(uid, nome) {
+        let texto = nome || '—';
+        let classe = 'badge-grupo';
+        let icone = '👤';
+
         if (uid && userMap[uid]) {
             const funcao = userMap[uid].funcao;
-            if (funcao === 'admin') return 'badge-direcionado-admin';
-            if (funcao === 'diretor') return 'badge-direcionado-diretor';
+            if (funcao === 'admin') classe = 'badge-admin';
+            else if (funcao === 'diretor') classe = 'badge-diretor';
+            else if (funcao === 'master') classe = 'badge-grupo';
+            else classe = 'badge-grupo';
+        } else {
+            // Fallback
+            const nomeLower = (nome || '').toLowerCase();
+            if (nomeLower.includes('admin')) classe = 'badge-admin';
+            else if (nomeLower.includes('diretor')) classe = 'badge-diretor';
+            else classe = 'badge-grupo';
         }
-        return 'badge-direcionado-grupo'; // fallback
+
+        return `<span class="badge ${classe}"><span class="icone">${icone}</span> ${texto}</span>`;
     }
 
     // ================================================================
@@ -385,19 +423,20 @@
         };
         const prioridadeLabel = prioridadeMap[osData.prioridade] || osData.prioridade;
 
-        // Direcionado para com badge colorido
-        const direcionadoNome = osData.direcionado_para_nome || '—';
-        const classeDirecionado = getClasseDirecionado(osData);
-        const direcionadoHtml = `<span class="badge ${classeDirecionado}">${direcionadoNome}</span>`;
+        // "Aberto por" com badge (com ícone)
+        const abertoPorBadge = getBadgeAbertoPor(osData.aberto_por, nomeAbertura);
+
+        // "Direcionado para" com badge (com ícone)
+        const direcionadoBadge = getBadgeDirecionado(osData);
 
         const campos = [
             { label: 'Título', value: osData.titulo || '—', edit: 'titulo' },
             { label: 'Descrição', value: osData.descricao || '—', edit: 'descricao' },
             { label: 'Tipo', value: osData.tipo || '—', edit: 'tipo' },
             { label: 'Prioridade', value: prioridadeLabel, edit: 'prioridade' },
-            { label: 'Aberto por', value: `👤 ${nomeAbertura}` },
+            { label: 'Aberto por', value: abertoPorBadge },
             { label: 'Abertura', value: formatarDataHora(osData.criado_em) },
-            { label: 'Direcionado para', value: direcionadoHtml, edit: 'direcionado_para' },
+            { label: 'Direcionado para', value: direcionadoBadge, edit: 'direcionado_para' },
         ];
 
         const reclamante = osData.quadra_reclamante && osData.lote_reclamante
@@ -446,7 +485,6 @@
             historico.sort((a, b) => (a.data || '').localeCompare(b.data || ''));
             let html = '';
             historico.forEach(item => {
-                // Pula cards de "abertura" (não queremos mais eles)
                 if (item.acao === 'abertura') return;
 
                 const funcao = getFuncao(item.usuario_uid) || 'outros';
@@ -485,7 +523,7 @@
                 `;
             });
 
-            // ---- ÚLTIMO CARD: formulário + botões ----
+            // ---- ÚLTIMO CARD ----
             html += `<div class="card card-ultimo">`;
             html += `<div class="card-header"><span class="usuario" style="font-size:15px;">➕ Adicionar Ação</span></div>`;
             html += `<div class="card-body">`;
@@ -504,7 +542,6 @@
                     <div class="acoes-rodape">
                         <button type="submit" class="btn btn-success">➕ Adicionar Ação</button>
             `;
-            // Botões de rodapé
             const funcaoUsuario = currentUserData?.funcao || 'tecnico';
             const isDiretor = (funcaoUsuario === 'diretor');
             const isAdmin = (funcaoUsuario === 'admin');
@@ -526,7 +563,6 @@
 
             historicoContainer.innerHTML = html;
 
-            // ---- EVENTOS DO ÚLTIMO CARD ----
             document.getElementById('btnConcluir')?.addEventListener('click', concluirOS);
             document.getElementById('btnReabrir')?.addEventListener('click', reabrirOS);
 
@@ -544,7 +580,6 @@
             });
         }
 
-        // ---- EVENTOS DE EDIÇÃO ----
         document.querySelectorAll('.btn-edit').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const campo = btn.dataset.campo;
@@ -819,16 +854,8 @@
         };
         if (direcionarPara) {
             updateData.direcionado_para = direcionarPara;
-            const select = document.getElementById('acaoDirecionar');
-            const destinoNome = select?.options[select.selectedIndex]?.text || direcionarPara;
-            updateData.direcionado_para_nome = destinoNome;
-            if (direcionarPara !== 'group:admin' && direcionarPara !== 'group:diretor' && userMap[direcionarPara]) {
-                updateData.direcionado_para_funcao = userMap[direcionarPara].funcao;
-            } else if (direcionarPara === 'group:admin') {
-                updateData.direcionado_para_funcao = 'admin';
-            } else if (direcionarPara === 'group:diretor') {
-                updateData.direcionado_para_funcao = 'diretor';
-            }
+            updateData.direcionado_para_nome = novaAcao.direcionado_para_nome;
+            updateData.direcionado_para_funcao = novaAcao.direcionado_para_funcao;
         }
 
         db.collection('ordens_servico').doc(osId).update(updateData)
