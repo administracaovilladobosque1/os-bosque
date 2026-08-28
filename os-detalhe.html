@@ -73,16 +73,14 @@
         .badge-emergencial { background: #ffcdd2; color: #b71c1c; font-weight: bold; }
         .badge-urgente { background: #fff9c4; color: #f57f17; font-weight: bold; }
         .badge-normal { background: #c8e6c9; color: #1b5e20; font-weight: bold; }
-        .badge-info { background: #c8e6c9; color: #1b5e20; }
 
         /* HISTÓRICO - CARDS */
-        .historico-container { margin: 20px 0; }
+        .historico-container { margin: 20px 0; display: flex; flex-direction: column; gap: 12px; }
         .historico-container .card {
             background: #fff;
             border-left: 4px solid #a5d6a7;
             border-radius: 8px;
             padding: 12px 14px;
-            margin-bottom: 12px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.04);
             border: 1px solid #e8f5e9;
         }
@@ -90,6 +88,7 @@
         .card-diretor { border-left-color: #a5d6a7; background: #f1f8e9; }
         .card-master { border-left-color: #ffcc80; background: #fff8e1; }
         .card-outros { border-left-color: #ced4da; background: #f8f9fa; }
+        .card-ultimo { border-left-color: #2e7d32; background: #f1f8e9; border: 2px solid #a5d6a7; }
 
         .card .card-header {
             display: flex;
@@ -97,6 +96,7 @@
             font-size: 13px;
             color: #555;
             margin-bottom: 4px;
+            flex-wrap: wrap;
         }
         .card .card-header .usuario { font-weight: 600; color: #1b5e20; }
         .card .card-body { font-size: 14px; }
@@ -107,6 +107,36 @@
             border-top: 1px solid #e8f5e9;
             padding-top: 6px;
         }
+        .card .card-body .direcionado {
+            font-size: 13px;
+            color: #555;
+            margin-top: 4px;
+        }
+
+        /* FORMULÁRIO DE AÇÃO (dentro do último card) */
+        .nova-acao .form-group { margin-bottom: 10px; }
+        .nova-acao label { font-weight: 600; font-size: 13px; color: #1b5e20; display: block; margin-bottom: 2px; }
+        .nova-acao textarea, .nova-acao select {
+            width: 100%;
+            padding: 6px 10px;
+            border: 1px solid #a5d6a7;
+            border-radius: 6px;
+            font-size: 14px;
+            background: #fafffe;
+        }
+        .nova-acao textarea { resize: vertical; min-height: 50px; }
+        .acoes-rodape {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 12px;
+            justify-content: flex-start;
+            align-items: center;
+        }
+        .acoes-rodape .btn { margin-right: 8px; }
+        .message { margin-top: 8px; padding: 6px 10px; border-radius: 6px; display: none; font-size: 13px; }
+        .message.error { display: block; background: #ffebee; color: #b71c1c; border: 1px solid #ef9a9a; }
+        .message.success { display: block; background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
 
         /* EDIÇÃO */
         .edit-field {
@@ -119,37 +149,6 @@
             border: 1px solid #a5d6a7;
             border-radius: 4px;
             font-size: 14px;
-        }
-        .edit-field .btn-sm { margin-left: 2px; }
-
-        /* FORMULÁRIO DE AÇÃO */
-        .nova-acao {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 16px;
-            border: 1px solid #c8e6c9;
-            margin: 16px 0;
-        }
-        .nova-acao .form-group { margin-bottom: 10px; }
-        .nova-acao label { font-weight: 600; font-size: 13px; color: #1b5e20; display: block; margin-bottom: 2px; }
-        .nova-acao textarea, .nova-acao select {
-            width: 100%;
-            padding: 6px 10px;
-            border: 1px solid #a5d6a7;
-            border-radius: 6px;
-            font-size: 14px;
-            background: #fafffe;
-        }
-        .nova-acao textarea { resize: vertical; min-height: 50px; }
-        .nova-acao .btn { margin-top: 6px; }
-
-        .acoes-rodape {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 16px;
-            justify-content: space-between;
-            align-items: center;
         }
 
         @media (max-width: 600px) {
@@ -177,34 +176,9 @@
         <!-- preenchido via JS -->
     </div>
 
-    <!-- HISTÓRICO -->
-    <h2 style="color:#2e7d32; margin:16px 0 8px;">📜 Histórico</h2>
+    <!-- HISTÓRICO (cards) -->
     <div id="historicoContainer" class="historico-container">
         <p>Carregando...</p>
-    </div>
-
-    <!-- NOVA AÇÃO -->
-    <div class="nova-acao" id="novaAcaoArea">
-        <h3 style="color:#2e7d32; margin-bottom:8px;">➕ Adicionar Ação</h3>
-        <form id="formNovaAcao">
-            <div class="form-group">
-                <label>Descrição da ação *</label>
-                <textarea id="acaoDescricao" placeholder="Descreva a ação realizada..." required></textarea>
-            </div>
-            <div class="form-group">
-                <label>Direcionar para (opcional)</label>
-                <select id="acaoDirecionar">
-                    <option value="">Manter destino atual</option>
-                </select>
-            </div>
-            <button type="submit" class="btn btn-success">Adicionar Ação</button>
-            <div id="acaoMessage" class="message" style="margin-top:8px; display:none;"></div>
-        </form>
-    </div>
-
-    <!-- RODAPÉ: CONCLUIR / REABRIR -->
-    <div class="acoes-rodape" id="rodapeAcoes">
-        <!-- preenchido via JS -->
     </div>
 </div>
 
@@ -263,7 +237,7 @@
     let osId = null;
     let osData = null;
     let userMap = {}; // uid -> { nome, funcao }
-    let editando = { campo: null, original: null, el: null };
+    let editando = { campo: null, original: null };
 
     // ================================================================
     // ELEMENTOS
@@ -273,11 +247,6 @@
     const osStatusBadge = document.getElementById('osStatusBadge');
     const osInfoContainer = document.getElementById('osInfoContainer');
     const historicoContainer = document.getElementById('historicoContainer');
-    const rodapeAcoes = document.getElementById('rodapeAcoes');
-    const formNovaAcao = document.getElementById('formNovaAcao');
-    const acaoDescricao = document.getElementById('acaoDescricao');
-    const acaoDirecionar = document.getElementById('acaoDirecionar');
-    const acaoMessage = document.getElementById('acaoMessage');
 
     // ================================================================
     // UTILITÁRIOS
@@ -400,7 +369,6 @@
         };
         const prioridadeLabel = prioridadeMap[osData.prioridade] || osData.prioridade;
 
-        // Monta os campos
         const campos = [
             { label: '📝 Título', value: osData.titulo || '—', edit: 'titulo' },
             { label: '📄 Descrição', value: osData.descricao || '—', edit: 'descricao' },
@@ -411,7 +379,6 @@
             { label: '🎯 Direcionado para', value: osData.direcionado_para_nome || '—', edit: 'direcionado_para' },
         ];
 
-        // Reclamante e Reclamado como badges em sequência
         const reclamante = osData.quadra_reclamante && osData.lote_reclamante
             ? `${osData.quadra_reclamante} ${osData.lote_reclamante}`
             : (osData.quadra_reclamante || osData.lote_reclamante || '—');
@@ -446,34 +413,42 @@
             `;
         });
 
-        // Cor de fundo do cabeçalho da OS (quem abriu)
         osInfoContainer.innerHTML = infoHTML;
         osInfoContainer.style.borderLeft = `6px solid ${corAbertura}`;
-        osInfoContainer.style.backgroundColor = corAbertura + '22'; // transparente
+        osInfoContainer.style.backgroundColor = corAbertura + '22';
 
-        // ---- HISTÓRICO ----
+        // ---- HISTÓRICO (CARDS) ----
         const historico = osData.historico || [];
         if (historico.length === 0) {
             historicoContainer.innerHTML = '<p>Nenhuma ação registrada.</p>';
         } else {
+            // Ordena por data crescente (mais antigo primeiro)
             historico.sort((a, b) => (a.data || '').localeCompare(b.data || ''));
             let html = '';
+            let cardIndex = 0;
             historico.forEach(item => {
+                cardIndex++;
                 const funcao = getFuncao(item.usuario_uid) || 'outros';
                 const cor = getCorPerfil(funcao);
                 const classe = getClasseCard(funcao);
                 const nome = getNome(item.usuario_uid) || item.usuario || 'Anônimo';
                 const dataFormat = formatarDataHora(item.data);
                 const acao = item.acao || 'ação';
-                const mensagem = item.mensagem || '';
-                let direcionado = item.direcionado_para ? ` → ${item.direcionado_para}` : '';
+                let mensagem = item.mensagem || '';
 
-                let corpo = mensagem;
+                // Se for edição, formata com tachado
                 if (acao === 'edicao') {
                     const detalhes = item.detalhes || {};
                     const antigo = detalhes.valor_antigo || '';
                     const novo = detalhes.valor_novo || '';
-                    corpo = `<span style="text-decoration:line-through; color:#999; font-style:italic;">${antigo}</span> → ${novo} <span style="color:#999; font-size:12px;">(edit em ${formatarDataCurta(item.data)})</span>`;
+                    mensagem = `<span style="text-decoration:line-through; color:#999; font-style:italic;">${antigo}</span> → ${novo} <span style="color:#999; font-size:12px;">(edit em ${formatarDataCurta(item.data)})</span>`;
+                }
+
+                // Direcionado para (se houver)
+                let direcionadoHtml = '';
+                if (item.direcionado_para) {
+                    const destino = item.direcionado_para_nome || item.direcionado_para;
+                    direcionadoHtml = `<div class="direcionado">🎯 Direcionado para: ${destino}</div>`;
                 }
 
                 html += `
@@ -483,42 +458,74 @@
                             <span>${dataFormat}</span>
                         </div>
                         <div class="card-body">
-                            <strong>${acao.toUpperCase()}</strong>${direcionado}
-                            <div>${corpo}</div>
+                            <strong>${acao.toUpperCase()}</strong>
+                            ${direcionadoHtml}
+                            <div>${mensagem}</div>
                         </div>
-                        <div class="card-footer">${item.acao === 'edicao' ? '✏️ Edição' : ''}</div>
                     </div>
                 `;
             });
+
+            // ---- ÚLTIMO CARD: formulário + botões ----
+            html += `<div class="card card-ultimo">`;
+            html += `<div class="card-header"><span class="usuario">➕ Adicionar Ação</span></div>`;
+            html += `<div class="card-body">`;
+            html += `
+                <form id="formNovaAcao">
+                    <div class="form-group">
+                        <label>Descrição da ação *</label>
+                        <textarea id="acaoDescricao" placeholder="Descreva a ação realizada..." required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Direcionar para (opcional)</label>
+                        <select id="acaoDirecionar">
+                            <option value="">Manter destino atual</option>
+                        </select>
+                    </div>
+                    <div class="acoes-rodape">
+                        <button type="submit" class="btn btn-success">➕ Adicionar Ação</button>
+            `;
+            // Botões de rodapé
+            const funcaoUsuario = currentUserData?.funcao || 'tecnico';
+            const isDiretor = (funcaoUsuario === 'diretor');
+            const isAdmin = (funcaoUsuario === 'admin');
+            const isMaster = (currentUser && currentUser.email === MASTER_EMAIL);
+            const podeConcluir = isDiretor || isMaster;
+            const podeReabrir = isDiretor || isAdmin || isMaster;
+            const statusConcluida = (osData.status === 'concluida');
+
+            if (!statusConcluida && podeConcluir) {
+                html += `<button type="button" class="btn btn-success" id="btnConcluir">✅ Concluir OS</button>`;
+            }
+            if (statusConcluida && podeReabrir) {
+                html += `<button type="button" class="btn btn-warning" id="btnReabrir">🔄 Reabrir OS</button>`;
+            }
+            html += `</div>`;
+            html += `<div id="acaoMessage" class="message"></div>`;
+            html += `</form>`;
+            html += `</div></div>`;
+
             historicoContainer.innerHTML = html;
-        }
 
-        // ---- RODAPÉ (Concluir / Reabrir) ----
-        const funcaoUsuario = currentUserData?.funcao || 'tecnico';
-        const isDiretor = (funcaoUsuario === 'diretor');
-        const isAdmin = (funcaoUsuario === 'admin');
-        const isMaster = (currentUser && currentUser.email === MASTER_EMAIL);
-        const podeConcluir = isDiretor || isMaster;
-        const podeReabrir = isDiretor || isAdmin || isMaster;
-        const statusConcluida = (osData.status === 'concluida');
-
-        let rodapeHtml = '';
-        if (!statusConcluida && podeConcluir) {
-            rodapeHtml += `<button class="btn btn-success" id="btnConcluir">✅ Concluir OS</button>`;
-        }
-        if (statusConcluida && podeReabrir) {
-            rodapeHtml += `<button class="btn btn-warning" id="btnReabrir">🔄 Reabrir OS</button>`;
-        }
-        rodapeHtml += `<span style="flex:1;"></span>`;
-        rodapeAcoes.innerHTML = rodapeHtml;
-
-        if (rodapeHtml) {
+            // ---- EVENTOS DO ÚLTIMO CARD ----
             document.getElementById('btnConcluir')?.addEventListener('click', concluirOS);
             document.getElementById('btnReabrir')?.addEventListener('click', reabrirOS);
-        }
 
-        // ---- POPULAR DROPDOWN DE DIRECIONAMENTO ----
-        popularDirecionamento();
+            // Popular dropdown de direcionamento
+            popularDirecionamento();
+
+            // Form de ação
+            document.getElementById('formNovaAcao').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const descricao = document.getElementById('acaoDescricao').value.trim();
+                if (!descricao) {
+                    mostrarMensagemAcao('A descrição é obrigatória.', 'error');
+                    return;
+                }
+                const direcionarPara = document.getElementById('acaoDirecionar').value;
+                adicionarAcao(descricao, direcionarPara);
+            });
+        }
 
         // ---- EVENTOS DE EDIÇÃO ----
         document.querySelectorAll('.btn-edit').forEach(btn => {
@@ -549,28 +556,22 @@
     // EDIÇÃO DE CAMPO
     // ================================================================
     function iniciarEdicao(campo, campo2, valorAtual, btn) {
-        // Cancelar edição anterior se houver
         if (editando.campo) cancelarEdicao();
-
         editando.campo = campo;
         editando.campo2 = campo2;
         editando.original = valorAtual;
-        editando.el = btn;
 
         const displayEl = btn.closest('.info-value').querySelector('span[id^="display-"]');
         if (!displayEl) return;
         const container = displayEl.parentElement;
 
-        // Esconde display e botão editar
         displayEl.style.display = 'none';
         btn.style.display = 'none';
 
-        // Cria input(s)
         let wrapper = document.createElement('span');
         wrapper.className = 'edit-field-wrapper';
 
         if (campo2) {
-            // Dois campos (quadra e lote)
             const input1 = document.createElement('input');
             input1.type = 'text';
             input1.placeholder = 'Quadra';
@@ -605,12 +606,10 @@
             });
             cancelarBtn.addEventListener('click', cancelarEdicao);
         } else {
-            // Campo único
             let input;
             if (campo === 'prioridade') {
                 input = document.createElement('select');
-                const opcoes = ['emergencial', 'urgente', 'normal'];
-                opcoes.forEach(opt => {
+                ['emergencial', 'urgente', 'normal'].forEach(opt => {
                     const option = document.createElement('option');
                     option.value = opt;
                     option.textContent = opt;
@@ -619,8 +618,7 @@
                 });
             } else if (campo === 'tipo') {
                 input = document.createElement('select');
-                const opcoes = ['serviço', 'reclamação', 'infração', 'análise'];
-                opcoes.forEach(opt => {
+                ['serviço', 'reclamação', 'infração', 'análise'].forEach(opt => {
                     const option = document.createElement('option');
                     option.value = opt;
                     option.textContent = opt;
@@ -628,10 +626,8 @@
                     input.appendChild(option);
                 });
             } else if (campo === 'direcionado_para') {
-                // Para direcionamento, usar dropdown com personagens
                 input = document.createElement('select');
-                input.innerHTML = acaoDirecionar.innerHTML; // reusa o mesmo
-                // Seleciona o valor atual
+                input.innerHTML = document.getElementById('acaoDirecionar').innerHTML;
                 const opt = input.querySelector(`option[value="${osData.direcionado_para || ''}"]`);
                 if (opt) opt.selected = true;
             } else {
@@ -655,12 +651,7 @@
             container.appendChild(wrapper);
 
             salvarBtn.addEventListener('click', () => {
-                let novoValor = input.value;
-                if (input.tagName === 'SELECT') {
-                    novoValor = input.value;
-                } else {
-                    novoValor = input.value.trim();
-                }
+                let novoValor = input.tagName === 'SELECT' ? input.value : input.value.trim();
                 if (novoValor === '' && campo !== 'tipo' && campo !== 'prioridade' && campo !== 'direcionado_para') {
                     alert('O campo não pode ficar vazio.');
                     return;
@@ -678,8 +669,7 @@
 
     function cancelarEdicao() {
         if (!editando.campo && !editando.campo2) return;
-        const displayId = editando.campo2 ? editando.campo : editando.campo;
-        const displayEl = document.getElementById(`display-${displayId || 'static'}`);
+        const displayEl = document.getElementById(`display-${editando.campo || editando.campo2 || 'static'}`);
         if (displayEl) {
             displayEl.style.display = 'inline';
             const container = displayEl.parentElement;
@@ -691,13 +681,11 @@
         editando.campo = null;
         editando.campo2 = null;
         editando.original = null;
-        editando.el = null;
     }
 
     function salvarEdicao(campo, valorAntigo, valorNovo) {
         const updateData = {};
         updateData[campo] = valorNovo;
-
         const historico = osData.historico || [];
         historico.push({
             data: new Date().toISOString(),
@@ -705,11 +693,7 @@
             usuario_uid: currentUser.uid,
             usuario: currentUserData?.nome || 'Usuário',
             mensagem: `Editou ${campo}`,
-            detalhes: {
-                campo: campo,
-                valor_antigo: valorAntigo,
-                valor_novo: valorNovo
-            }
+            detalhes: { campo, valor_antigo: valorAntigo, valor_novo: valorNovo }
         });
         updateData.historico = historico;
         updateData.atualizado_em = new Date().toISOString();
@@ -722,16 +706,13 @@
                 cancelarEdicao();
                 renderizarDetalhe();
             })
-            .catch(err => {
-                alert('Erro ao salvar: ' + err.message);
-            });
+            .catch(err => alert('Erro ao salvar: ' + err.message));
     }
 
     function salvarEdicaoDupla(campo1, campo2, antigo1, antigo2, novo1, novo2) {
         const updateData = {};
         updateData[campo1] = novo1;
         updateData[campo2] = novo2;
-
         const historico = osData.historico || [];
         historico.push({
             data: new Date().toISOString(),
@@ -739,11 +720,7 @@
             usuario_uid: currentUser.uid,
             usuario: currentUserData?.nome || 'Usuário',
             mensagem: `Editou ${campo1} e ${campo2}`,
-            detalhes: {
-                campo: `${campo1}, ${campo2}`,
-                valor_antigo: `${antigo1} ${antigo2}`,
-                valor_novo: `${novo1} ${novo2}`
-            }
+            detalhes: { campo: `${campo1}, ${campo2}`, valor_antigo: `${antigo1} ${antigo2}`, valor_novo: `${novo1} ${novo2}` }
         });
         updateData.historico = historico;
         updateData.atualizado_em = new Date().toISOString();
@@ -757,20 +734,19 @@
                 cancelarEdicao();
                 renderizarDetalhe();
             })
-            .catch(err => {
-                alert('Erro ao salvar: ' + err.message);
-            });
+            .catch(err => alert('Erro ao salvar: ' + err.message));
     }
 
     // ================================================================
     // POPULAR DIRECIONAMENTO
     // ================================================================
     function popularDirecionamento() {
-        acaoDirecionar.innerHTML = '<option value="">Manter destino atual</option>';
-        acaoDirecionar.innerHTML += `<option value="group:admin">👥 Administradores</option>`;
-        acaoDirecionar.innerHTML += `<option value="group:diretor">👥 Diretores</option>`;
-        const admins = [];
-        const diretores = [];
+        const select = document.getElementById('acaoDirecionar');
+        if (!select) return;
+        select.innerHTML = '<option value="">Manter destino atual</option>';
+        select.innerHTML += `<option value="group:admin">👥 Administradores</option>`;
+        select.innerHTML += `<option value="group:diretor">👥 Diretores</option>`;
+        const admins = [], diretores = [];
         Object.keys(userMap).forEach(uid => {
             const u = userMap[uid];
             if (u.funcao === 'admin') admins.push({uid, nome: u.nome});
@@ -782,30 +758,21 @@
             const opt = document.createElement('option');
             opt.value = a.uid;
             opt.textContent = `👤 ${a.nome} (admin)`;
-            acaoDirecionar.appendChild(opt);
+            select.appendChild(opt);
         });
         diretores.forEach(d => {
             const opt = document.createElement('option');
             opt.value = d.uid;
             opt.textContent = `👤 ${d.nome} (diretor)`;
-            acaoDirecionar.appendChild(opt);
+            select.appendChild(opt);
         });
     }
 
     // ================================================================
     // ADICIONAR AÇÃO
     // ================================================================
-    formNovaAcao.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const descricao = acaoDescricao.value.trim();
-        if (!descricao) {
-            mostrarMensagemAcao('A descrição é obrigatória.', 'error');
-            return;
-        }
-
-        const direcionarPara = acaoDirecionar.value;
+    function adicionarAcao(descricao, direcionarPara) {
         const agora = new Date().toISOString();
-
         const historico = osData.historico || [];
         const novaAcao = {
             data: agora,
@@ -815,10 +782,10 @@
             mensagem: descricao,
         };
         if (direcionarPara) {
+            const select = document.getElementById('acaoDirecionar');
+            const destinoNome = select?.options[select.selectedIndex]?.text || direcionarPara;
             novaAcao.direcionado_para = direcionarPara;
-            const destinoNome = acaoDirecionar.options[acaoDirecionar.selectedIndex]?.text || direcionarPara;
             novaAcao.direcionado_para_nome = destinoNome;
-            // Atualiza função do destino (se for personagem)
             if (direcionarPara !== 'group:admin' && direcionarPara !== 'group:diretor' && userMap[direcionarPara]) {
                 novaAcao.direcionado_para_funcao = userMap[direcionarPara].funcao;
             } else if (direcionarPara === 'group:admin') {
@@ -827,17 +794,16 @@
                 novaAcao.direcionado_para_funcao = 'diretor';
             }
         }
-
         historico.push(novaAcao);
 
         const updateData = {
             historico: historico,
             atualizado_em: agora
         };
-
         if (direcionarPara) {
             updateData.direcionado_para = direcionarPara;
-            const destinoNome = acaoDirecionar.options[acaoDirecionar.selectedIndex]?.text || direcionarPara;
+            const select = document.getElementById('acaoDirecionar');
+            const destinoNome = select?.options[select.selectedIndex]?.text || direcionarPara;
             updateData.direcionado_para_nome = destinoNome;
             if (direcionarPara !== 'group:admin' && direcionarPara !== 'group:diretor' && userMap[direcionarPara]) {
                 updateData.direcionado_para_funcao = userMap[direcionarPara].funcao;
@@ -857,8 +823,8 @@
                     osData.direcionado_para_funcao = updateData.direcionado_para_funcao;
                 }
                 osData.atualizado_em = agora;
-                acaoDescricao.value = '';
-                acaoDirecionar.value = '';
+                document.getElementById('acaoDescricao').value = '';
+                document.getElementById('acaoDirecionar').value = '';
                 mostrarMensagemAcao('✅ Ação adicionada com sucesso!', 'success');
                 renderizarDetalhe();
                 setTimeout(() => { esconderMensagemAcao(); }, 3000);
@@ -866,17 +832,20 @@
             .catch(err => {
                 mostrarMensagemAcao('Erro: ' + err.message, 'error');
             });
-    });
+    }
 
     function mostrarMensagemAcao(texto, tipo) {
-        acaoMessage.textContent = texto;
-        acaoMessage.className = 'message';
-        if (tipo === 'error') acaoMessage.classList.add('error');
-        else if (tipo === 'success') acaoMessage.classList.add('success');
-        acaoMessage.style.display = 'block';
+        const el = document.getElementById('acaoMessage');
+        if (!el) return;
+        el.textContent = texto;
+        el.className = 'message';
+        if (tipo === 'error') el.classList.add('error');
+        else if (tipo === 'success') el.classList.add('success');
+        el.style.display = 'block';
     }
     function esconderMensagemAcao() {
-        acaoMessage.style.display = 'none';
+        const el = document.getElementById('acaoMessage');
+        if (el) el.style.display = 'none';
     }
 
     // ================================================================
@@ -909,7 +878,7 @@
     }
 
     // ================================================================
-    // REABRIR OS (Admin e Diretor)
+    // REABRIR OS
     // ================================================================
     function reabrirOS() {
         if (!confirm('Deseja reabrir esta OS?')) return;
@@ -953,20 +922,13 @@
                 currentUser = user;
                 db.collection('usuarios').doc(user.uid).get()
                     .then(doc => {
-                        if (doc.exists) {
-                            currentUserData = doc.data();
-                        } else {
-                            currentUserData = { nome: user.displayName || 'Usuário', funcao: 'tecnico' };
-                        }
-                        carregarUsuarios().then(() => {
-                            carregarOS();
-                        });
+                        if (doc.exists) currentUserData = doc.data();
+                        else currentUserData = { nome: user.displayName || 'Usuário', funcao: 'tecnico' };
+                        carregarUsuarios().then(() => carregarOS());
                     })
                     .catch(() => {
                         currentUserData = { nome: user.displayName || 'Usuário', funcao: 'tecnico' };
-                        carregarUsuarios().then(() => {
-                            carregarOS();
-                        });
+                        carregarUsuarios().then(() => carregarOS());
                     });
             } else {
                 window.location.href = 'index.html';
