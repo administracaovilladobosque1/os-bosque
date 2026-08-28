@@ -90,6 +90,11 @@
             margin-left: 6px;
         }
 
+        /* Estilos para o select de direcionamento nas ações */
+        select option.grupo { background-color: #ced4da; }
+        select option.admin { background-color: #ffe082; }
+        select option.diretor { background-color: #a5d6a7; }
+
         .historico-container { margin: 20px 0; display: flex; flex-direction: column; gap: 12px; }
         .historico-container .card {
             border-radius: 8px;
@@ -471,6 +476,7 @@
         const prioridadeLabel = getValorExibicao('prioridade', osData.prioridade) || osData.prioridade;
 
         // ---- Direcionado original (sempre fixo) ----
+        // Usamos o campo original, e se não existir (OS antiga), usamos o atual como fallback
         const dirOriginal = osData.direcionado_para_original || osData.direcionado_para || '—';
         const dirNomeOriginal = osData.direcionado_para_nome_original || osData.direcionado_para_nome || '—';
         const dirBadgeOriginal = getBadgeDirecionado({
@@ -918,14 +924,37 @@
     }
 
     // ================================================================
-    // POPULAR DIRECIONAMENTO
+    // POPULAR DIRECIONAMENTO (com cores)
     // ================================================================
     function popularDirecionamento() {
         const select = document.getElementById('acaoDirecionar');
         if (!select) return;
-        select.innerHTML = '<option value="">Manter destino atual</option>';
-        select.innerHTML += `<option value="group:admin">Administradores</option>`;
-        select.innerHTML += `<option value="group:diretor">Diretores</option>`;
+
+        // Limpa e adiciona opções com classes para cores
+        select.innerHTML = '';
+
+        const optDefault = document.createElement('option');
+        optDefault.value = '';
+        optDefault.textContent = 'Manter destino atual';
+        select.appendChild(optDefault);
+
+        // Grupo Administradores
+        const optGroupAdmin = document.createElement('option');
+        optGroupAdmin.value = 'group:admin';
+        optGroupAdmin.textContent = 'GRUPO: Administradores';
+        optGroupAdmin.className = 'grupo';
+        optGroupAdmin.style.backgroundColor = '#ced4da';
+        select.appendChild(optGroupAdmin);
+
+        // Grupo Diretores
+        const optGroupDiretor = document.createElement('option');
+        optGroupDiretor.value = 'group:diretor';
+        optGroupDiretor.textContent = 'GRUPO: Diretores';
+        optGroupDiretor.className = 'grupo';
+        optGroupDiretor.style.backgroundColor = '#ced4da';
+        select.appendChild(optGroupDiretor);
+
+        // Lista de Admins
         const admins = [], diretores = [];
         Object.keys(userMap).forEach(uid => {
             const u = userMap[uid];
@@ -934,16 +963,22 @@
         });
         admins.sort((a,b) => a.nome.localeCompare(b.nome));
         diretores.sort((a,b) => a.nome.localeCompare(b.nome));
+
         admins.forEach(a => {
             const opt = document.createElement('option');
             opt.value = a.uid;
             opt.textContent = `${a.nome} (admin)`;
+            opt.className = 'admin';
+            opt.style.backgroundColor = '#ffe082';
             select.appendChild(opt);
         });
+
         diretores.forEach(d => {
             const opt = document.createElement('option');
             opt.value = d.uid;
             opt.textContent = `${d.nome} (diretor)`;
+            opt.className = 'diretor';
+            opt.style.backgroundColor = '#a5d6a7';
             select.appendChild(opt);
         });
     }
