@@ -89,11 +89,11 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.04);
             border: 1px solid #e8f5e9;
         }
-        .card-admin { border-left-color: #ffe082; background: #fffde7; }
-        .card-diretor { border-left-color: #a5d6a7; background: #f1f8e9; }
-        .card-master { border-left-color: #ffcc80; background: #fff8e1; }
-        .card-outros { border-left-color: #ced4da; background: #f8f9fa; }
-        .card-ultimo { border-left-color: #c62828; background: #ffebee; border: 2px solid #ef9a9a; }
+        .card-admin { background: #fffde7; border-left-color: #ffe082; }
+        .card-diretor { background: #f1f8e9; border-left-color: #a5d6a7; }
+        .card-master { background: #fff8e1; border-left-color: #ffcc80; }
+        .card-outros { background: #f8f9fa; border-left-color: #ced4da; }
+        .card-ultimo { background: #ffebee; border-left-color: #c62828; border: 2px solid #ef9a9a; }
 
         .card .card-header {
             display: flex;
@@ -102,8 +102,19 @@
             color: #555;
             margin-bottom: 4px;
             flex-wrap: wrap;
+            align-items: center;
         }
-        .card .card-header .usuario { font-weight: 600; color: #1b5e20; }
+        .card .card-header .usuario {
+            font-weight: 600;
+            color: #1b5e20;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .card .card-header .tempo {
+            font-size: 12px;
+            color: #888;
+        }
         .card .card-body { font-size: 14px; }
         .card .card-body .direcionado {
             font-size: 13px;
@@ -303,7 +314,7 @@
     }
 
     // ================================================================
-    // FUNÇÕES PARA BADGE (SEM DUPLICAÇÃO DE ÍCONE)
+    // FUNÇÕES PARA BADGE (COM ÍCONE ÚNICO)
     // ================================================================
     function getBadgeDirecionado(data) {
         const target = data.direcionado_para;
@@ -419,7 +430,6 @@
         };
         const prioridadeLabel = prioridadeMap[osData.prioridade] || osData.prioridade;
 
-        // Badges com ícone único
         const abertoPorBadge = getBadgeAbertoPor(osData.aberto_por, nomeAbertura);
         const direcionadoBadge = getBadgeDirecionado(osData);
 
@@ -476,10 +486,13 @@
         if (historico.length === 0) {
             historicoContainer.innerHTML = '<p>Nenhuma ação registrada.</p>';
         } else {
+            // Ordena por data crescente (mais antigo primeiro)
             historico.sort((a, b) => (a.data || '').localeCompare(b.data || ''));
             let html = '';
-            historico.forEach(item => {
-                if (item.acao === 'abertura') return;
+            let dataAnterior = null;
+
+            historico.forEach((item, index) => {
+                if (item.acao === 'abertura') return; // pula abertura
 
                 const funcao = getFuncao(item.usuario_uid) || 'outros';
                 const cor = getCorPerfil(funcao);
@@ -502,11 +515,31 @@
                     direcionadoHtml = `<div class="direcionado">🎯 Direcionado para: ${destino}</div>`;
                 }
 
+                // Cálculo de horas desde o card anterior
+                let horasDecorridas = '';
+                if (dataAnterior !== null) {
+                    const diffMs = new Date(item.data) - new Date(dataAnterior);
+                    const diffHoras = Math.round(diffMs / (1000 * 60 * 60));
+                    if (diffHoras === 0) {
+                        horasDecorridas = ' (menos de 1 hora depois)';
+                    } else if (diffHoras === 1) {
+                        horasDecorridas = ' (1 hora depois)';
+                    } else {
+                        horasDecorridas = ` (${diffHoras} horas depois)`;
+                    }
+                } else {
+                    horasDecorridas = ' (primeira resposta)';
+                }
+                dataAnterior = item.data;
+
+                // Badge do autor
+                const autorBadge = getBadgeAbertoPor(item.usuario_uid, nome);
+
                 html += `
                     <div class="card ${classe}" style="border-left-color:${cor};">
                         <div class="card-header">
-                            <span class="usuario">${nome}</span>
-                            <span>${dataFormat}</span>
+                            <span class="usuario">Resposta por ${autorBadge}</span>
+                            <span class="tempo">${dataFormat}${horasDecorridas}</span>
                         </div>
                         <div class="card-body">
                             <strong>${acao.toUpperCase()}</strong>
