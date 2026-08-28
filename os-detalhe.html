@@ -8,7 +8,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
-        /* ===== ESTILOS (mesmo de antes, mantido) ===== */
+        /* ===== ESTILOS (mantido) ===== */
         * { margin:0; padding:0; box-sizing:border-box; font-family: 'Calibri', 'Segoe UI', Tahoma, sans-serif; }
         body { background: #e8f5e9; padding: 16px 12px; display: flex; justify-content: center; min-height: 100vh; }
         .container { background: #fff; max-width: 900px; width: 100%; padding: 20px; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,80,0,0.12); border: 1px solid #a5d6a7; }
@@ -122,6 +122,14 @@
         }
         .card .card-body .mensagem {
             margin-top: 4px;
+        }
+        .card .card-body .edicao {
+            font-size: 13px;
+            color: #999;
+            font-style: italic;
+            margin-top: 4px;
+            padding-top: 4px;
+            border-top: 1px dashed #e0e0e0;
         }
 
         .nova-acao .form-group { margin-bottom: 10px; }
@@ -282,9 +290,6 @@
         return uid || '—';
     }
 
-    // ================================================================
-    // BADGES SEM ÍCONES (apenas cores)
-    // ================================================================
     function getBadgePerfil(uid, nome) {
         let texto = nome || '—';
         let classe = 'badge-grupo';
@@ -324,9 +329,6 @@
         return `<span class="badge ${classe}">${texto}</span>`;
     }
 
-    // ================================================================
-    // FUNÇÃO PARA FORMATAR LOTE (dois dígitos)
-    // ================================================================
     function formatarLote(valor) {
         if (!valor) return '';
         const num = parseInt(valor.trim(), 10);
@@ -336,7 +338,7 @@
     }
 
     // ================================================================
-    // CARREGAR USUÁRIOS PARA MAPA
+    // CARREGAR USUÁRIOS
     // ================================================================
     function carregarUsuarios() {
         return db.collection('usuarios').where('status', '==', 'ativo').get()
@@ -371,7 +373,7 @@
     }
 
     // ================================================================
-    // RENDERIZAR DETALHE
+    // RENDERIZAR DETALHE (REFATORADO)
     // ================================================================
     function renderizarDetalhe() {
         if (!osData) return;
@@ -394,7 +396,6 @@
         const abertoPorBadge = getBadgePerfil(osData.aberto_por, nomeAbertura);
         const direcionadoBadge = getBadgeDirecionado(osData);
 
-        // Capitalizar tipo
         let tipoCapitalizado = osData.tipo || '—';
         if (tipoCapitalizado !== '—') {
             tipoCapitalizado = tipoCapitalizado.charAt(0).toUpperCase() + tipoCapitalizado.slice(1);
@@ -471,49 +472,34 @@
 
         let html = '';
         let dataAnterior = null;
-        let respostaIndex = 0;
+        let cardIndex = 0; // contador de cards de resposta (exclui abertura)
+        let ultimoCard = null; // guarda o último card de ação para anexar edições
 
-        historico.forEach((item, idx) => {
-            // Se for abertura, tratamos de forma especial
-            if (item.acao === 'abertura') {
-                // Card de abertura (não será exibido como "resposta", mas podemos exibir informações?)
-                // O usuário não quer ver card de abertura, então pulamos.
-                return;
-            }
-
-            const uid = item.usuario_uid;
-            const nome = getNome(uid) || item.usuario || 'Anônimo';
+        // Função para criar um card de ação
+        function criarCard(acaoItem, edicoes = []) {
+            const uid = acaoItem.usuario_uid;
+            const nome = getNome(uid) || acaoItem.usuario || 'Anônimo';
             const funcao = getFuncao(uid) || 'outros';
-            const dataFormat = formatarDataHora(item.data);
-            const acao = item.acao || 'ação';
-            let mensagem = item.mensagem || '';
+            const dataFormat = formatarDataHora(acaoItem.data);
+            const acao = acaoItem.acao || 'ação';
+            let mensagem = acaoItem.mensagem || '';
 
-            // Se for edição, formata com tachado
-            if (acao === 'edicao') {
-                const detalhes = item.detalhes || {};
-                const antigo = detalhes.valor_antigo || '';
-                const novo = detalhes.valor_novo || '';
-                mensagem = `<span style="text-decoration:line-through; color:#999; font-style:italic;">${antigo}</span> → ${novo} <span style="color:#999; font-size:12px;">(edit em ${formatarDataCurta(item.data)})</span>`;
-            }
-
-            // Direcionado (sem ícone)
+            // Direcionado (usa o valor do item, não o atual da OS)
             let direcionadoHtml = '';
-            if (item.direcionado_para) {
+            if (acaoItem.direcionado_para) {
                 const direcionadoData = {
-                    direcionado_para: item.direcionado_para,
-                    direcionado_para_nome: item.direcionado_para_nome || item.direcionado_para
+                    direcionado_para: acaoItem.direcionado_para,
+                    direcionado_para_nome: acaoItem.direcionado_para_nome || acaoItem.direcionado_para
                 };
                 direcionadoHtml = `<div class="direcionado">Direcionado para: ${getBadgeDirecionado(direcionadoData)}</div>`;
             }
 
-            // Cálculo de horas (sempre comparando com o card anterior)
+            // Cálculo de horas
             let horasDecorridas = '';
-            const dataItem = new Date(item.data);
-            if (respostaIndex === 0) {
-                // Primeiro card de resposta (após a abertura) – sempre "primeira resposta"
+            const dataItem = new Date(acaoItem.data);
+            if (cardIndex === 0) {
                 horasDecorridas = ' (primeira resposta)';
             } else {
-                // Demais cards: compara com o card anterior
                 if (dataAnterior !== null) {
                     const diffMs = dataItem - new Date(dataAnterior);
                     const diffHoras = Math.round(diffMs / (1000 * 60 * 60));
@@ -522,10 +508,9 @@
                     else horasDecorridas = ` (${diffHoras} horas depois)`;
                 }
             }
-            dataAnterior = item.data;
-            respostaIndex++;
+            dataAnterior = acaoItem.data;
+            cardIndex++;
 
-            // Badge do autor (sem ícone)
             const autorBadge = getBadgePerfil(uid, nome);
 
             let cardClass = 'card-outros';
@@ -533,7 +518,19 @@
             else if (funcao === 'diretor') cardClass = 'card-diretor';
             else if (funcao === 'master') cardClass = 'card-master';
 
-            html += `
+            let edicoesHtml = '';
+            if (edicoes.length > 0) {
+                edicoesHtml = '<div class="edicao">✏️ Edições:<br>';
+                edicoes.forEach(ed => {
+                    const detalhes = ed.detalhes || {};
+                    const antigo = detalhes.valor_antigo || '';
+                    const novo = detalhes.valor_novo || '';
+                    edicoesHtml += `<span style="text-decoration:line-through; color:#999; font-style:italic;">${antigo}</span> → ${novo} <span style="color:#999; font-size:12px;">(edit em ${formatarDataCurta(ed.data)})</span><br>`;
+                });
+                edicoesHtml += '</div>';
+            }
+
+            return `
                 <div class="card ${cardClass}">
                     <div class="card-header">
                         <span class="usuario">Resposta por ${autorBadge}</span>
@@ -543,10 +540,72 @@
                         <strong>${acao.toUpperCase()}</strong>
                         ${direcionadoHtml}
                         <div class="mensagem">${mensagem}</div>
+                        ${edicoesHtml}
                     </div>
                 </div>
             `;
+        }
+
+        // Percorrer histórico, coletando edições para anexar ao card seguinte
+        let edicoesPendentes = [];
+        let ultimoItemAcao = null;
+
+        historico.forEach((item) => {
+            if (item.acao === 'abertura') return;
+
+            if (item.acao === 'edicao') {
+                // Guarda a edição para anexar ao próximo card de ação
+                edicoesPendentes.push(item);
+                return;
+            }
+
+            // É uma ação (não edição)
+            // Se houver edições pendentes, anexa ao card que vamos criar
+            if (edicoesPendentes.length > 0) {
+                // Cria o card com as edições
+                html += criarCard(item, edicoesPendentes);
+                edicoesPendentes = [];
+            } else {
+                html += criarCard(item);
+            }
         });
+
+        // Se sobraram edições pendentes (nenhuma ação depois), cria um card especial para elas
+        if (edicoesPendentes.length > 0) {
+            // Cria um card de "Edição" sem ação principal
+            const primeiraEdicao = edicoesPendentes[0];
+            const uid = primeiraEdicao.usuario_uid;
+            const nome = getNome(uid) || primeiraEdicao.usuario || 'Anônimo';
+            const funcao = getFuncao(uid) || 'outros';
+            const dataFormat = formatarDataHora(primeiraEdicao.data);
+            let edicoesHtml = '<div class="edicao">✏️ Edições:<br>';
+            edicoesPendentes.forEach(ed => {
+                const detalhes = ed.detalhes || {};
+                const antigo = detalhes.valor_antigo || '';
+                const novo = detalhes.valor_novo || '';
+                edicoesHtml += `<span style="text-decoration:line-through; color:#999; font-style:italic;">${antigo}</span> → ${novo} <span style="color:#999; font-size:12px;">(edit em ${formatarDataCurta(ed.data)})</span><br>`;
+            });
+            edicoesHtml += '</div>';
+
+            const autorBadge = getBadgePerfil(uid, nome);
+            let cardClass = 'card-outros';
+            if (funcao === 'admin') cardClass = 'card-admin';
+            else if (funcao === 'diretor') cardClass = 'card-diretor';
+            else if (funcao === 'master') cardClass = 'card-master';
+
+            html += `
+                <div class="card ${cardClass}">
+                    <div class="card-header">
+                        <span class="usuario">Resposta por ${autorBadge}</span>
+                        <span class="tempo">${dataFormat} (edição)</span>
+                    </div>
+                    <div class="card-body">
+                        <strong>EDIÇÃO</strong>
+                        <div class="mensagem">${edicoesHtml}</div>
+                    </div>
+                </div>
+            `;
+        }
 
         // ---- ÚLTIMO CARD (Adicionar Ação) ----
         html += `<div class="card card-ultimo">`;
@@ -647,7 +706,6 @@
         wrapper.className = 'edit-field-wrapper';
 
         if (campo2) {
-            // Edição dupla (quadra + lote)
             const input1 = document.createElement('input');
             input1.type = 'text';
             input1.placeholder = 'Quadra';
@@ -674,7 +732,6 @@
             salvarBtn.addEventListener('click', () => {
                 let novo1 = input1.value.trim();
                 let novo2 = input2.value.trim();
-                // Formata lote (se não vazio)
                 if (novo2) novo2 = formatarLote(novo2);
                 if (novo1 === osData[campo] && novo2 === osData[campo2]) {
                     cancelarEdicao();
@@ -684,7 +741,6 @@
             });
             cancelarBtn.addEventListener('click', cancelarEdicao);
         } else {
-            // Edição simples
             let input;
             if (campo === 'prioridade') {
                 input = document.createElement('select');
@@ -732,7 +788,6 @@
             salvarBtn.addEventListener('click', () => {
                 let novoValor = input.tagName === 'SELECT' ? input.value : input.value.trim();
                 if (campo === 'tipo' && novoValor) {
-                    // Capitaliza tipo
                     novoValor = novoValor.charAt(0).toUpperCase() + novoValor.slice(1);
                 }
                 if (novoValor === '' && campo !== 'tipo' && campo !== 'prioridade' && campo !== 'direcionado_para') {
@@ -767,7 +822,6 @@
     }
 
     function salvarEdicao(campo, valorAntigo, valorNovo) {
-        // Se for tipo, capitaliza
         if (campo === 'tipo' && valorNovo) {
             valorNovo = valorNovo.charAt(0).toUpperCase() + valorNovo.slice(1);
         }
@@ -797,7 +851,6 @@
     }
 
     function salvarEdicaoDupla(campo1, campo2, antigo1, antigo2, novo1, novo2) {
-        // Formata lote
         if (novo2) novo2 = formatarLote(novo2);
         const updateData = {};
         updateData[campo1] = novo1;
