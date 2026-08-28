@@ -105,7 +105,6 @@
     </div>
 
     <div class="filtros">
-        <!-- Status e Pendente -->
         <select id="filtroStatus">
             <option value="todos">Status: Todos</option>
             <option value="aberto" selected>Aberto</option>
@@ -116,22 +115,16 @@
             <option value="diretoria">Diretoria</option>
             <option value="admin">Admin</option>
         </select>
-
-        <!-- Reclamante -->
         <span class="grupo-filtro">
             <label>Reclamante:</label>
             <input type="text" id="filtroQuadraReclamante" placeholder="Quadra">
             <input type="text" id="filtroLoteReclamante" placeholder="Lote">
         </span>
-
-        <!-- Reclamado -->
         <span class="grupo-filtro">
             <label>Reclamado:</label>
             <input type="text" id="filtroQuadraReclamada" placeholder="Quadra">
             <input type="text" id="filtroLoteReclamada" placeholder="Lote">
         </span>
-
-        <!-- Busca geral -->
         <input type="text" id="filtroBusca" placeholder="Buscar...">
         <button class="btn-filtrar" id="btnFiltrar">Filtrar</button>
     </div>
@@ -140,6 +133,9 @@
 </div>
 
 <script>
+    // ================================================================
+    // FIREBASE CONFIG
+    // ================================================================
     const firebaseConfig = {
         apiKey: "AIzaSyDx_6oWO30Drh8GkuQA9jk2Oym7H8J3ABg",
         authDomain: "villa-bosque1.firebaseapp.com",
@@ -152,6 +148,40 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
+    // ================================================================
+    // TIMEOUT GLOBAL (sessionStorage)
+    // ================================================================
+    const TIMEOUT_MS = 4 * 60 * 60 * 1000;
+    function verificarTimeout() {
+        const lastActivity = sessionStorage.getItem('lastActivity');
+        if (!lastActivity) {
+            sessionStorage.setItem('lastActivity', Date.now().toString());
+            return;
+        }
+        const diff = Date.now() - parseInt(lastActivity);
+        if (diff > TIMEOUT_MS) {
+            sessionStorage.removeItem('lastActivity');
+            sessionStorage.removeItem('userLoggedIn');
+            auth.signOut().then(() => {
+                alert('Sessão expirada por inatividade.');
+                window.location.href = 'index.html';
+            });
+        } else {
+            sessionStorage.setItem('lastActivity', Date.now().toString());
+        }
+    }
+    function resetTimeoutGlobal() {
+        sessionStorage.setItem('lastActivity', Date.now().toString());
+    }
+    ['click','mousemove','keydown','scroll','touchstart'].forEach(ev => {
+        document.addEventListener(ev, resetTimeoutGlobal);
+    });
+    // Verifica ao carregar
+    verificarTimeout();
+
+    // ================================================================
+    // ELEMENTOS
+    // ================================================================
     const listaDiv = document.getElementById('listaContainer');
     const filtroStatus = document.getElementById('filtroStatus');
     const filtroPendente = document.getElementById('filtroPendente');
@@ -164,7 +194,7 @@
 
     let sortField = 'numero';
     let sortAsc = false;
-    let userMap = {}; // uid -> { nome, funcao }
+    let userMap = {};
 
     const priorityMap = {
         'emergencial': { label: 'Emergencial', class: 'badge-emergencial', icon: '🔴' },
@@ -172,11 +202,17 @@
         'normal': { label: 'Normal', class: 'badge-normal', icon: '🟢' }
     };
 
+    // ================================================================
+    // CÁLCULO DE DIAS CORRIGIDO (ignora horas)
+    // ================================================================
     function calcularDias(dataISO) {
         if (!dataISO) return '—';
         const data = new Date(dataISO);
         const agora = new Date();
-        const diffMs = agora - data;
+        // Zerar horas para comparar apenas datas
+        const dataSemHora = new Date(data.getFullYear(), data.getMonth(), data.getDate());
+        const agoraSemHora = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+        const diffMs = agoraSemHora - dataSemHora;
         const diffDias = Math.floor(diffMs / (1000 * 60 * 60 * 24));
         if (diffDias === 0) return '<span class="dias-hoje">Hoje</span>';
         if (diffDias === 1) return '1 dia';
@@ -191,29 +227,24 @@
         return data.criado_em;
     }
 
-    // Função que retorna a categoria do destino atual
     function getPendenteCategoria(data) {
-        // Caso 1: grupo
         if (data.direcionado_para === 'group:admin') return 'admin';
         if (data.direcionado_para === 'group:diretor') return 'diretoria';
-
-        // Caso 2: personagem individual
         const uid = data.direcionado_para;
         if (uid && userMap[uid]) {
             const funcao = userMap[uid].funcao;
             if (funcao === 'admin') return 'admin';
             if (funcao === 'diretor') return 'diretoria';
         }
-
-        // Caso 3: fallback pelo nome (para dados muito antigos)
         const nome = (data.direcionado_para_nome || '').toLowerCase();
         if (nome.includes('admin')) return 'admin';
         if (nome.includes('diretor')) return 'diretoria';
-
         return 'outros';
     }
 
-    // --- Ordenação ---
+    // ================================================================
+    // ORDENAÇÃO
+    // ================================================================
     function ordenarDados(docs) {
         docs.sort((a, b) => {
             let valA, valB;
@@ -246,7 +277,9 @@
         return docs;
     }
 
-    // --- Renderização ---
+    // ================================================================
+    // RENDERIZAÇÃO
+    // ================================================================
     function renderizarTabela(docs) {
         if (!docs || docs.length === 0) {
             listaDiv.innerHTML = '<p class="empty-message">Nenhuma ordem encontrada com os filtros atuais.</p>';
@@ -317,11 +350,13 @@
         });
     }
 
-    // --- Aplicar filtros ---
+    // ================================================================
+    // APLICAR FILTROS
+    // ================================================================
     function aplicarFiltros() {
         let docs = window.allDocs || [];
 
-        // Filtro Status
+        // Status
         const statusFiltro = filtroStatus.value;
         if (statusFiltro === 'aberto') {
             docs = docs.filter(d => d.status === 'aberta' || d.status === 'em_andamento');
@@ -329,7 +364,7 @@
             docs = docs.filter(d => d.status === 'concluida' || d.status === 'cancelada');
         }
 
-        // Filtro Pendente em
+        // Pendente
         const pendenteFiltro = filtroPendente.value;
         if (pendenteFiltro === 'diretoria') {
             docs = docs.filter(d => getPendenteCategoria(d) === 'diretoria');
@@ -337,19 +372,19 @@
             docs = docs.filter(d => getPendenteCategoria(d) === 'admin');
         }
 
-        // Filtros de Reclamante (quadra e lote)
+        // Reclamante
         const qReclamante = filtroQuadraReclamante.value.trim().toLowerCase();
         const lReclamante = filtroLoteReclamante.value.trim().toLowerCase();
         if (qReclamante) docs = docs.filter(d => (d.quadra_reclamante || '').toLowerCase().includes(qReclamante));
         if (lReclamante) docs = docs.filter(d => (d.lote_reclamante || '').toLowerCase().includes(lReclamante));
 
-        // Filtros de Reclamado (quadra e lote)
+        // Reclamado
         const qReclamada = filtroQuadraReclamada.value.trim().toLowerCase();
         const lReclamada = filtroLoteReclamada.value.trim().toLowerCase();
         if (qReclamada) docs = docs.filter(d => (d.quadra_reclamada || '').toLowerCase().includes(qReclamada));
         if (lReclamada) docs = docs.filter(d => (d.lote_reclamada || '').toLowerCase().includes(lReclamada));
 
-        // Busca geral
+        // Busca
         const busca = filtroBusca.value.trim().toLowerCase();
         if (busca) {
             docs = docs.filter(d => {
@@ -363,11 +398,11 @@
         renderizarTabela(docs);
     }
 
-    // --- Carregar dados ---
+    // ================================================================
+    // CARREGAR DADOS
+    // ================================================================
     function carregarOS() {
         listaDiv.innerHTML = '<p class="empty-message">Carregando ordens de serviço...</p>';
-
-        // Primeiro, carregar os usuários para o mapa de funções
         db.collection('usuarios').where('status', '==', 'ativo').get()
             .then(snapshot => {
                 userMap = {};
@@ -375,7 +410,6 @@
                     const data = doc.data();
                     userMap[doc.id] = { nome: data.nome, funcao: data.funcao };
                 });
-                // Agora carregar as OS
                 return db.collection('ordens_servico').get();
             })
             .then(snapshot => {
@@ -397,22 +431,28 @@
             });
     }
 
-    // --- Event listeners ---
+    // ================================================================
+    // EVENT LISTENERS
+    // ================================================================
     btnFiltrar.addEventListener('click', aplicarFiltros);
     [filtroStatus, filtroPendente].forEach(el => el.addEventListener('change', aplicarFiltros));
-    // Inputs com delay
-    const inputsDelay = [filtroQuadraReclamante, filtroLoteReclamante, filtroQuadraReclamada, filtroLoteReclamada, filtroBusca];
     let timeoutBusca;
-    inputsDelay.forEach(input => {
+    [filtroQuadraReclamante, filtroLoteReclamante, filtroQuadraReclamada, filtroLoteReclamada, filtroBusca].forEach(input => {
         input.addEventListener('input', () => {
             clearTimeout(timeoutBusca);
             timeoutBusca = setTimeout(aplicarFiltros, 300);
         });
     });
 
+    // ================================================================
+    // AUTENTICAÇÃO
+    // ================================================================
     auth.onAuthStateChanged((user) => {
-        if (user) carregarOS();
-        else window.location.href = 'index.html';
+        if (user) {
+            carregarOS();
+        } else {
+            window.location.href = 'index.html';
+        }
     });
 </script>
 </body>

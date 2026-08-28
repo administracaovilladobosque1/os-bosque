@@ -51,7 +51,7 @@
             th, td { padding: 6px; }
         }
 
-        /* ===== MODAL ===== */
+        /* MODAL */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -71,19 +71,8 @@
             box-shadow: 0 8px 30px rgba(0,0,0,0.2);
             border: 1px solid #a5d6a7;
         }
-        .modal-box h2 {
-            color: #1b5e20;
-            margin-bottom: 16px;
-            font-size: 22px;
-            border-bottom: 2px solid #c8e6c9;
-            padding-bottom: 8px;
-        }
-        .modal-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 16px;
-            justify-content: flex-end;
-        }
+        .modal-box h2 { color: #1b5e20; margin-bottom: 16px; font-size: 22px; border-bottom: 2px solid #c8e6c9; padding-bottom: 8px; }
+        .modal-actions { display: flex; gap: 10px; margin-top: 16px; justify-content: flex-end; }
         .modal-actions .btn { width: auto; }
     </style>
 </head>
@@ -137,7 +126,7 @@
     <div id="listaContainer"><p>Carregando...</p></div>
 </div>
 
-<!-- ===== MODAL DE EDIÇÃO ===== -->
+<!-- MODAL EDIÇÃO -->
 <div class="modal-overlay" id="editModal">
     <div class="modal-box">
         <h2>✏️ Editar Personagem</h2>
@@ -171,6 +160,9 @@
 </div>
 
 <script>
+    // ================================================================
+    // FIREBASE CONFIG
+    // ================================================================
     const firebaseConfig = {
         apiKey: "AIzaSyDx_6oWO30Drh8GkuQA9jk2Oym7H8J3ABg",
         authDomain: "villa-bosque1.firebaseapp.com",
@@ -183,9 +175,39 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // ============================================================
+    // ================================================================
+    // TIMEOUT GLOBAL
+    // ================================================================
+    const TIMEOUT_MS = 4 * 60 * 60 * 1000;
+    function verificarTimeout() {
+        const lastActivity = sessionStorage.getItem('lastActivity');
+        if (!lastActivity) {
+            sessionStorage.setItem('lastActivity', Date.now().toString());
+            return;
+        }
+        const diff = Date.now() - parseInt(lastActivity);
+        if (diff > TIMEOUT_MS) {
+            sessionStorage.removeItem('lastActivity');
+            sessionStorage.removeItem('userLoggedIn');
+            auth.signOut().then(() => {
+                alert('Sessão expirada por inatividade.');
+                window.location.href = 'index.html';
+            });
+        } else {
+            sessionStorage.setItem('lastActivity', Date.now().toString());
+        }
+    }
+    function resetTimeoutGlobal() {
+        sessionStorage.setItem('lastActivity', Date.now().toString());
+    }
+    ['click','mousemove','keydown','scroll','touchstart'].forEach(ev => {
+        document.addEventListener(ev, resetTimeoutGlobal);
+    });
+    verificarTimeout();
+
+    // ================================================================
     // REFERÊNCIAS
-    // ============================================================
+    // ================================================================
     const form = document.getElementById('personagemForm');
     const nomeInput = document.getElementById('nome');
     const emailInput = document.getElementById('email');
@@ -196,20 +218,19 @@
     const formMsg = document.getElementById('formMessage');
     const listaDiv = document.getElementById('listaContainer');
 
-    // Modal
     const modal = document.getElementById('editModal');
     const editNome = document.getElementById('editNome');
     const editFuncao = document.getElementById('editFuncao');
     const editStatus = document.getElementById('editStatus');
     const editForm = document.getElementById('editForm');
     const editMsg = document.getElementById('editMessage');
-    let editUid = null; // armazena o uid do personagem sendo editado
+    let editUid = null;
 
     const MASTER_EMAIL = 'administracaovilladobosque@gmail.com';
 
-    // ============================================================
-    // FUNÇÕES DO MODAL
-    // ============================================================
+    // ================================================================
+    // MODAL
+    // ================================================================
     function abrirModal(uid, nome, funcao, status) {
         editUid = uid;
         editNome.value = nome || '';
@@ -219,47 +240,34 @@
         editMsg.textContent = '';
         modal.classList.add('active');
     }
-
     function fecharModal() {
         modal.classList.remove('active');
         editUid = null;
         editForm.reset();
     }
 
-    // ============================================================
-    // SALVAR EDIÇÃO
-    // ============================================================
     editForm.addEventListener('submit', (e) => {
         e.preventDefault();
         if (!editUid) return;
-
         const nome = editNome.value.trim();
         const funcao = editFuncao.value;
         const status = editStatus.value;
-
         if (!nome) {
             showMessage(editMsg, 'O nome não pode ficar vazio.', 'error');
             return;
         }
-
-        db.collection('usuarios').doc(editUid).update({
-            nome: nome,
-            funcao: funcao,
-            status: status
-        })
-        .then(() => {
-            showMessage(editMsg, '✅ Personagem atualizado com sucesso!', 'success');
-            fecharModal();
-            carregarLista();
-        })
-        .catch(err => {
-            showMessage(editMsg, 'Erro: ' + err.message, 'error');
-        });
+        db.collection('usuarios').doc(editUid).update({ nome, funcao, status })
+            .then(() => {
+                showMessage(editMsg, '✅ Personagem atualizado com sucesso!', 'success');
+                fecharModal();
+                carregarLista();
+            })
+            .catch(err => showMessage(editMsg, 'Erro: ' + err.message, 'error'));
     });
 
-    // ============================================================
-    // CARREGAR LISTA
-    // ============================================================
+    // ================================================================
+    // LISTA
+    // ================================================================
     function carregarLista() {
         listaDiv.innerHTML = '<p>Carregando...</p>';
         db.collection('usuarios').orderBy('criado_em', 'desc').get()
@@ -297,9 +305,6 @@
             .catch(err => { listaDiv.innerHTML = `<p style="color:red;">Erro ao carregar: ${err.message}</p>`; });
     }
 
-    // ============================================================
-    // FUNÇÕES EXISTENTES (toggleStatus, excluir)
-    // ============================================================
     window.toggleStatus = function(uid, currentStatus) {
         const novoStatus = currentStatus === 'ativo' ? 'inativo' : 'ativo';
         if (!confirm(`Deseja ${novoStatus === 'ativo' ? 'ativar' : 'inativar'} este usuário?`)) return;
@@ -315,9 +320,9 @@
             .catch(err => alert('Erro: ' + err.message));
     };
 
-    // ============================================================
-    // CRIAR NOVO PERSONAGEM
-    // ============================================================
+    // ================================================================
+    // CRIAR PERSONAGEM
+    // ================================================================
     form.addEventListener('submit', (e) => {
         e.preventDefault();
         const nome = nomeInput.value.trim();
@@ -377,9 +382,9 @@
         el.className = 'message ' + type;
     }
 
-    // ============================================================
+    // ================================================================
     // AUTENTICAÇÃO
-    // ============================================================
+    // ================================================================
     auth.onAuthStateChanged((user) => {
         if (user && user.email === MASTER_EMAIL) {
             carregarLista();
