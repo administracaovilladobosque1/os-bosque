@@ -374,7 +374,7 @@
     }
 
     // ================================================================
-    // PERMISSÃO DE EDIÇÃO (Nova lógica)
+    // PERMISSÃO DE EDIÇÃO
     // ================================================================
     function podeEditarOS() {
         if (!currentUser || !osData) return false;
@@ -383,13 +383,11 @@
         const funcaoUsuario = currentUserData?.funcao;
         if (!funcaoUsuario) return false;
 
-        // Verifica o direcionado_para e a função do destinatário
         const direcionadoPara = osData.direcionado_para;
         const funcaoDestino = osData.direcionado_para_funcao;
         const criadorFuncao = getFuncao(osData.aberto_por);
 
         if (funcaoUsuario === 'admin') {
-            // Pode editar se for grupo admin, admin específico ou criador admin
             if (direcionadoPara === 'group:admin') return true;
             if (funcaoDestino === 'admin') return true;
             if (criadorFuncao === 'admin') return true;
@@ -472,7 +470,7 @@
 
         const prioridadeLabel = getValorExibicao('prioridade', osData.prioridade) || osData.prioridade;
 
-        // ---- Direcionado original (última linha) ----
+        // ---- Direcionado original (sempre fixo) ----
         const dirOriginal = osData.direcionado_para_original || osData.direcionado_para || '—';
         const dirNomeOriginal = osData.direcionado_para_nome_original || osData.direcionado_para_nome || '—';
         const dirBadgeOriginal = getBadgeDirecionado({
@@ -480,7 +478,7 @@
             direcionado_para_nome: dirNomeOriginal
         });
 
-        // Campos – Abertura primeiro, depois os editáveis, e por fim Direcionado original
+        // Campos – Abertura primeiro, depois editáveis, e por fim Direcionado (fixo)
         const campos = [
             { label: 'Abertura', value: formatarDataHora(osData.criado_em), campo: 'criado_em', edit: false },
             { label: 'Título', value: osData.titulo || '—', campo: 'titulo', edit: true },
@@ -500,7 +498,7 @@
         campos.push(
             { label: 'Reclamante', value: reclamante, campo: 'quadra_reclamante', campo2: 'lote_reclamante', edit: true },
             { label: 'Reclamado', value: reclamado, campo: 'quadra_reclamada', campo2: 'lote_reclamada', edit: true },
-            { label: 'Direcionado para (original)', value: dirBadgeOriginal, campo: 'direcionado_original', edit: false }
+            { label: 'Direcionado para', value: dirBadgeOriginal, campo: 'direcionado_original', edit: false }
         );
 
         const podeEditar = podeEditarOS();
@@ -558,11 +556,10 @@
 
         historico.sort((a, b) => (a.data || '').localeCompare(b.data || ''));
 
-        // Data de abertura para cálculo da primeira resposta
         const dataAbertura = osData.criado_em ? new Date(osData.criado_em).getTime() : null;
 
         let html = '';
-        let dataAnterior = dataAbertura; // para a primeira resposta, comparar com abertura
+        let dataAnterior = dataAbertura;
         let cardIndex = 0;
 
         historico.forEach((item) => {
@@ -592,7 +589,6 @@
                 const diffMs = dataItem - dataAnterior;
                 const diffHoras = Math.round(diffMs / (1000 * 60 * 60));
                 if (cardIndex === 0) {
-                    // primeira resposta: comparar com a abertura
                     if (diffHoras === 0) tempoDecorrido = ' (menos de 1 hora após abertura)';
                     else if (diffHoras === 1) tempoDecorrido = ' (1 hora após abertura)';
                     else tempoDecorrido = ` (${diffHoras} horas após abertura)`;
@@ -602,7 +598,6 @@
                     else tempoDecorrido = ` (${diffHoras} horas após resposta anterior)`;
                 }
             }
-            // Atualiza dataAnterior para a próxima iteração
             dataAnterior = dataItem;
             cardIndex++;
 
@@ -694,7 +689,7 @@
     }
 
     // ================================================================
-    // EDIÇÃO DE CAMPO (SEM CRIAR NOVO CARD)
+    // EDIÇÃO DE CAMPO
     // ================================================================
     function iniciarEdicao(campo, campo2, valorAtual, btn) {
         if (editando.campo) cancelarEdicao();
@@ -737,7 +732,7 @@
             container.appendChild(wrapper);
 
             salvarBtn.addEventListener('click', () => {
-                let novo1 = input1.value.trim().toUpperCase(); // força maiúscula
+                let novo1 = input1.value.trim().toUpperCase();
                 let novo2 = input2.value.trim();
                 if (novo2) novo2 = formatarLote(novo2);
                 if (novo1 === osData[campo] && novo2 === osData[campo2]) {
