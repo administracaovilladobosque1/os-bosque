@@ -51,9 +51,11 @@
             .page-title { font-size: 20px; }
             .bloco { padding: 8px 10px 4px 10px; }
         }
-        select option.grupo { background-color: #e9ecef; }
-        select option.admin { background-color: #fff3cd; }
-        select option.diretor { background-color: #d4edda; }
+
+        /* ===== NOVAS CORES PARA O DROPDOWN ===== */
+        select option.grupo { background-color: #ced4da; }        /* cinza mais escuro */
+        select option.admin { background-color: #ffe082; }        /* amarelo mais vivo */
+        select option.diretor { background-color: #a5d6a7; }       /* verde mais vivo */
     </style>
 </head>
 <body>
@@ -140,6 +142,39 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
+    // ============================================================
+    // TIMEOUT GLOBAL
+    // ============================================================
+    const TIMEOUT_MS = 4 * 60 * 60 * 1000;
+    function verificarTimeout() {
+        const lastActivity = sessionStorage.getItem('lastActivity');
+        if (!lastActivity) {
+            sessionStorage.setItem('lastActivity', Date.now().toString());
+            return;
+        }
+        const diff = Date.now() - parseInt(lastActivity);
+        if (diff > TIMEOUT_MS) {
+            sessionStorage.removeItem('lastActivity');
+            sessionStorage.removeItem('userLoggedIn');
+            auth.signOut().then(() => {
+                alert('Sessão expirada por inatividade.');
+                window.location.href = 'index.html';
+            });
+        } else {
+            sessionStorage.setItem('lastActivity', Date.now().toString());
+        }
+    }
+    function resetTimeoutGlobal() {
+        sessionStorage.setItem('lastActivity', Date.now().toString());
+    }
+    ['click','mousemove','keydown','scroll','touchstart'].forEach(ev => {
+        document.addEventListener(ev, resetTimeoutGlobal);
+    });
+    verificarTimeout();
+
+    // ============================================================
+    // ELEMENTOS
+    // ============================================================
     const form = document.getElementById('osForm');
     const tituloInput = document.getElementById('titulo');
     const descricaoInput = document.getElementById('descricao');
@@ -157,6 +192,11 @@
     let currentUserNome = '';
     let personagensList = [];
 
+    const MASTER_EMAIL = 'administracaovilladobosque@gmail.com';
+
+    // ============================================================
+    // CARREGAR PERSONAGENS (exclui o Master)
+    // ============================================================
     function carregarPersonagens() {
         direcionadoSelect.innerHTML = '<option value="">Carregando...</option>';
         db.collection('usuarios')
@@ -169,6 +209,9 @@
 
                 snapshot.forEach(doc => {
                     const data = doc.data();
+                    // PULAR O MASTER
+                    if (data.email === MASTER_EMAIL) return;
+
                     const item = { id: doc.id, nome: data.nome, funcao: data.funcao };
                     if (data.funcao === 'admin') admins.push(item);
                     else if (data.funcao === 'diretor') diretores.push(item);
@@ -183,21 +226,25 @@
 
                 let html = '<option value="">Selecione um destino...</option>';
 
-                html += `<option value="group:admin" class="grupo" style="background-color:#e9ecef;">GRUPO: Administradores</option>`;
-                html += `<option value="group:diretor" class="grupo" style="background-color:#e9ecef;">GRUPO: Diretores</option>`;
+                // GRUPOS (cinza)
+                html += `<option value="group:admin" class="grupo" style="background-color:#ced4da;">GRUPO: Administradores</option>`;
+                html += `<option value="group:diretor" class="grupo" style="background-color:#ced4da;">GRUPO: Diretores</option>`;
 
+                // ADMINISTRADORES (amarelo)
                 admins.forEach(item => {
                     const isMe = (item.id === currentUser.uid);
                     const label = isMe ? `${item.nome} (você) (${item.funcao})` : `${item.nome} (${item.funcao})`;
-                    html += `<option value="${item.id}" class="admin" style="background-color:#fff3cd;">${label}</option>`;
+                    html += `<option value="${item.id}" class="admin" style="background-color:#ffe082;">${label}</option>`;
                 });
 
+                // DIRETORES (verde)
                 diretores.forEach(item => {
                     const isMe = (item.id === currentUser.uid);
                     const label = isMe ? `${item.nome} (você) (${item.funcao})` : `${item.nome} (${item.funcao})`;
-                    html += `<option value="${item.id}" class="diretor" style="background-color:#d4edda;">${label}</option>`;
+                    html += `<option value="${item.id}" class="diretor" style="background-color:#a5d6a7;">${label}</option>`;
                 });
 
+                // OUTROS (caso existam, fundo neutro)
                 outros.forEach(item => {
                     const isMe = (item.id === currentUser.uid);
                     const label = isMe ? `${item.nome} (você) (${item.funcao})` : `${item.nome} (${item.funcao})`;
@@ -212,6 +259,9 @@
             });
     }
 
+    // ============================================================
+    // GERAR NÚMERO DA OS
+    // ============================================================
     function gerarNumeroOS() {
         return db.collection('ordens_servico')
             .orderBy('numero', 'desc')
@@ -224,6 +274,9 @@
             });
     }
 
+    // ============================================================
+    // SUBMIT
+    // ============================================================
     form.addEventListener('submit', (e) => {
         e.preventDefault();
         const titulo = tituloInput.value.trim();
@@ -327,6 +380,9 @@
         el.className = 'message ' + type;
     }
 
+    // ============================================================
+    // AUTENTICAÇÃO
+    // ============================================================
     auth.onAuthStateChanged((user) => {
         if (user) {
             currentUser = user;
