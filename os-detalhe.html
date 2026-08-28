@@ -8,6 +8,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
+        /* ===== ESTILOS (mantido) ===== */
         * { margin:0; padding:0; box-sizing:border-box; font-family: 'Calibri', 'Segoe UI', Tahoma, sans-serif; }
         body { background: #e8f5e9; padding: 16px 12px; display: flex; justify-content: center; min-height: 100vh; }
         .container { background: #fff; max-width: 900px; width: 100%; padding: 20px; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,80,0,0.12); border: 1px solid #a5d6a7; }
@@ -406,7 +407,7 @@
     }
 
     // ================================================================
-    // RENDERIZAR DETALHE
+    // RENDERIZAR DETALHE – SEM "DIRECIONADO PARA" NO CARD INICIAL
     // ================================================================
     function renderizarDetalhe() {
         if (!osData) return;
@@ -435,6 +436,7 @@
 
         const prioridadeLabel = getValorExibicao('prioridade', osData.prioridade) || osData.prioridade;
 
+        // ==== LISTA DE CAMPOS (NÃO INCLUI "Direcionado para") ====
         const campos = [
             { label: 'Título', value: osData.titulo || '—', campo: 'titulo', edit: true },
             { label: 'Descrição', value: osData.descricao || '—', campo: 'descricao', edit: true },
@@ -442,7 +444,7 @@
             { label: 'Prioridade', value: prioridadeLabel, campo: 'prioridade', edit: true },
             { label: 'Aberto por', value: abertoPorBadge, campo: 'aberto_por', edit: false },
             { label: 'Abertura', value: formatarDataHora(osData.criado_em), campo: 'criado_em', edit: false },
-            // CAMPO "DIRECIONADO PARA" REMOVIDO DAQUI
+            // O CAMPO "DIRECIONADO PARA" FOI REMOVIDO AQUI
         ];
 
         const reclamante = osData.quadra_reclamante && osData.lote_reclamante
@@ -462,7 +464,7 @@
         let infoHTML = '';
         campos.forEach(campo => {
             let valor = campo.value;
-            // Adiciona histórico inline para campos editáveis
+            // Adiciona histórico inline
             if (campo.campo) {
                 const hist = exibirHistoricoEdicao(campo.campo);
                 if (hist) valor += hist;
@@ -526,7 +528,7 @@
             const acao = item.acao || 'ação';
             let mensagem = item.mensagem || '';
 
-            if (acao === 'edicao') return; // edições são inline
+            if (acao === 'edicao') return;
 
             let direcionadoHtml = '';
             if (item.direcionado_para) {
@@ -729,7 +731,6 @@
                     input.appendChild(option);
                 });
             } else if (campo === 'direcionado_para') {
-                // Para editar direcionado, usamos o select do formulário
                 const selectAcao = document.getElementById('acaoDirecionar');
                 if (selectAcao) {
                     input = document.createElement('select');
