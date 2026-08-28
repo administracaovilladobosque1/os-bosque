@@ -146,6 +146,11 @@
             font-size: 14px;
         }
 
+        /* Cores para o badge de direcionado */
+        .badge-direcionado-grupo { background: #ced4da; color: #000; }
+        .badge-direcionado-admin { background: #ffe082; color: #000; }
+        .badge-direcionado-diretor { background: #a5d6a7; color: #000; }
+
         @media (max-width: 600px) {
             .container { padding: 14px; }
             .page-title { font-size: 20px; }
@@ -297,6 +302,21 @@
         return '⚪';
     }
 
+    // Determina a classe do badge para "Direcionado para"
+    function getClasseDirecionado(data) {
+        const target = data.direcionado_para;
+        if (target === 'group:admin' || target === 'group:diretor') {
+            return 'badge-direcionado-grupo';
+        }
+        const uid = target;
+        if (uid && userMap[uid]) {
+            const funcao = userMap[uid].funcao;
+            if (funcao === 'admin') return 'badge-direcionado-admin';
+            if (funcao === 'diretor') return 'badge-direcionado-diretor';
+        }
+        return 'badge-direcionado-grupo'; // fallback
+    }
+
     // ================================================================
     // CARREGAR USUÁRIOS PARA MAPA
     // ================================================================
@@ -359,20 +379,25 @@
         const nomeAbertura = getNome(osData.aberto_por);
 
         const prioridadeMap = {
-            'emergencial': 'Emergencial',
-            'urgente': 'Urgente',
-            'normal': 'Normal'
+            'emergencial': `🔴 Emergencial`,
+            'urgente': `🟡 Urgente`,
+            'normal': `🟢 Normal`
         };
         const prioridadeLabel = prioridadeMap[osData.prioridade] || osData.prioridade;
 
+        // Direcionado para com badge colorido
+        const direcionadoNome = osData.direcionado_para_nome || '—';
+        const classeDirecionado = getClasseDirecionado(osData);
+        const direcionadoHtml = `<span class="badge ${classeDirecionado}">${direcionadoNome}</span>`;
+
         const campos = [
-            { label: '📝 Título', value: osData.titulo || '—', edit: 'titulo' },
-            { label: '📄 Descrição', value: osData.descricao || '—', edit: 'descricao' },
-            { label: '📂 Tipo', value: osData.tipo || '—', edit: 'tipo' },
-            { label: `${emojiPrioridade(osData.prioridade)} Prioridade`, value: prioridadeLabel, edit: 'prioridade' },
-            { label: '👤 Aberto por', value: nomeAbertura },
-            { label: '📅 Abertura', value: formatarDataHora(osData.criado_em) },
-            { label: '🎯 Direcionado para', value: osData.direcionado_para_nome || '—', edit: 'direcionado_para' },
+            { label: 'Título', value: osData.titulo || '—', edit: 'titulo' },
+            { label: 'Descrição', value: osData.descricao || '—', edit: 'descricao' },
+            { label: 'Tipo', value: osData.tipo || '—', edit: 'tipo' },
+            { label: 'Prioridade', value: prioridadeLabel, edit: 'prioridade' },
+            { label: 'Aberto por', value: `👤 ${nomeAbertura}` },
+            { label: 'Abertura', value: formatarDataHora(osData.criado_em) },
+            { label: 'Direcionado para', value: direcionadoHtml, edit: 'direcionado_para' },
         ];
 
         const reclamante = osData.quadra_reclamante && osData.lote_reclamante
@@ -383,8 +408,8 @@
             : (osData.quadra_reclamada || osData.lote_reclamada || '—');
 
         campos.push(
-            { label: '📌 Reclamante', value: reclamante, edit: 'quadra_reclamante', edit2: 'lote_reclamante' },
-            { label: '📍 Reclamado', value: reclamado, edit: 'quadra_reclamada', edit2: 'lote_reclamada' }
+            { label: 'Reclamante', value: reclamante, edit: 'quadra_reclamante', edit2: 'lote_reclamante' },
+            { label: 'Reclamado', value: reclamado, edit: 'quadra_reclamada', edit2: 'lote_reclamada' }
         );
 
         const podeEditar = podeEditarOS();
@@ -421,6 +446,9 @@
             historico.sort((a, b) => (a.data || '').localeCompare(b.data || ''));
             let html = '';
             historico.forEach(item => {
+                // Pula cards de "abertura" (não queremos mais eles)
+                if (item.acao === 'abertura') return;
+
                 const funcao = getFuncao(item.usuario_uid) || 'outros';
                 const cor = getCorPerfil(funcao);
                 const classe = getClasseCard(funcao);
