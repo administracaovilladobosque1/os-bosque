@@ -27,7 +27,6 @@
         .btn-sm { padding: 4px 10px; font-size: 12px; }
         .btn-edit { background: transparent; border: 1px solid #2e7d32; color: #2e7d32; padding: 2px 8px; font-size: 12px; border-radius: 4px; cursor: pointer; }
         .btn-edit:hover { background: #e8f5e9; }
-
         .header-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; align-items: center; }
 
         /* INFORMAÇÕES DA OS */
@@ -67,6 +66,15 @@
             font-weight: 600;
             white-space: nowrap;
         }
+        .badge .icone { margin-right: 4px; }
+
+        /* Cores dos badges */
+        .badge-grupo { background: #ced4da; color: #000; }
+        .badge-admin { background: #ffe082; color: #000; }
+        .badge-diretor { background: #a5d6a7; color: #000; }
+        .badge-master { background: #ffcc80; color: #000; }
+
+        /* Status badges */
         .badge-aberta { background: #e3f2fd; color: #0d47a1; }
         .badge-em_andamento { background: #fff3e0; color: #e65100; }
         .badge-concluida { background: #c8e6c9; color: #1b5e20; }
@@ -74,21 +82,18 @@
         .badge-emergencial { background: #ffcdd2; color: #b71c1c; font-weight: bold; }
         .badge-urgente { background: #fff9c4; color: #f57f17; font-weight: bold; }
         .badge-normal { background: #c8e6c9; color: #1b5e20; font-weight: bold; }
-        .badge-grupo { background: #ced4da; color: #000; }
-        .badge-admin { background: #ffe082; color: #000; }
-        .badge-diretor { background: #a5d6a7; color: #000; }
-        .badge .icone { margin-right: 4px; }
 
         /* HISTÓRICO - CARDS */
         .historico-container { margin: 20px 0; display: flex; flex-direction: column; gap: 12px; }
         .historico-container .card {
-            background: #fff;
-            border-left: 4px solid #a5d6a7;
             border-radius: 8px;
             padding: 12px 14px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.04);
             border: 1px solid #e8f5e9;
+            border-left-width: 4px;
+            border-left-style: solid;
         }
+        /* Fundos dos cards conforme perfil */
         .card-admin { background: #fffde7; border-left-color: #ffe082; }
         .card-diretor { background: #f1f8e9; border-left-color: #a5d6a7; }
         .card-master { background: #fff8e1; border-left-color: #ffcc80; }
@@ -292,30 +297,32 @@
         return uid || '—';
     }
 
-    function getCorPerfil(funcao) {
-        if (funcao === 'admin') return '#ffe082';
-        if (funcao === 'diretor') return '#a5d6a7';
-        if (funcao === 'master') return '#ffcc80';
-        return '#ced4da';
-    }
-
-    function getClasseCard(funcao) {
-        if (funcao === 'admin') return 'card-admin';
-        if (funcao === 'diretor') return 'card-diretor';
-        if (funcao === 'master') return 'card-master';
-        return 'card-outros';
-    }
-
-    function emojiPrioridade(prio) {
-        if (prio === 'emergencial') return '🔴';
-        if (prio === 'urgente') return '🟡';
-        if (prio === 'normal') return '🟢';
-        return '⚪';
-    }
-
     // ================================================================
     // FUNÇÕES PARA BADGE (COM ÍCONE ÚNICO)
     // ================================================================
+    function getBadgePerfil(uid, nome) {
+        let texto = nome || '—';
+        let classe = 'badge-grupo';
+        let icone = '👤';
+
+        if (uid && userMap[uid]) {
+            const funcao = userMap[uid].funcao;
+            if (funcao === 'admin') { classe = 'badge-admin'; icone = '👤'; }
+            else if (funcao === 'diretor') { classe = 'badge-diretor'; icone = '👤'; }
+            else if (funcao === 'master') { classe = 'badge-master'; icone = '👤'; }
+            else { classe = 'badge-grupo'; icone = '👤'; }
+        } else {
+            // Fallback: inferir pelo nome
+            const nomeLower = (nome || '').toLowerCase();
+            if (nomeLower.includes('admin')) { classe = 'badge-admin'; icone = '👤'; }
+            else if (nomeLower.includes('diretor')) { classe = 'badge-diretor'; icone = '👤'; }
+            else if (nomeLower.includes('master')) { classe = 'badge-master'; icone = '👤'; }
+            else { classe = 'badge-grupo'; icone = '👤'; }
+        }
+
+        return `<span class="badge ${classe}"><span class="icone">${icone}</span> ${texto}</span>`;
+    }
+
     function getBadgeDirecionado(data) {
         const target = data.direcionado_para;
         let texto = data.direcionado_para_nome || '—';
@@ -336,27 +343,6 @@
             if (nome.includes('admin')) { classe = 'badge-admin'; icone = '👤'; }
             else if (nome.includes('diretor')) { classe = 'badge-diretor'; icone = '👤'; }
             else { classe = 'badge-grupo'; icone = '👤'; }
-        }
-
-        return `<span class="badge ${classe}"><span class="icone">${icone}</span> ${texto}</span>`;
-    }
-
-    function getBadgeAbertoPor(uid, nome) {
-        let texto = nome || '—';
-        let classe = 'badge-grupo';
-        let icone = '👤';
-
-        if (uid && userMap[uid]) {
-            const funcao = userMap[uid].funcao;
-            if (funcao === 'admin') classe = 'badge-admin';
-            else if (funcao === 'diretor') classe = 'badge-diretor';
-            else if (funcao === 'master') classe = 'badge-grupo';
-            else classe = 'badge-grupo';
-        } else {
-            const nomeLower = (nome || '').toLowerCase();
-            if (nomeLower.includes('admin')) classe = 'badge-admin';
-            else if (nomeLower.includes('diretor')) classe = 'badge-diretor';
-            else classe = 'badge-grupo';
         }
 
         return `<span class="badge ${classe}"><span class="icone">${icone}</span> ${texto}</span>`;
@@ -419,9 +405,9 @@
         osStatusBadge.className = `badge badge-${osData.status || 'aberta'}`;
 
         // ---- INFORMAÇÕES ----
-        const funcaoAbertura = getFuncao(osData.aberto_por);
-        const corAbertura = getCorPerfil(funcaoAbertura);
         const nomeAbertura = getNome(osData.aberto_por);
+        const abertoPorBadge = getBadgePerfil(osData.aberto_por, nomeAbertura);
+        const direcionadoBadge = getBadgeDirecionado(osData);
 
         const prioridadeMap = {
             'emergencial': `🔴 Emergencial`,
@@ -429,9 +415,6 @@
             'normal': `🟢 Normal`
         };
         const prioridadeLabel = prioridadeMap[osData.prioridade] || osData.prioridade;
-
-        const abertoPorBadge = getBadgeAbertoPor(osData.aberto_por, nomeAbertura);
-        const direcionadoBadge = getBadgeDirecionado(osData);
 
         const campos = [
             { label: 'Título', value: osData.titulo || '—', edit: 'titulo' },
@@ -478,6 +461,11 @@
         });
 
         osInfoContainer.innerHTML = infoHTML;
+        // Cor de fundo da área de informações (quem abriu)
+        const funcaoAbertura = getFuncao(osData.aberto_por);
+        const corAbertura = funcaoAbertura === 'admin' ? '#ffe082' :
+                            funcaoAbertura === 'diretor' ? '#a5d6a7' :
+                            funcaoAbertura === 'master' ? '#ffcc80' : '#ced4da';
         osInfoContainer.style.borderLeft = `6px solid ${corAbertura}`;
         osInfoContainer.style.backgroundColor = corAbertura + '22';
 
@@ -491,13 +479,12 @@
             let html = '';
             let dataAnterior = null;
 
-            historico.forEach((item, index) => {
-                if (item.acao === 'abertura') return; // pula abertura
+            historico.forEach((item) => {
+                if (item.acao === 'abertura') return;
 
-                const funcao = getFuncao(item.usuario_uid) || 'outros';
-                const cor = getCorPerfil(funcao);
-                const classe = getClasseCard(funcao);
-                const nome = getNome(item.usuario_uid) || item.usuario || 'Anônimo';
+                const uid = item.usuario_uid;
+                const nome = getNome(uid) || item.usuario || 'Anônimo';
+                const funcao = getFuncao(uid) || 'outros';
                 const dataFormat = formatarDataHora(item.data);
                 const acao = item.acao || 'ação';
                 let mensagem = item.mensagem || '';
@@ -520,23 +507,25 @@
                 if (dataAnterior !== null) {
                     const diffMs = new Date(item.data) - new Date(dataAnterior);
                     const diffHoras = Math.round(diffMs / (1000 * 60 * 60));
-                    if (diffHoras === 0) {
-                        horasDecorridas = ' (menos de 1 hora depois)';
-                    } else if (diffHoras === 1) {
-                        horasDecorridas = ' (1 hora depois)';
-                    } else {
-                        horasDecorridas = ` (${diffHoras} horas depois)`;
-                    }
+                    if (diffHoras === 0) horasDecorridas = ' (menos de 1 hora depois)';
+                    else if (diffHoras === 1) horasDecorridas = ' (1 hora depois)';
+                    else horasDecorridas = ` (${diffHoras} horas depois)`;
                 } else {
                     horasDecorridas = ' (primeira resposta)';
                 }
                 dataAnterior = item.data;
 
-                // Badge do autor (consistente em todos os cards)
-                const autorBadge = getBadgeAbertoPor(item.usuario_uid, nome);
+                // Badge do autor (consistente)
+                const autorBadge = getBadgePerfil(uid, nome);
+
+                // Classe do card conforme perfil
+                let cardClass = 'card-outros';
+                if (funcao === 'admin') cardClass = 'card-admin';
+                else if (funcao === 'diretor') cardClass = 'card-diretor';
+                else if (funcao === 'master') cardClass = 'card-master';
 
                 html += `
-                    <div class="card ${classe}" style="border-left-color:${cor};">
+                    <div class="card ${cardClass}">
                         <div class="card-header">
                             <span class="usuario">Resposta por ${autorBadge}</span>
                             <span class="tempo">${dataFormat}${horasDecorridas}</span>
