@@ -52,7 +52,6 @@
             .bloco { padding: 8px 10px 4px 10px; }
         }
 
-        /* CORES DO DROPDOWN */
         select option.grupo { background-color: #ced4da; }
         select option.admin { background-color: #ffe082; }
         select option.diretor { background-color: #a5d6a7; }
@@ -78,7 +77,7 @@
                 <option value="serviço">Serviço</option>
                 <option value="reclamação">Reclamação</option>
                 <option value="infração">Infração</option>
-                <option value="observação">Observação</option>
+                <option value="análise">Análise</option>
             </select>
         </div>
 
@@ -206,9 +205,7 @@
 
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    // SÓ PERMITE ADMIN E DIRETOR
                     if (data.funcao !== 'admin' && data.funcao !== 'diretor') return;
-
                     const item = { id: doc.id, nome: data.nome, funcao: data.funcao };
                     if (data.funcao === 'admin') admins.push(item);
                     else if (data.funcao === 'diretor') diretores.push(item);
@@ -221,25 +218,21 @@
 
                 let html = '<option value="">Selecione um destino...</option>';
 
-                // GRUPOS (cinza)
                 html += `<option value="group:admin" class="grupo" style="background-color:#ced4da;">GRUPO: Administradores</option>`;
                 html += `<option value="group:diretor" class="grupo" style="background-color:#ced4da;">GRUPO: Diretores</option>`;
 
-                // ADMINISTRADORES (amarelo)
                 admins.forEach(item => {
                     const isMe = (item.id === currentUser.uid);
                     const label = isMe ? `${item.nome} (você) (${item.funcao})` : `${item.nome} (${item.funcao})`;
                     html += `<option value="${item.id}" class="admin" style="background-color:#ffe082;">${label}</option>`;
                 });
 
-                // DIRETORES (verde)
                 diretores.forEach(item => {
                     const isMe = (item.id === currentUser.uid);
                     const label = isMe ? `${item.nome} (você) (${item.funcao})` : `${item.nome} (${item.funcao})`;
                     html += `<option value="${item.id}" class="diretor" style="background-color:#a5d6a7;">${label}</option>`;
                 });
 
-                // Se não houver ninguém, mostra mensagem
                 if (admins.length === 0 && diretores.length === 0) {
                     html = '<option value="">Nenhum Administrador ou Diretor ativo</option>';
                 }
