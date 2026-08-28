@@ -9,134 +9,205 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; font-family: 'Calibri', 'Segoe UI', Tahoma, sans-serif; }
-        body { background: #e8f5e9; padding: 20px 15px; display: flex; justify-content: center; min-height: 100vh; }
-        .container { background: #fff; max-width: 900px; width: 100%; padding: 30px 25px; border-radius: 20px; box-shadow: 0 8px 30px rgba(0,80,0,0.15); border: 1px solid #a5d6a7; }
-        .logo-area { text-align: center; margin-bottom: 20px; }
-        .logo-area img { max-width: 100px; height: auto; }
-        .logo-area h1 { font-size: 24px; color: #1b5e20; background: #c8e6c9; display: inline-block; padding: 6px 20px; border-radius: 30px; }
-        .btn { padding: 10px 18px; background: #2e7d32; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        body { background: #e8f5e9; padding: 16px 12px; display: flex; justify-content: center; min-height: 100vh; }
+        .container { background: #fff; max-width: 900px; width: 100%; padding: 20px; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,80,0,0.12); border: 1px solid #a5d6a7; }
+        .page-title { font-size: 24px; color: #1b5e20; background: #c8e6c9; display: inline-block; padding: 4px 18px; border-radius: 30px; margin-bottom: 12px; }
+        .btn { padding: 8px 16px; background: #2e7d32; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s; text-decoration: none; display: inline-block; }
         .btn:hover { background: #1b5e20; }
         .btn-success { background: #388e3c; }
         .btn-success:hover { background: #2e7d32; }
         .btn-danger { background: #c62828; }
         .btn-danger:hover { background: #b71c1c; }
-        .btn-warning { background: #f57c00; }
-        .btn-warning:hover { background: #e65100; }
         .btn-secondary { background: #6c757d; }
         .btn-secondary:hover { background: #5a6268; }
-        .btn-voltar { background: #558b2f; margin-bottom: 20px; }
+        .btn-warning { background: #f0ad4e; color: #000; }
+        .btn-warning:hover { background: #ec971f; }
+        .btn-voltar { background: #558b2f; }
         .btn-voltar:hover { background: #33691e; }
-        .btn-sm { padding: 6px 12px; font-size: 13px; }
-        .form-group { margin-bottom: 16px; }
-        label { display: block; font-weight: 600; font-size: 14px; color: #1b5e20; margin-bottom: 4px; }
-        input, select, textarea { width: 100%; padding: 10px 14px; border: 1px solid #a5d6a7; border-radius: 10px; font-size: 15px; background: #fafffe; }
-        textarea { resize: vertical; min-height: 60px; }
-        .message { margin-top: 16px; padding: 12px; border-radius: 8px; display: none; }
-        .message.error { display: block; background: #ffebee; color: #b71c1c; border: 1px solid #ef9a9a; }
-        .message.success { display: block; background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
+        .btn-sm { padding: 4px 10px; font-size: 12px; }
+        .btn-edit { background: transparent; border: 1px solid #2e7d32; color: #2e7d32; padding: 2px 8px; font-size: 12px; border-radius: 4px; cursor: pointer; }
+        .btn-edit:hover { background: #e8f5e9; }
 
-        .os-header { background: #f1f8e9; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #a5d6a7; }
-        .os-header .numero { font-size: 22px; font-weight: 700; color: #1b5e20; }
-        .os-header .status { float: right; }
-        .os-header .info { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; font-size: 14px; color: #333; }
-        .os-header .info strong { color: #1b5e20; }
+        .header-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; align-items: center; }
 
-        .historico { margin-top: 20px; }
-        .historico .item { background: #f8f9fa; padding: 12px 15px; border-radius: 10px; margin-bottom: 8px; border-left: 4px solid #2e7d32; }
-        .historico .item .cabecalho { display: flex; justify-content: space-between; font-size: 13px; color: #555; margin-bottom: 4px; }
-        .historico .item .cabecalho .autor { font-weight: 600; color: #1b5e20; }
-        .historico .item .texto { font-size: 15px; color: #222; }
-
-        .acoes { margin-top: 25px; padding-top: 20px; border-top: 2px solid #c8e6c9; }
-        .acoes .btn { margin-right: 8px; margin-bottom: 8px; }
-
-        .badge { display: inline-block; padding: 4px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; }
-        .badge-aberta { background: #ffcdd2; color: #b71c1c; }
-        .badge-em_andamento { background: #fff9c4; color: #f57f17; }
+        /* INFORMAÇÕES DA OS */
+        .os-info {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            border: 1px solid #c8e6c9;
+        }
+        .os-info .info-row {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 4px 0;
+            border-bottom: 1px solid #e8f5e9;
+        }
+        .os-info .info-row:last-child { border-bottom: none; }
+        .os-info .info-label {
+            font-weight: 600;
+            color: #1b5e20;
+            width: 140px;
+            flex-shrink: 0;
+        }
+        .os-info .info-value {
+            flex: 1;
+            word-break: break-word;
+        }
+        .os-info .info-value .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-aberta { background: #e3f2fd; color: #0d47a1; }
+        .badge-em_andamento { background: #fff3e0; color: #e65100; }
         .badge-concluida { background: #c8e6c9; color: #1b5e20; }
         .badge-cancelada { background: #e0e0e0; color: #424242; }
-        .badge-baixa { background: #e8f5e9; color: #1b5e20; }
-        .badge-media { background: #fff9c4; color: #f57f17; }
-        .badge-alta { background: #ffccbc; color: #bf360c; }
-        .badge-urgente { background: #ffcdd2; color: #b71c1c; }
+        .badge-emergencial { background: #ffcdd2; color: #b71c1c; font-weight: bold; }
+        .badge-urgente { background: #fff9c4; color: #f57f17; font-weight: bold; }
+        .badge-normal { background: #c8e6c9; color: #1b5e20; font-weight: bold; }
 
-        .tempo { font-size: 14px; color: #558b2f; margin-top: 10px; }
+        /* HISTÓRICO - CARDS */
+        .historico-container {
+            margin: 20px 0;
+        }
+        .historico-container .card {
+            background: #fff;
+            border-left: 4px solid #a5d6a7;
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+            border: 1px solid #e8f5e9;
+        }
+        .card-admin { border-left-color: #ffe082; background: #fffde7; }
+        .card-diretor { border-left-color: #a5d6a7; background: #f1f8e9; }
+        .card-master { border-left-color: #ffcc80; background: #fff8e1; }
+        .card-outros { border-left-color: #ced4da; background: #f8f9fa; }
+
+        .card .card-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 4px;
+        }
+        .card .card-header .usuario { font-weight: 600; color: #1b5e20; }
+        .card .card-body { font-size: 14px; }
+        .card .card-footer {
+            font-size: 12px;
+            color: #888;
+            margin-top: 6px;
+            border-top: 1px solid #e8f5e9;
+            padding-top: 6px;
+        }
+
+        /* EDIÇÃO */
+        .edit-field {
+            display: inline-block;
+            margin-left: 8px;
+        }
+        .edit-field input, .edit-field select {
+            padding: 2px 6px;
+            border: 1px solid #a5d6a7;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .edit-field .btn-sm { margin-left: 4px; }
+
+        /* FORMULÁRIO DE AÇÃO */
+        .nova-acao {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid #c8e6c9;
+            margin: 16px 0;
+        }
+        .nova-acao .form-group { margin-bottom: 10px; }
+        .nova-acao label { font-weight: 600; font-size: 13px; color: #1b5e20; display: block; margin-bottom: 2px; }
+        .nova-acao textarea, .nova-acao select {
+            width: 100%;
+            padding: 6px 10px;
+            border: 1px solid #a5d6a7;
+            border-radius: 6px;
+            font-size: 14px;
+            background: #fafffe;
+        }
+        .nova-acao textarea { resize: vertical; min-height: 50px; }
+        .nova-acao .btn { margin-top: 6px; }
+
+        .acoes-rodape {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 16px;
+            justify-content: space-between;
+            align-items: center;
+        }
 
         @media (max-width: 600px) {
-            .container { padding: 20px 15px; }
-            .os-header .info { grid-template-columns: 1fr; }
+            .container { padding: 14px; }
+            .page-title { font-size: 20px; }
+            .os-info .info-label { width: 100px; }
+            .os-info .info-value { font-size: 13px; }
+            .acoes-rodape { flex-direction: column; align-items: stretch; }
+            .acoes-rodape .btn { width: 100%; text-align: center; }
         }
     </style>
 </head>
 <body>
 <div class="container">
-    <div class="logo-area">
-        <img src="logo.png" alt="Logo Villa do Bosque" style="max-width:80px;">
-        <h1>🔍 Detalhe da OS</h1>
-        <a href="os-list.html" class="btn btn-voltar" style="display:inline-block; margin-top:10px; text-decoration:none;">← Voltar à lista</a>
+    <div class="header-actions">
+        <a href="os-list.html" class="btn btn-voltar">← Voltar</a>
+        <span style="flex:1;"></span>
+        <span id="osStatusBadge" class="badge badge-aberta" style="font-size:16px; padding:6px 16px;">Aberta</span>
     </div>
 
-    <div id="osDetalhe">
-        <div id="loading"><p>Carregando...</p></div>
-        <div id="conteudo" style="display:none;">
-            <!-- Cabeçalho da OS -->
-            <div class="os-header" id="osHeader">
-                <div>
-                    <span class="numero" id="osNumero">#001</span>
-                    <span class="status" id="osStatusBadge"></span>
-                </div>
-                <div class="info">
-                    <div><strong>Título:</strong> <span id="osTitulo">—</span></div>
-                    <div><strong>Prioridade:</strong> <span id="osPrioridade">—</span></div>
-                    <div><strong>Aberto por:</strong> <span id="osAbertoPor">—</span></div>
-                    <div><strong>Direcionado a:</strong> <span id="osDirecionado">—</span></div>
-                    <div><strong>Quadra:</strong> <span id="osQuadra">—</span></div>
-                    <div><strong>Lote:</strong> <span id="osLote">—</span></div>
-                    <div><strong>Data de abertura:</strong> <span id="osDataAbertura">—</span></div>
-                    <div><strong>Tempo aberto:</strong> <span id="osTempoAberto">—</span></div>
-                </div>
-                <div class="tempo" id="osTempoParado"><strong>Tempo parado no responsável atual:</strong> —</div>
-            </div>
+    <h1 class="page-title" id="osTitulo">📋 OS #<span id="osNumero">---</span></h1>
 
-            <!-- Histórico (conversa) -->
-            <h2 style="color:#2e7d32; margin-top:20px;">📜 Histórico</h2>
-            <div class="historico" id="osHistorico">
-                <p>Nenhuma ação registrada.</p>
-            </div>
+    <!-- INFORMAÇÕES DA OS -->
+    <div class="os-info" id="osInfoContainer">
+        <!-- preenchido via JS -->
+    </div>
 
-            <!-- Ações -->
-            <div class="acoes" id="osAcoes">
-                <h3 style="color:#2e7d32;">⚡ Ações</h3>
-                <!-- Botões dinâmicos serão inseridos aqui -->
-                <div id="acoesContainer"></div>
-            </div>
+    <!-- HISTÓRICO -->
+    <h2 style="color:#2e7d32; margin:16px 0 8px;">📜 Histórico</h2>
+    <div id="historicoContainer" class="historico-container">
+        <p>Carregando...</p>
+    </div>
 
-            <!-- Formulário para nova ação -->
-            <div class="acoes" id="novaAcaoArea">
-                <h3 style="color:#2e7d32;">✏️ Adicionar ação</h3>
-                <form id="novaAcaoForm">
-                    <div class="form-group">
-                        <label>Descrição da ação</label>
-                        <textarea id="acaoDescricao" placeholder="Descreva a ação realizada..." required></textarea>
-                    </div>
-                    <div class="form-group" id="grupoDirecionamento" style="display:none;">
-                        <label>Direcionar para</label>
-                        <select id="acaoDirecionarPara">
-                            <option value="">Selecione...</option>
-                            <option value="grupo_admin">👥 Grupo: Administradores</option>
-                            <option value="grupo_diretor">👥 Grupo: Diretores</option>
-                            <!-- Personagens serão carregados -->
-                        </select>
-                    </div>
-                    <button type="submit" class="btn btn-success">Adicionar ação</button>
-                    <div id="acaoMessage" class="message"></div>
-                </form>
+    <!-- NOVA AÇÃO -->
+    <div class="nova-acao" id="novaAcaoArea">
+        <h3 style="color:#2e7d32; margin-bottom:8px;">➕ Adicionar Ação</h3>
+        <form id="formNovaAcao">
+            <div class="form-group">
+                <label>Descrição da ação *</label>
+                <textarea id="acaoDescricao" placeholder="Descreva a ação realizada..." required></textarea>
             </div>
-        </div>
+            <div class="form-group">
+                <label>Direcionar para (opcional)</label>
+                <select id="acaoDirecionar">
+                    <option value="">Manter destino atual</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-success">Adicionar Ação</button>
+            <div id="acaoMessage" class="message" style="margin-top:8px; display:none;"></div>
+        </form>
+    </div>
+
+    <!-- RODAPÉ: CONCLUIR / REABRIR -->
+    <div class="acoes-rodape" id="rodapeAcoes">
+        <!-- preenchido via JS -->
     </div>
 </div>
 
 <script>
+    // ================================================================
+    // FIREBASE CONFIG
+    // ================================================================
     const firebaseConfig = {
         apiKey: "AIzaSyDx_6oWO30Drh8GkuQA9jk2Oym7H8J3ABg",
         authDomain: "villa-bosque1.firebaseapp.com",
@@ -149,369 +220,641 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // Pega o ID da OS da URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const osId = urlParams.get('id');
-
-    let osData = null;
-    let personagens = [];
-    let userAtual = null;
-
-    // Elementos
-    const loading = document.getElementById('loading');
-    const conteudo = document.getElementById('conteudo');
-    const osNumero = document.getElementById('osNumero');
-    const osTitulo = document.getElementById('osTitulo');
-    const osPrioridade = document.getElementById('osPrioridade');
-    const osAbertoPor = document.getElementById('osAbertoPor');
-    const osDirecionado = document.getElementById('osDirecionado');
-    const osQuadra = document.getElementById('osQuadra');
-    const osLote = document.getElementById('osLote');
-    const osDataAbertura = document.getElementById('osDataAbertura');
-    const osStatusBadge = document.getElementById('osStatusBadge');
-    const osTempoAberto = document.getElementById('osTempoAberto');
-    const osTempoParado = document.getElementById('osTempoParado');
-    const osHistorico = document.getElementById('osHistorico');
-    const acoesContainer = document.getElementById('acoesContainer');
-    const novaAcaoForm = document.getElementById('novaAcaoForm');
-    const acaoDescricao = document.getElementById('acaoDescricao');
-    const acaoDirecionarPara = document.getElementById('acaoDirecionarPara');
-    const grupoDirecionamento = document.getElementById('grupoDirecionamento');
-    const acaoMessage = document.getElementById('acaoMessage');
-
-    // Carregar personagens para direcionamento
-    function carregarPersonagens() {
-        db.collection('usuarios')
-            .where('status', '==', 'ativo')
-            .get()
-            .then(snapshot => {
-                personagens = [];
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    personagens.push({
-                        uid: doc.id,
-                        nome: data.nome,
-                        email: data.email,
-                        funcao: data.funcao
-                    });
-                });
-                // Preencher o select de direcionamento
-                acaoDirecionarPara.innerHTML = `
-                    <option value="">Selecione...</option>
-                    <option value="grupo_admin">👥 Grupo: Administradores</option>
-                    <option value="grupo_diretor">👥 Grupo: Diretores</option>
-                `;
-                personagens.forEach(p => {
-                    const opt = document.createElement('option');
-                    opt.value = p.uid;
-                    opt.textContent = `👤 ${p.nome} (${p.funcao})`;
-                    acaoDirecionarPara.appendChild(opt);
-                });
-            })
-            .catch(err => console.error('Erro ao carregar personagens:', err));
-    }
-
-    // Calcular tempo decorrido
-    function calcularTempo(seconds) {
-        if (!seconds) return '—';
-        const total = Math.floor((Date.now() / 1000) - seconds);
-        if (total < 60) return `${total} segundos`;
-        if (total < 3600) return `${Math.floor(total/60)} minutos`;
-        if (total < 86400) return `${Math.floor(total/3600)} horas`;
-        return `${Math.floor(total/86400)} dias`;
-    }
-
-    function atualizarTempos(criadoEmSec) {
-        if (criadoEmSec) {
-            osTempoAberto.textContent = calcularTempo(criadoEmSec);
-        }
-        // Tempo parado: calcula desde a última ação (ou desde abertura se não houver)
-        if (osData && osData.historico && osData.historico.length > 0) {
-            const ultimaAcao = osData.historico[osData.historico.length - 1];
-            if (ultimaAcao && ultimaAcao.data) {
-                const sec = ultimaAcao.data.seconds || ultimaAcao.data._seconds;
-                if (sec) {
-                    osTempoParado.textContent = `⏱️ ${calcularTempo(sec)} parado (desde última ação)`;
-                }
-            }
-        } else if (criadoEmSec) {
-            osTempoParado.textContent = `⏱️ ${calcularTempo(criadoEmSec)} parado (desde abertura)`;
-        }
-    }
-
-    // Carregar OS
-    function carregarOS() {
-        if (!osId) {
-            loading.innerHTML = '<p style="color:red;">ID da OS não informado.</p>';
+    // ================================================================
+    // TIMEOUT GLOBAL
+    // ================================================================
+    const TIMEOUT_MS = 4 * 60 * 60 * 1000;
+    function verificarTimeout() {
+        const lastActivity = sessionStorage.getItem('lastActivity');
+        if (!lastActivity) {
+            sessionStorage.setItem('lastActivity', Date.now().toString());
             return;
         }
+        const diff = Date.now() - parseInt(lastActivity);
+        if (diff > TIMEOUT_MS) {
+            sessionStorage.removeItem('lastActivity');
+            sessionStorage.removeItem('userLoggedIn');
+            auth.signOut().then(() => {
+                alert('Sessão expirada por inatividade.');
+                window.location.href = 'index.html';
+            });
+        } else {
+            sessionStorage.setItem('lastActivity', Date.now().toString());
+        }
+    }
+    function resetTimeoutGlobal() {
+        sessionStorage.setItem('lastActivity', Date.now().toString());
+    }
+    ['click','mousemove','keydown','scroll','touchstart'].forEach(ev => {
+        document.addEventListener(ev, resetTimeoutGlobal);
+    });
+    verificarTimeout();
 
+    // ================================================================
+    // VARIÁVEIS GLOBAIS
+    // ================================================================
+    const MASTER_EMAIL = 'administracaovilladobosque@gmail.com';
+    let currentUser = null;
+    let currentUserData = null;
+    let osId = null;
+    let osData = null;
+    let userMap = {}; // uid -> { nome, funcao }
+    let editando = { campo: null, original: null };
+
+    // ================================================================
+    // ELEMENTOS
+    // ================================================================
+    const osNumero = document.getElementById('osNumero');
+    const osTitulo = document.getElementById('osTitulo');
+    const osStatusBadge = document.getElementById('osStatusBadge');
+    const osInfoContainer = document.getElementById('osInfoContainer');
+    const historicoContainer = document.getElementById('historicoContainer');
+    const rodapeAcoes = document.getElementById('rodapeAcoes');
+    const formNovaAcao = document.getElementById('formNovaAcao');
+    const acaoDescricao = document.getElementById('acaoDescricao');
+    const acaoDirecionar = document.getElementById('acaoDirecionar');
+    const acaoMessage = document.getElementById('acaoMessage');
+
+    // ================================================================
+    // UTILITÁRIOS
+    // ================================================================
+    function formatarDataHora(dataISO) {
+        if (!dataISO) return '—';
+        const d = new Date(dataISO);
+        if (isNaN(d)) return '—';
+        const dia = String(d.getDate()).padStart(2, '0');
+        const mes = String(d.getMonth()+1).padStart(2, '0');
+        const ano = d.getFullYear();
+        const hora = String(d.getHours()).padStart(2, '0');
+        const min = String(d.getMinutes()).padStart(2, '0');
+        return `${dia}/${mes}/${ano} ${hora}:${min}`;
+    }
+
+    function formatarDataCurta(dataISO) {
+        if (!dataISO) return '—';
+        const d = new Date(dataISO);
+        if (isNaN(d)) return '—';
+        return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+    }
+
+    function getFuncao(uid) {
+        if (uid && userMap[uid]) return userMap[uid].funcao;
+        return null;
+    }
+
+    function getNome(uid) {
+        if (uid && userMap[uid]) return userMap[uid].nome;
+        return uid || '—';
+    }
+
+    function getCorPerfil(funcao) {
+        if (funcao === 'admin') return '#ffe082';
+        if (funcao === 'diretor') return '#a5d6a7';
+        if (funcao === 'master') return '#ffcc80';
+        return '#ced4da';
+    }
+
+    function getClasseCard(funcao) {
+        if (funcao === 'admin') return 'card-admin';
+        if (funcao === 'diretor') return 'card-diretor';
+        if (funcao === 'master') return 'card-master';
+        return 'card-outros';
+    }
+
+    // ================================================================
+    // CARREGAR USUÁRIOS PARA MAPA
+    // ================================================================
+    function carregarUsuarios() {
+        return db.collection('usuarios').where('status', '==', 'ativo').get()
+            .then(snapshot => {
+                userMap = {};
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    userMap[doc.id] = { nome: data.nome, funcao: data.funcao };
+                });
+            });
+    }
+
+    // ================================================================
+    // CARREGAR DETALHE DA OS
+    // ================================================================
+    function carregarOS() {
+        if (!osId) return;
+        historicoContainer.innerHTML = '<p>Carregando...</p>';
         db.collection('ordens_servico').doc(osId).get()
             .then(doc => {
                 if (!doc.exists) {
-                    loading.innerHTML = '<p style="color:red;">OS não encontrada.</p>';
+                    historicoContainer.innerHTML = '<p style="color:red;">OS não encontrada.</p>';
                     return;
                 }
-                osData = doc.data();
-                osData.id = doc.id;
-
-                loading.style.display = 'none';
-                conteudo.style.display = 'block';
-
-                // Preencher cabeçalho
-                osNumero.textContent = `#${osData.numero || 'N/A'}`;
-                osTitulo.textContent = osData.titulo || '—';
-                osPrioridade.innerHTML = `<span class="badge badge-${osData.prioridade || 'media'}">${(osData.prioridade || 'media').toUpperCase()}</span>`;
-                osAbertoPor.textContent = osData.aberto_por_nome || '—';
-                osDirecionado.textContent = osData.direcionado_para || '—';
-                osQuadra.textContent = osData.quadra || '—';
-                osLote.textContent = osData.lote || '—';
-                osDataAbertura.textContent = osData.criado_em ? new Date(osData.criado_em.seconds * 1000).toLocaleString('pt-BR') : '—';
-
-                const statusLabel = (osData.status || 'aberta').replace('_', ' ').toUpperCase();
-                osStatusBadge.innerHTML = `<span class="badge badge-${osData.status || 'aberta'}">${statusLabel}</span>`;
-
-                // Atualizar tempos
-                if (osData.criado_em) {
-                    const sec = osData.criado_em.seconds || osData.criado_em._seconds;
-                    atualizarTempos(sec);
-                    // Atualizar a cada 30 segundos
-                    setInterval(() => {
-                        if (osData.criado_em) {
-                            const sec = osData.criado_em.seconds || osData.criado_em._seconds;
-                            atualizarTempos(sec);
-                        }
-                    }, 30000);
-                }
-
-                // Histórico
-                if (osData.historico && osData.historico.length > 0) {
-                    let html = '';
-                    osData.historico.forEach(item => {
-                        const dataStr = item.data ? new Date(item.data.seconds * 1000).toLocaleString('pt-BR') : '—';
-                        html += `
-                            <div class="item">
-                                <div class="cabecalho">
-                                    <span class="autor">${item.autor_nome || '—'}</span>
-                                    <span>${dataStr}</span>
-                                </div>
-                                <div class="texto">${item.descricao || item.acao || ''}</div>
-                            </div>
-                        `;
-                    });
-                    osHistorico.innerHTML = html;
-                } else {
-                    osHistorico.innerHTML = '<p>Nenhum histórico registrado.</p>';
-                }
-
-                // Ações (botões)
-                gerarBotoesAcao();
-                // Mostrar área de nova ação
-                novaAcaoForm.style.display = 'block';
-                // Mostrar direcionamento apenas se a OS não estiver concluída
-                if (osData.status === 'concluida' || osData.status === 'cancelada') {
-                    grupoDirecionamento.style.display = 'none';
-                } else {
-                    grupoDirecionamento.style.display = 'block';
-                    // Pré-seleciona o direcionamento atual
-                    if (osData.direcionado_para_tipo === 'grupo') {
-                        acaoDirecionarPara.value = osData.direcionado_para === 'Administradores' ? 'grupo_admin' : 'grupo_diretor';
-                    } else if (osData.direcionado_para_tipo === 'personagem' && osData.direcionado_para_id) {
-                        acaoDirecionarPara.value = osData.direcionado_para_id;
-                    }
-                }
-                carregarPersonagens();
+                osData = { id: doc.id, ...doc.data() };
+                renderizarDetalhe();
             })
             .catch(err => {
-                loading.innerHTML = `<p style="color:red;">Erro ao carregar: ${err.message}</p>`;
+                console.error(err);
+                historicoContainer.innerHTML = `<p style="color:red;">Erro ao carregar: ${err.message}</p>`;
             });
     }
 
-    // Gerar botões de ação com base no status e permissões
-    function gerarBotoesAcao() {
-        acoesContainer.innerHTML = '';
-        const status = osData.status;
-        const user = auth.currentUser;
-        const isMaster = user && user.email === 'administracaovilladobosque@gmail.com';
-        const isDiretor = userAtual && userAtual.funcao === 'diretor';
+    // ================================================================
+    // RENDERIZAR DETALHE
+    // ================================================================
+    function renderizarDetalhe() {
+        if (!osData) return;
 
-        // Botão: Em andamento (se estiver aberta)
-        if (status === 'aberta') {
-            const btn = document.createElement('button');
-            btn.className = 'btn btn-warning';
-            btn.textContent = '⏳ Marcar como Em Andamento';
-            btn.onclick = () => mudarStatus('em_andamento');
-            acoesContainer.appendChild(btn);
-        }
+        // Número e título
+        osNumero.textContent = osData.numero || '---';
+        osTitulo.textContent = `📋 OS #${osData.numero || '---'}`;
 
-        // Botão: Concluir (apenas diretores podem concluir)
-        if ((status === 'aberta' || status === 'em_andamento') && (isMaster || isDiretor)) {
-            const btn = document.createElement('button');
-            btn.className = 'btn btn-success';
-            btn.textContent = '✅ Concluir OS';
-            btn.onclick = () => {
-                if (confirm('Deseja concluir esta OS?')) {
-                    mudarStatus('concluida');
+        // Status badge
+        const statusMap = {
+            'aberta': 'Aberta',
+            'em_andamento': 'Em andamento',
+            'concluida': 'Concluída',
+            'cancelada': 'Cancelada'
+        };
+        const statusLabel = statusMap[osData.status] || osData.status;
+        osStatusBadge.textContent = statusLabel;
+        osStatusBadge.className = `badge badge-${osData.status || 'aberta'}`;
+
+        // ---- INFORMAÇÕES ----
+        let infoHTML = '';
+        const campos = [
+            { label: 'Número', value: osData.numero || '—' },
+            { label: 'Título', value: osData.titulo || '—', edit: 'titulo' },
+            { label: 'Descrição', value: osData.descricao || '—', edit: 'descricao' },
+            { label: 'Tipo', value: osData.tipo || '—', edit: 'tipo' },
+            { label: 'Prioridade', value: osData.prioridade || 'normal', edit: 'prioridade' },
+            { label: 'Status', value: statusLabel },
+            { label: 'Aberto por', value: getNome(osData.aberto_por) },
+            { label: 'Data/Hora abertura', value: formatarDataHora(osData.criado_em) },
+            { label: 'Reclamante - Quadra', value: osData.quadra_reclamante || '—' },
+            { label: 'Reclamante - Lote', value: osData.lote_reclamante || '—' },
+            { label: 'Reclamado - Quadra', value: osData.quadra_reclamada || '—' },
+            { label: 'Reclamado - Lote', value: osData.lote_reclamada || '—' },
+            { label: 'Direcionado para', value: osData.direcionado_para_nome || '—' },
+        ];
+
+        // Determina se o usuário atual pode editar
+        const podeEditar = podeEditarOS();
+
+        campos.forEach(campo => {
+            let valor = campo.value;
+            let editHtml = '';
+            if (campo.edit && podeEditar) {
+                editHtml = `<span class="edit-field">
+                    <button class="btn-edit" data-campo="${campo.edit}" data-valor="${campo.value || ''}">✏️</button>
+                </span>`;
+            }
+            infoHTML += `
+                <div class="info-row">
+                    <div class="info-label">${campo.label}</div>
+                    <div class="info-value" id="info-${campo.edit || 'static'}">
+                        ${campo.edit ? `<span id="display-${campo.edit}">${valor}</span>` : valor}
+                        ${editHtml}
+                    </div>
+                </div>
+            `;
+        });
+
+        osInfoContainer.innerHTML = infoHTML;
+
+        // ---- HISTÓRICO ----
+        const historico = osData.historico || [];
+        if (historico.length === 0) {
+            historicoContainer.innerHTML = '<p>Nenhuma ação registrada.</p>';
+        } else {
+            // Ordenar por data crescente (mais antigo primeiro)
+            historico.sort((a, b) => (a.data || '').localeCompare(b.data || ''));
+            let html = '';
+            historico.forEach(item => {
+                const funcao = getFuncao(item.usuario_uid) || 'outros';
+                const cor = getCorPerfil(funcao);
+                const classe = getClasseCard(funcao);
+                const nome = getNome(item.usuario_uid) || item.usuario || 'Anônimo';
+                const dataFormat = formatarDataHora(item.data);
+                const acao = item.acao || 'ação';
+                const mensagem = item.mensagem || '';
+                let direcionado = item.direcionado_para ? ` → ${item.direcionado_para}` : '';
+
+                // Se for edição, exibe tachado
+                let corpo = mensagem;
+                if (acao === 'edicao') {
+                    const detalhes = item.detalhes || {};
+                    const antigo = detalhes.valor_antigo || '';
+                    const novo = detalhes.valor_novo || '';
+                    corpo = `<span style="text-decoration:line-through; color:#999; font-style:italic;">${antigo}</span> → ${novo} <span style="color:#999; font-size:12px;">(edit em ${formatarDataCurta(item.data)})</span>`;
                 }
-            };
-            acoesContainer.appendChild(btn);
+
+                html += `
+                    <div class="card ${classe}" style="border-left-color:${cor};">
+                        <div class="card-header">
+                            <span class="usuario">${nome}</span>
+                            <span>${dataFormat}</span>
+                        </div>
+                        <div class="card-body">
+                            <strong>${acao.toUpperCase()}</strong>${direcionado}
+                            <div>${corpo}</div>
+                        </div>
+                        <div class="card-footer">${item.acao === 'edicao' ? '✏️ Edição' : ''}</div>
+                    </div>
+                `;
+            });
+            historicoContainer.innerHTML = html;
         }
 
-        // Botão: Reabrir (apenas diretores podem reabrir)
-        if ((status === 'concluida' || status === 'cancelada') && (isMaster || isDiretor)) {
-            const btn = document.createElement('button');
-            btn.className = 'btn btn-warning';
-            btn.textContent = '🔄 Reabrir OS';
-            btn.onclick = () => {
-                if (confirm('Deseja reabrir esta OS?')) {
-                    mudarStatus('aberta');
-                }
-            };
-            acoesContainer.appendChild(btn);
+        // ---- RODAPÉ (Concluir / Reabrir) ----
+        const funcaoUsuario = currentUserData?.funcao || 'tecnico';
+        const isDiretor = (funcaoUsuario === 'diretor');
+        const isAdmin = (funcaoUsuario === 'admin');
+        const isMaster = (currentUser && currentUser.email === MASTER_EMAIL);
+        const podeConcluir = isDiretor || isMaster;
+        const podeReabrir = isAdmin || isDiretor || isMaster;
+        const statusConcluida = (osData.status === 'concluida');
+
+        let rodapeHtml = '';
+        if (!statusConcluida && podeConcluir) {
+            rodapeHtml += `<button class="btn btn-success" id="btnConcluir">✅ Concluir OS</button>`;
+        }
+        if (statusConcluida && podeReabrir) {
+            rodapeHtml += `<button class="btn btn-warning" id="btnReabrir">🔄 Reabrir OS</button>`;
+        }
+        rodapeHtml += `<span style="flex:1;"></span>`;
+        rodapeAcoes.innerHTML = rodapeHtml;
+
+        if (rodapeHtml) {
+            document.getElementById('btnConcluir')?.addEventListener('click', concluirOS);
+            document.getElementById('btnReabrir')?.addEventListener('click', reabrirOS);
         }
 
-        // Botão: Cancelar (apenas Master)
-        if (isMaster && status !== 'cancelada' && status !== 'concluida') {
-            const btn = document.createElement('button');
-            btn.className = 'btn btn-danger';
-            btn.textContent = '❌ Cancelar OS';
-            btn.onclick = () => {
-                if (confirm('Deseja cancelar esta OS?')) {
-                    mudarStatus('cancelada');
-                }
-            };
-            acoesContainer.appendChild(btn);
-        }
+        // ---- POPULAR DROPDOWN DE DIRECIONAMENTO ----
+        popularDirecionamento();
 
-        // Se não houver botões
-        if (acoesContainer.children.length === 0) {
-            acoesContainer.innerHTML = '<p style="color:#555;">Nenhuma ação disponível para seu perfil.</p>';
-        }
+        // ---- EVENTOS DE EDIÇÃO ----
+        document.querySelectorAll('.btn-edit').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const campo = btn.dataset.campo;
+                const valorAtual = btn.dataset.valor;
+                iniciarEdicao(campo, valorAtual);
+            });
+        });
     }
 
-    // Mudar status da OS
-    function mudarStatus(novoStatus) {
-        const user = auth.currentUser;
-        if (!user) return;
+    // ================================================================
+    // PERMISSÃO DE EDIÇÃO
+    // ================================================================
+    function podeEditarOS() {
+        if (!currentUser || !osData) return false;
+        // Master pode editar sempre
+        if (currentUser.email === MASTER_EMAIL) return true;
+        // Se a OS foi criada por um admin, apenas admins podem editar
+        const criadorUid = osData.aberto_por;
+        const funcaoCriador = getFuncao(criadorUid);
+        const funcaoUsuario = currentUserData?.funcao;
+        if (funcaoCriador === 'admin' && funcaoUsuario === 'admin') return true;
+        if (funcaoCriador === 'diretor' && funcaoUsuario === 'diretor') return true;
+        return false;
+    }
 
-        db.collection('usuarios').doc(user.uid).get()
-            .then(doc => {
-                const nome = doc.exists ? doc.data().nome : user.displayName || 'Usuário';
-                // Adicionar entrada no histórico
-                const historicoItem = {
-                    tipo: 'mudanca_status',
-                    data: firebase.firestore.FieldValue.serverTimestamp(),
-                    autor: user.uid,
-                    autor_nome: nome,
-                    acao: `Status alterado para ${novoStatus.replace('_',' ').toUpperCase()}`,
-                    descricao: `Status alterado para ${novoStatus.replace('_',' ').toUpperCase()}`
-                };
+    // ================================================================
+    // EDIÇÃO DE CAMPO
+    // ================================================================
+    function iniciarEdicao(campo, valorAtual) {
+        if (editando.campo) {
+            cancelarEdicao();
+        }
+        editando.campo = campo;
+        editando.original = valorAtual;
 
-                return db.collection('ordens_servico').doc(osId).update({
-                    status: novoStatus,
-                    historico: firebase.firestore.FieldValue.arrayUnion(historicoItem)
-                });
-            })
+        const displayEl = document.getElementById(`display-${campo}`);
+        if (!displayEl) return;
+        const container = displayEl.parentElement;
+
+        let input;
+        if (campo === 'prioridade') {
+            input = document.createElement('select');
+            const opcoes = ['emergencial', 'urgente', 'normal'];
+            opcoes.forEach(opt => {
+                const option = document.createElement('option');
+                option.value = opt;
+                option.textContent = opt;
+                if (opt === valorAtual) option.selected = true;
+                input.appendChild(option);
+            });
+        } else if (campo === 'tipo') {
+            input = document.createElement('select');
+            const opcoes = ['serviço', 'reclamação', 'infração', 'análise'];
+            opcoes.forEach(opt => {
+                const option = document.createElement('option');
+                option.value = opt;
+                option.textContent = opt;
+                if (opt === valorAtual) option.selected = true;
+                input.appendChild(option);
+            });
+        } else {
+            input = document.createElement('input');
+            input.type = 'text';
+            input.value = valorAtual || '';
+        }
+        input.className = 'edit-field-input';
+        input.style.width = 'auto';
+        input.style.minWidth = '150px';
+
+        const salvarBtn = document.createElement('button');
+        salvarBtn.textContent = 'Salvar';
+        salvarBtn.className = 'btn btn-sm btn-success';
+        salvarBtn.style.marginLeft = '4px';
+
+        const cancelarBtn = document.createElement('button');
+        cancelarBtn.textContent = 'Cancelar';
+        cancelarBtn.className = 'btn btn-sm btn-secondary';
+        cancelarBtn.style.marginLeft = '4px';
+
+        displayEl.style.display = 'none';
+        const editBtn = container.querySelector('.btn-edit');
+        if (editBtn) editBtn.style.display = 'none';
+
+        const wrapper = document.createElement('span');
+        wrapper.className = 'edit-field-wrapper';
+        wrapper.appendChild(input);
+        wrapper.appendChild(salvarBtn);
+        wrapper.appendChild(cancelarBtn);
+        container.appendChild(wrapper);
+
+        salvarBtn.addEventListener('click', () => {
+            const novoValor = input.value.trim();
+            if (novoValor === '' && campo !== 'tipo' && campo !== 'prioridade') {
+                alert('O campo não pode ficar vazio.');
+                return;
+            }
+            if (novoValor === editando.original) {
+                cancelarEdicao();
+                return;
+            }
+            salvarEdicao(campo, editando.original, novoValor);
+        });
+
+        cancelarBtn.addEventListener('click', cancelarEdicao);
+
+        if (input.focus) input.focus();
+    }
+
+    function cancelarEdicao() {
+        if (!editando.campo) return;
+        const campo = editando.campo;
+        const displayEl = document.getElementById(`display-${campo}`);
+        if (displayEl) {
+            displayEl.style.display = 'inline';
+            const container = displayEl.parentElement;
+            const wrapper = container.querySelector('.edit-field-wrapper');
+            if (wrapper) wrapper.remove();
+            const editBtn = container.querySelector('.btn-edit');
+            if (editBtn) editBtn.style.display = 'inline-block';
+        }
+        editando.campo = null;
+        editando.original = null;
+    }
+
+    function salvarEdicao(campo, valorAntigo, valorNovo) {
+        const updateData = {};
+        updateData[campo] = valorNovo;
+
+        const historico = osData.historico || [];
+        historico.push({
+            data: new Date().toISOString(),
+            acao: 'edicao',
+            usuario_uid: currentUser.uid,
+            usuario: currentUserData?.nome || 'Usuário',
+            mensagem: `Editou ${campo}`,
+            detalhes: {
+                campo: campo,
+                valor_antigo: valorAntigo,
+                valor_novo: valorNovo
+            }
+        });
+
+        updateData.historico = historico;
+        updateData.atualizado_em = new Date().toISOString();
+
+        db.collection('ordens_servico').doc(osId).update(updateData)
             .then(() => {
-                alert(`OS alterada para ${novoStatus.replace('_',' ').toUpperCase()}`);
-                carregarOS(); // Recarrega
+                osData[campo] = valorNovo;
+                osData.historico = historico;
+                osData.atualizado_em = new Date().toISOString();
+                cancelarEdicao();
+                renderizarDetalhe();
             })
-            .catch(err => alert('Erro ao alterar status: ' + err.message));
+            .catch(err => {
+                alert('Erro ao salvar: ' + err.message);
+            });
     }
 
-    // Adicionar nova ação
-    novaAcaoForm.addEventListener('submit', (e) => {
+    // ================================================================
+    // POPULAR DIRECIONAMENTO
+    // ================================================================
+    function popularDirecionamento() {
+        acaoDirecionar.innerHTML = '<option value="">Manter destino atual</option>';
+        acaoDirecionar.innerHTML += `<option value="group:admin">GRUPO: Administradores</option>`;
+        acaoDirecionar.innerHTML += `<option value="group:diretor">GRUPO: Diretores</option>`;
+        const admins = [];
+        const diretores = [];
+        Object.keys(userMap).forEach(uid => {
+            const u = userMap[uid];
+            if (u.funcao === 'admin') admins.push({uid, nome: u.nome});
+            else if (u.funcao === 'diretor') diretores.push({uid, nome: u.nome});
+        });
+        admins.sort((a,b) => a.nome.localeCompare(b.nome));
+        diretores.sort((a,b) => a.nome.localeCompare(b.nome));
+        admins.forEach(a => {
+            const opt = document.createElement('option');
+            opt.value = a.uid;
+            opt.textContent = `👤 ${a.nome} (admin)`;
+            acaoDirecionar.appendChild(opt);
+        });
+        diretores.forEach(d => {
+            const opt = document.createElement('option');
+            opt.value = d.uid;
+            opt.textContent = `👤 ${d.nome} (diretor)`;
+            acaoDirecionar.appendChild(opt);
+        });
+    }
+
+    // ================================================================
+    // ADICIONAR AÇÃO
+    // ================================================================
+    formNovaAcao.addEventListener('submit', (e) => {
         e.preventDefault();
         const descricao = acaoDescricao.value.trim();
-        const direcionarVal = acaoDirecionarPara.value;
-        const user = auth.currentUser;
-
         if (!descricao) {
-            showMessage(acaoMessage, 'Digite uma descrição para a ação.', 'error');
+            mostrarMensagemAcao('A descrição é obrigatória.', 'error');
             return;
         }
 
-        db.collection('usuarios').doc(user.uid).get()
-            .then(doc => {
-                const nome = doc.exists ? doc.data().nome : user.displayName || 'Usuário';
-                let direcionadoPara = '';
-                let direcionadoParaTipo = '';
-                let direcionadoParaId = '';
+        const direcionarPara = acaoDirecionar.value;
+        const agora = new Date().toISOString();
 
-                if (direcionarVal === 'grupo_admin') {
-                    direcionadoPara = 'Administradores';
-                    direcionadoParaTipo = 'grupo';
-                } else if (direcionarVal === 'grupo_diretor') {
-                    direcionadoPara = 'Diretores';
-                    direcionadoParaTipo = 'grupo';
-                } else if (direcionarVal) {
-                    const p = personagens.find(p => p.uid === direcionarVal);
-                    if (p) {
-                        direcionadoPara = p.nome;
-                        direcionadoParaTipo = 'personagem';
-                        direcionadoParaId = p.uid;
-                    }
-                }
+        const historico = osData.historico || [];
+        const novaAcao = {
+            data: agora,
+            acao: 'ação',
+            usuario_uid: currentUser.uid,
+            usuario: currentUserData?.nome || 'Usuário',
+            mensagem: descricao,
+        };
+        if (direcionarPara) {
+            novaAcao.direcionado_para = direcionarPara;
+            const destinoNome = acaoDirecionar.options[acaoDirecionar.selectedIndex]?.text || direcionarPara;
+            novaAcao.direcionado_para_nome = destinoNome;
+        }
 
-                const historicoItem = {
-                    tipo: 'acao',
-                    data: firebase.firestore.FieldValue.serverTimestamp(),
-                    autor: user.uid,
-                    autor_nome: nome,
-                    acao: 'Ação registrada',
-                    descricao: descricao,
-                    direcionado_para: direcionadoPara,
-                    direcionado_para_tipo: direcionadoParaTipo,
-                    direcionado_para_id: direcionadoParaId
-                };
+        historico.push(novaAcao);
 
-                const updateData = {
-                    historico: firebase.firestore.FieldValue.arrayUnion(historicoItem)
-                };
+        const updateData = {
+            historico: historico,
+            atualizado_em: agora
+        };
 
-                // Se houve direcionamento, atualiza também os campos principais
-                if (direcionadoPara) {
-                    updateData.direcionado_para = direcionadoPara;
-                    updateData.direcionado_para_tipo = direcionadoParaTipo;
-                    updateData.direcionado_para_id = direcionadoParaId;
-                }
+        if (direcionarPara) {
+            updateData.direcionado_para = direcionarPara;
+            const destinoNome = acaoDirecionar.options[acaoDirecionar.selectedIndex]?.text || direcionarPara;
+            updateData.direcionado_para_nome = destinoNome;
+            const uid = direcionarPara;
+            if (uid && userMap[uid]) {
+                updateData.direcionado_para_funcao = userMap[uid].funcao;
+            } else if (direcionarPara === 'group:admin') {
+                updateData.direcionado_para_funcao = 'admin';
+            } else if (direcionarPara === 'group:diretor') {
+                updateData.direcionado_para_funcao = 'diretor';
+            }
+        }
 
-                return db.collection('ordens_servico').doc(osId).update(updateData);
-            })
+        db.collection('ordens_servico').doc(osId).update(updateData)
             .then(() => {
-                showMessage(acaoMessage, 'Ação adicionada com sucesso!', 'success');
+                osData.historico = historico;
+                if (direcionarPara) {
+                    osData.direcionado_para = updateData.direcionado_para;
+                    osData.direcionado_para_nome = updateData.direcionado_para_nome;
+                    osData.direcionado_para_funcao = updateData.direcionado_para_funcao;
+                }
+                osData.atualizado_em = agora;
                 acaoDescricao.value = '';
-                acaoDirecionarPara.value = '';
-                carregarOS(); // Recarrega
-                setTimeout(() => {
-                    acaoMessage.className = 'message';
-                    acaoMessage.textContent = '';
-                }, 3000);
+                acaoDirecionar.value = '';
+                mostrarMensagemAcao('Ação adicionada com sucesso!', 'success');
+                renderizarDetalhe();
+                setTimeout(() => { esconderMensagemAcao(); }, 3000);
             })
             .catch(err => {
-                showMessage(acaoMessage, 'Erro ao adicionar ação: ' + err.message, 'error');
+                mostrarMensagemAcao('Erro: ' + err.message, 'error');
             });
     });
 
-    function showMessage(el, text, type) { el.textContent = text; el.className = 'message ' + type; }
+    function mostrarMensagemAcao(texto, tipo) {
+        acaoMessage.textContent = texto;
+        acaoMessage.className = 'message';
+        if (tipo === 'error') acaoMessage.classList.add('error');
+        else if (tipo === 'success') acaoMessage.classList.add('success');
+        acaoMessage.style.display = 'block';
+    }
+    function esconderMensagemAcao() {
+        acaoMessage.style.display = 'none';
+    }
 
-    // Observador de autenticação
-    auth.onAuthStateChanged((user) => {
-        if (user) {
-            userAtual = user;
-            // Busca função do usuário
-            db.collection('usuarios').doc(user.uid).get()
-                .then(doc => {
-                    if (doc.exists) {
-                        userAtual.funcao = doc.data().funcao;
-                    }
-                    carregarOS();
-                })
-                .catch(() => carregarOS());
-        } else {
-            window.location.href = 'index.html';
+    // ================================================================
+    // CONCLUIR OS
+    // ================================================================
+    function concluirOS() {
+        if (!confirm('Deseja concluir esta OS?')) return;
+        const agora = new Date().toISOString();
+        const historico = osData.historico || [];
+        historico.push({
+            data: agora,
+            acao: 'conclusão',
+            usuario_uid: currentUser.uid,
+            usuario: currentUserData?.nome || 'Usuário',
+            mensagem: 'OS concluída'
+        });
+
+        db.collection('ordens_servico').doc(osId).update({
+            status: 'concluida',
+            historico: historico,
+            atualizado_em: agora
+        })
+        .then(() => {
+            osData.status = 'concluida';
+            osData.historico = historico;
+            osData.atualizado_em = agora;
+            renderizarDetalhe();
+        })
+        .catch(err => alert('Erro: ' + err.message));
+    }
+
+    // ================================================================
+    // REABRIR OS (Admin ou Diretor)
+    // ================================================================
+    function reabrirOS() {
+        if (!confirm('Deseja reabrir esta OS?')) return;
+        const agora = new Date().toISOString();
+        const historico = osData.historico || [];
+        historico.push({
+            data: agora,
+            acao: 'reabertura',
+            usuario_uid: currentUser.uid,
+            usuario: currentUserData?.nome || 'Usuário',
+            mensagem: 'OS reaberta'
+        });
+
+        db.collection('ordens_servico').doc(osId).update({
+            status: 'em_andamento',
+            historico: historico,
+            atualizado_em: agora
+        })
+        .then(() => {
+            osData.status = 'em_andamento';
+            osData.historico = historico;
+            osData.atualizado_em = agora;
+            renderizarDetalhe();
+        })
+        .catch(err => alert('Erro: ' + err.message));
+    }
+
+    // ================================================================
+    // INICIALIZAÇÃO
+    // ================================================================
+    function init() {
+        const params = new URLSearchParams(window.location.search);
+        osId = params.get('id');
+        if (!osId) {
+            historicoContainer.innerHTML = '<p style="color:red;">ID da OS não fornecido.</p>';
+            return;
         }
-    });
+
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                currentUser = user;
+                db.collection('usuarios').doc(user.uid).get()
+                    .then(doc => {
+                        if (doc.exists) {
+                            currentUserData = doc.data();
+                        } else {
+                            currentUserData = { nome: user.displayName || 'Usuário', funcao: 'tecnico' };
+                        }
+                        carregarUsuarios().then(() => {
+                            carregarOS();
+                        });
+                    })
+                    .catch(() => {
+                        currentUserData = { nome: user.displayName || 'Usuário', funcao: 'tecnico' };
+                        carregarUsuarios().then(() => {
+                            carregarOS();
+                        });
+                    });
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
+    }
+
+    init();
 </script>
 </body>
 </html>
