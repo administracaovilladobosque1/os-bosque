@@ -472,7 +472,15 @@
 
         const prioridadeLabel = getValorExibicao('prioridade', osData.prioridade) || osData.prioridade;
 
-        // Campos – Abertura agora é o primeiro
+        // ---- Direcionado original (última linha) ----
+        const dirOriginal = osData.direcionado_para_original || osData.direcionado_para || '—';
+        const dirNomeOriginal = osData.direcionado_para_nome_original || osData.direcionado_para_nome || '—';
+        const dirBadgeOriginal = getBadgeDirecionado({
+            direcionado_para: dirOriginal,
+            direcionado_para_nome: dirNomeOriginal
+        });
+
+        // Campos – Abertura primeiro, depois os editáveis, e por fim Direcionado original
         const campos = [
             { label: 'Abertura', value: formatarDataHora(osData.criado_em), campo: 'criado_em', edit: false },
             { label: 'Título', value: osData.titulo || '—', campo: 'titulo', edit: true },
@@ -491,7 +499,8 @@
 
         campos.push(
             { label: 'Reclamante', value: reclamante, campo: 'quadra_reclamante', campo2: 'lote_reclamante', edit: true },
-            { label: 'Reclamado', value: reclamado, campo: 'quadra_reclamada', campo2: 'lote_reclamada', edit: true }
+            { label: 'Reclamado', value: reclamado, campo: 'quadra_reclamada', campo2: 'lote_reclamada', edit: true },
+            { label: 'Direcionado para (original)', value: dirBadgeOriginal, campo: 'direcionado_original', edit: false }
         );
 
         const podeEditar = podeEditarOS();
@@ -500,7 +509,7 @@
         campos.forEach(campo => {
             let valor = campo.value;
             // Adiciona histórico de edição (última alteração) se houver
-            if (campo.campo) {
+            if (campo.campo && campo.campo !== 'direcionado_original') {
                 const hist = exibirHistoricoEdicao(campo.campo);
                 if (hist) valor += ' ' + hist;
             }
@@ -549,8 +558,11 @@
 
         historico.sort((a, b) => (a.data || '').localeCompare(b.data || ''));
 
+        // Data de abertura para cálculo da primeira resposta
+        const dataAbertura = osData.criado_em ? new Date(osData.criado_em).getTime() : null;
+
         let html = '';
-        let dataAnterior = null;
+        let dataAnterior = dataAbertura; // para a primeira resposta, comparar com abertura
         let cardIndex = 0;
 
         historico.forEach((item) => {
@@ -574,20 +586,24 @@
                 direcionadoHtml = `<div class="direcionado">Direcionado para: ${getBadgeDirecionado(direcionadoData)}</div>`;
             }
 
-            let horasDecorridas = '';
-            const dataItem = new Date(item.data);
-            if (cardIndex === 0) {
-                horasDecorridas = ' (primeira resposta)';
-            } else {
-                if (dataAnterior !== null) {
-                    const diffMs = dataItem - new Date(dataAnterior);
-                    const diffHoras = Math.round(diffMs / (1000 * 60 * 60));
-                    if (diffHoras === 0) horasDecorridas = ' (menos de 1 hora depois)';
-                    else if (diffHoras === 1) horasDecorridas = ' (1 hora depois)';
-                    else horasDecorridas = ` (${diffHoras} horas depois)`;
+            let tempoDecorrido = '';
+            const dataItem = new Date(item.data).getTime();
+            if (dataAnterior !== null) {
+                const diffMs = dataItem - dataAnterior;
+                const diffHoras = Math.round(diffMs / (1000 * 60 * 60));
+                if (cardIndex === 0) {
+                    // primeira resposta: comparar com a abertura
+                    if (diffHoras === 0) tempoDecorrido = ' (menos de 1 hora após abertura)';
+                    else if (diffHoras === 1) tempoDecorrido = ' (1 hora após abertura)';
+                    else tempoDecorrido = ` (${diffHoras} horas após abertura)`;
+                } else {
+                    if (diffHoras === 0) tempoDecorrido = ' (menos de 1 hora após resposta anterior)';
+                    else if (diffHoras === 1) tempoDecorrido = ' (1 hora após resposta anterior)';
+                    else tempoDecorrido = ` (${diffHoras} horas após resposta anterior)`;
                 }
             }
-            dataAnterior = item.data;
+            // Atualiza dataAnterior para a próxima iteração
+            dataAnterior = dataItem;
             cardIndex++;
 
             const autorBadge = getBadgePerfil(uid, nome);
@@ -601,7 +617,7 @@
                 <div class="card ${cardClass}">
                     <div class="card-header">
                         <span class="usuario">Resposta por ${autorBadge}</span>
-                        <span class="tempo">${dataFormat}${horasDecorridas}</span>
+                        <span class="tempo">${dataFormat}${tempoDecorrido}</span>
                     </div>
                     <div class="card-body">
                         <strong>${acao.toUpperCase()}</strong>
@@ -721,7 +737,7 @@
             container.appendChild(wrapper);
 
             salvarBtn.addEventListener('click', () => {
-                let novo1 = input1.value.trim();
+                let novo1 = input1.value.trim().toUpperCase(); // força maiúscula
                 let novo2 = input2.value.trim();
                 if (novo2) novo2 = formatarLote(novo2);
                 if (novo1 === osData[campo] && novo2 === osData[campo2]) {
