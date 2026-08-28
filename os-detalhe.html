@@ -8,7 +8,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
-        /* ... estilos mantidos iguais ao anterior ... */
         * { margin:0; padding:0; box-sizing:border-box; font-family: 'Calibri', 'Segoe UI', Tahoma, sans-serif; }
         body { background: #e8f5e9; padding: 16px 12px; display: flex; justify-content: center; min-height: 100vh; }
         .container { background: #fff; max-width: 900px; width: 100%; padding: 20px; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,80,0,0.12); border: 1px solid #a5d6a7; }
@@ -269,6 +268,10 @@
     // ================================================================
     // UTILITÁRIOS
     // ================================================================
+    function removerAcentos(str) {
+        return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+
     function formatarDataHora(dataISO) {
         if (!dataISO) return '—';
         const d = new Date(dataISO);
@@ -279,13 +282,6 @@
         const hora = String(d.getHours()).padStart(2, '0');
         const min = String(d.getMinutes()).padStart(2, '0');
         return `${dia}/${mes}/${ano} ${hora}:${min}`;
-    }
-
-    function formatarDataCurta(dataISO) {
-        if (!dataISO) return '—';
-        const d = new Date(dataISO);
-        if (isNaN(d)) return '—';
-        return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
     }
 
     function getFuncao(uid) {
@@ -379,12 +375,13 @@
     }
 
     // ================================================================
-    // PERMISSÃO DE EDIÇÃO – BLOQUEIO DEFINITIVO PARA CONCLUÍDA
+    // PERMISSÃO DE EDIÇÃO – COM NORMALIZAÇÃO DE ACENTOS
     // ================================================================
     function podeEditarOS() {
-        // Verifica se OS está concluída (independente de maiúsculas)
         if (!osData) return false;
-        if (osData.status && osData.status.toLowerCase() === 'concluida') {
+        // Remove acentos do status para comparação segura
+        const statusNormalizado = osData.status ? removerAcentos(osData.status.toLowerCase()) : '';
+        if (statusNormalizado === 'concluida') {
             return false;
         }
 
@@ -512,13 +509,11 @@
             { label: 'Direcionado para', value: dirBadgeOriginal, campo: 'direcionado_original', edit: false }
         );
 
-        // Verifica permissão de edição (considerando status concluída)
         const podeEditar = podeEditarOS();
 
         let infoHTML = '';
         campos.forEach(campo => {
             let valor = campo.value;
-            // Adiciona histórico de edição (última alteração) se houver
             if (campo.campo && campo.campo !== 'direcionado_original') {
                 const hist = exibirHistoricoEdicao(campo.campo);
                 if (hist) valor += ' ' + hist;
@@ -660,7 +655,7 @@
         const isMaster = (currentUser && currentUser.email === MASTER_EMAIL);
         const podeConcluir = isDiretor || isMaster;
         const podeReabrir = isDiretor || isAdmin || isMaster;
-        const statusConcluida = (osData.status && osData.status.toLowerCase() === 'concluida');
+        const statusConcluida = (osData.status && removerAcentos(osData.status.toLowerCase()) === 'concluida');
 
         if (!statusConcluida && podeConcluir) {
             html += `<button type="button" class="btn btn-success" id="btnConcluir">✅ Concluir OS</button>`;
