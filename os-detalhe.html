@@ -309,25 +309,20 @@
     }
 
     function getBadgeDirecionado(data) {
-        // data pode ser um objeto com direcionado_para e direcionado_para_nome
         const target = data.direcionado_para;
         let texto = data.direcionado_para_nome || '—';
         let classe = 'badge-grupo';
-        // Determina classe com base no target
         if (target && target.startsWith('group:')) {
-            // É um grupo: sempre cinza
             classe = 'badge-grupo';
         } else if (target && userMap[target]) {
-            // É um personagem individual: usa a função
             const funcao = userMap[target].funcao;
             if (funcao === 'admin') classe = 'badge-admin';
             else if (funcao === 'diretor') classe = 'badge-diretor';
             else classe = 'badge-grupo';
         } else {
-            // Fallback: tenta inferir pelo nome
-            const nomeLower = (data.direcionado_para_nome || '').toLowerCase();
-            if (nomeLower.includes('admin')) classe = 'badge-admin';
-            else if (nomeLower.includes('diretor')) classe = 'badge-diretor';
+            const nome = (data.direcionado_para_nome || '').toLowerCase();
+            if (nome.includes('admin')) classe = 'badge-admin';
+            else if (nome.includes('diretor')) classe = 'badge-diretor';
             else classe = 'badge-grupo';
         }
         return `<span class="badge ${classe}">${texto}</span>`;
@@ -429,11 +424,9 @@
         osStatusBadge.textContent = statusLabel;
         osStatusBadge.className = `badge badge-${osData.status || 'aberta'}`;
 
-        // ---- INFORMAÇÕES DA OS ----
+        // ---- INFORMAÇÕES DA OS (sem "Direcionado para") ----
         const nomeAbertura = getNome(osData.aberto_por);
         const abertoPorBadge = getBadgePerfil(osData.aberto_por, nomeAbertura);
-        // Direcionado: usa osData atual
-        const direcionadoBadge = getBadgeDirecionado(osData);
 
         let tipoCapitalizado = osData.tipo || '—';
         if (tipoCapitalizado !== '—') {
@@ -449,7 +442,7 @@
             { label: 'Prioridade', value: prioridadeLabel, campo: 'prioridade', edit: true },
             { label: 'Aberto por', value: abertoPorBadge, campo: 'aberto_por', edit: false },
             { label: 'Abertura', value: formatarDataHora(osData.criado_em), campo: 'criado_em', edit: false },
-            { label: 'Direcionado para', value: direcionadoBadge, campo: 'direcionado_para', edit: true },
+            // CAMPO "DIRECIONADO PARA" REMOVIDO DAQUI
         ];
 
         const reclamante = osData.quadra_reclamante && osData.lote_reclamante
@@ -681,7 +674,6 @@
         wrapper.className = 'edit-field-wrapper';
 
         if (campo2) {
-            // Edição dupla (quadra + lote)
             const input1 = document.createElement('input');
             input1.type = 'text';
             input1.placeholder = 'Quadra';
@@ -717,7 +709,6 @@
             });
             cancelarBtn.addEventListener('click', cancelarEdicao);
         } else {
-            // Edição simples
             let input;
             if (campo === 'prioridade') {
                 input = document.createElement('select');
@@ -738,16 +729,14 @@
                     input.appendChild(option);
                 });
             } else if (campo === 'direcionado_para') {
-                // Usa o mesmo conteúdo do select de "acaoDirecionar"
+                // Para editar direcionado, usamos o select do formulário
                 const selectAcao = document.getElementById('acaoDirecionar');
                 if (selectAcao) {
                     input = document.createElement('select');
                     input.innerHTML = selectAcao.innerHTML;
-                    // Seleciona a opção correspondente ao valor atual
                     const opt = input.querySelector(`option[value="${osData.direcionado_para || ''}"]`);
                     if (opt) opt.selected = true;
                 } else {
-                    // Fallback: cria opções básicas
                     input = document.createElement('select');
                     input.innerHTML = `<option value="">Manter destino atual</option>
                         <option value="group:admin">Administradores</option>
@@ -816,9 +805,7 @@
         const updateData = {};
         updateData[campo] = valorNovo;
 
-        // Se for direcionado_para, também atualiza nome e função
         if (campo === 'direcionado_para') {
-            // Determina nome e função
             let nome = '';
             let funcao = '';
             if (valorNovo === 'group:admin') {
@@ -828,25 +815,16 @@
                 nome = 'Diretores';
                 funcao = 'diretor';
             } else {
-                // É um UID de personagem
                 const user = userMap[valorNovo];
                 if (user) {
                     nome = user.nome;
                     funcao = user.funcao;
-                } else {
-                    // Fallback: tenta usar o texto do select
-                    const select = document.querySelector('.edit-field-input');
-                    if (select && select.options) {
-                        const opt = select.options[select.selectedIndex];
-                        if (opt) nome = opt.text;
-                    }
                 }
             }
             updateData.direcionado_para_nome = nome || valorNovo;
             updateData.direcionado_para_funcao = funcao || '';
         }
 
-        // Registrar edição no objeto edicoes
         const edicoes = osData.edicoes || {};
         if (!edicoes[campo]) edicoes[campo] = [];
         edicoes[campo].push({
