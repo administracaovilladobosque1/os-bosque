@@ -12,12 +12,8 @@
         body { background: #e8f5e9; padding: 16px 12px; display: flex; justify-content: center; min-height: 100vh; }
         .container { background: #fff; max-width: 900px; width: 100%; padding: 20px; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,80,0,0.12); border: 1px solid #a5d6a7; }
 
-        /* Cabeçalho "Logado como" */
+        /* Cabeçalho "Logado como" — linha simples */
         .user-header {
-            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
-            border: 1px solid #a5d6a7;
-            border-radius: 10px;
-            padding: 8px 14px;
             margin-bottom: 14px;
             display: flex;
             align-items: center;
@@ -97,8 +93,8 @@
         .card-concluida { background: #e8f5e9; border-left-color: #2e7d32; border: 2px solid #a5d6a7; }
         .aviso-concluida { font-size: 14px; color: #1b5e20; margin: 4px 0; }
 
-        .card .card-header { display: flex; justify-content: space-between; font-size: 13px; color: #555; margin-bottom: 4px; flex-wrap: wrap; align-items: center; }
-        .card .card-header .usuario { font-weight: 600; color: #1b5e20; display: flex; align-items: center; gap: 6px; }
+        .card .card-header { display: flex; justify-content: space-between; font-size: 13px; color: #555; margin-bottom: 4px; flex-wrap: wrap; align-items: center; gap: 6px; }
+        .card .card-header .usuario { font-weight: 600; color: #1b5e20; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
         .card .card-header .tempo { font-size: 12px; color: #888; }
         .card .card-body { font-size: 14px; }
         .card .card-body .direcionado { font-size: 13px; color: #555; margin-top: 4px; }
@@ -118,9 +114,7 @@
         .message.success { display: block; background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
 
         .edit-field { display: inline-flex; align-items: center; gap: 4px; }
-        .edit-field input, .edit-field select {
-            padding: 2px 6px; border: 1px solid #a5d6a7; border-radius: 4px; font-size: 14px;
-        }
+        .edit-field input, .edit-field select { padding: 2px 6px; border: 1px solid #a5d6a7; border-radius: 4px; font-size: 14px; }
 
         @media (max-width: 600px) {
             .container { padding: 14px; }
@@ -154,9 +148,6 @@
 </div>
 
 <script>
-    // ================================================================
-    // FIREBASE
-    // ================================================================
     const firebaseConfig = {
         apiKey: "AIzaSyDx_6oWO30Drh8GkuQA9jk2Oym7H8J3ABg",
         authDomain: "villa-bosque1.firebaseapp.com",
@@ -169,30 +160,22 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // ================================================================
-    // CONSTANTES
-    // ================================================================
     const MASTER_EMAIL = 'administracaovilladobosque@gmail.com';
     const TIMEOUT_MS = 4 * 60 * 60 * 1000;
     const TIMEOUT_KEY = 'vb_lastActivity';
     const TIMEOUT_CHECK_INTERVAL = 30 * 1000;
 
     const roleMap = { 'master':'Master', 'admin':'Administrador', 'diretor':'Diretor', 'tecnico':'Técnico' };
+    const funcaoLabelMap = { admin: 'Admin', diretor: 'Diretor', master: 'Master', tecnico: 'Técnico' };
 
-    // ================================================================
+    // ============================================================
     // TIMEOUT
-    // ================================================================
-    function registrarAtividade() {
-        try { localStorage.setItem(TIMEOUT_KEY, Date.now().toString()); } catch(e) {}
-    }
+    // ============================================================
+    function registrarAtividade() { try { localStorage.setItem(TIMEOUT_KEY, Date.now().toString()); } catch(e) {} }
     function fazerLogoutTimeout() {
         if (window.__fazendoLogout) return;
         window.__fazendoLogout = true;
-        try {
-            localStorage.removeItem(TIMEOUT_KEY);
-            localStorage.removeItem('vb_userLoggedIn');
-            sessionStorage.clear();
-        } catch(e) {}
+        try { localStorage.removeItem(TIMEOUT_KEY); localStorage.removeItem('vb_userLoggedIn'); sessionStorage.clear(); } catch(e) {}
         auth.signOut().finally(() => {
             alert('Sessão expirada por inatividade. Faça login novamente.');
             window.location.href = 'index.html';
@@ -216,9 +199,6 @@
         });
     }
 
-    // ================================================================
-    // VARIÁVEIS
-    // ================================================================
     let currentUser = null;
     let currentUserData = null;
     let osId = null;
@@ -226,9 +206,6 @@
     let userMap = {};
     let editando = { campo: null, original: null };
 
-    // ================================================================
-    // ELEMENTOS
-    // ================================================================
     const osNumero = document.getElementById('osNumero');
     const osTitulo = document.getElementById('osTitulo');
     const osStatusBadge = document.getElementById('osStatusBadge');
@@ -237,12 +214,7 @@
     const userHeaderName = document.getElementById('userHeaderName');
     const userHeaderRole = document.getElementById('userHeaderRole');
 
-    // ================================================================
-    // UTILITÁRIOS
-    // ================================================================
-    function removerAcentos(str) {
-        return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    }
+    function removerAcentos(str) { return str.normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
     function formatarDataHora(dataISO) {
         if (!dataISO) return '—';
         const d = new Date(dataISO);
@@ -263,51 +235,70 @@
         return String(Math.min(num, 99)).padStart(2, '0');
     }
 
-    // ================================================================
-    // BADGES — PADRÃO DE CORES
-    // admin (grupo ou pessoa) → amarelo | diretor → verde
-    // ================================================================
+    function atualizarHeader(nome, funcao) {
+        userHeaderName.textContent = nome || 'Usuário';
+        userHeaderRole.className = 'uh-funcao ' + (funcao || 'tecnico');
+        userHeaderRole.textContent = roleMap[funcao] || funcao || 'Técnico';
+    }
+
+    // ============================================================
+    // BADGES — nome + função no texto
+    // ============================================================
     function getBadgePerfil(uid, nome) {
-        let texto = nome || '—';
+        const textoBase = nome || '—';
         let classe = 'badge-grupo';
-        if (uid && userMap[uid]) {
-            const f = userMap[uid].funcao;
-            if (f === 'admin') classe = 'badge-admin';
-            else if (f === 'diretor') classe = 'badge-diretor';
-            else if (f === 'master') classe = 'badge-master';
-        } else {
-            const n = (nome || '').toLowerCase();
-            if (n.includes('admin')) classe = 'badge-admin';
-            else if (n.includes('diretor')) classe = 'badge-diretor';
-            else if (n.includes('master')) classe = 'badge-master';
+        let funcao = null;
+        if (uid && userMap[uid]) funcao = userMap[uid].funcao;
+        if (!funcao) {
+            const n = textoBase.toLowerCase();
+            if (n.includes('admin')) funcao = 'admin';
+            else if (n.includes('diretor')) funcao = 'diretor';
+            else if (n.includes('master')) funcao = 'master';
+        }
+        if (funcao === 'admin') classe = 'badge-admin';
+        else if (funcao === 'diretor') classe = 'badge-diretor';
+        else if (funcao === 'master') classe = 'badge-master';
+
+        // Adiciona função ao texto se identificada e ainda não presente
+        let texto = textoBase;
+        if (funcao && !textoBase.includes('(')) {
+            texto = `${textoBase} (${funcaoLabelMap[funcao] || funcao})`;
         }
         return `<span class="badge ${classe}">${texto}</span>`;
     }
+
     function getBadgeDirecionado(data) {
         const alvo = data.direcionado_para;
-        const texto = data.direcionado_para_nome || '—';
+        let texto = data.direcionado_para_nome || '—';
         let classe = 'badge-grupo';
 
         if (alvo && alvo.startsWith('group:')) {
+            // Grupo — deixa texto como está ("Administradores" / "Diretores")
             if (alvo === 'group:admin') classe = 'badge-admin';
             else if (alvo === 'group:diretor') classe = 'badge-diretor';
-        } else if (alvo && userMap[alvo]) {
-            const f = userMap[alvo].funcao;
+        } else {
+            // Pessoa — busca função
+            let f = null;
+            if (alvo && userMap[alvo]) f = userMap[alvo].funcao;
+            if (!f && data.direcionado_para_funcao) f = data.direcionado_para_funcao;
+            if (!f) {
+                const n = (texto || '').toLowerCase();
+                if (n.includes('admin')) f = 'admin';
+                else if (n.includes('diretor')) f = 'diretor';
+                else if (n.includes('master')) f = 'master';
+            }
             if (f === 'admin') classe = 'badge-admin';
             else if (f === 'diretor') classe = 'badge-diretor';
             else if (f === 'master') classe = 'badge-master';
-        } else {
-            const n = (data.direcionado_para_nome || '').toLowerCase();
-            if (n.includes('admin')) classe = 'badge-admin';
-            else if (n.includes('diretor')) classe = 'badge-diretor';
-            else if (n.includes('master')) classe = 'badge-master';
+
+            // Adiciona função ao texto
+            if (f && texto && !texto.includes('(')) {
+                texto = `${texto} (${funcaoLabelMap[f] || f})`;
+            }
         }
         return `<span class="badge ${classe}">${texto}</span>`;
     }
 
-    // ================================================================
-    // HISTÓRICO DE EDIÇÕES
-    // ================================================================
     function getHistoricoEdicoes(campo) {
         if (!osData.edicoes) return null;
         const e = osData.edicoes[campo];
@@ -321,19 +312,15 @@
         if (!ultima) return '';
         return `<span class="edit-historico">(edit ${formatarDataHora(ultima.data)}: ${ultima.valor_antigo || ''})</span>`;
     }
-    const prioridadeMap = {
-        'emergencial': '🔴 Emergencial',
-        'urgente': '🟡 Urgente',
-        'normal': '🟢 Normal'
-    };
+    const prioridadeMap = { 'emergencial': '🔴 Emergencial', 'urgente': '🟡 Urgente', 'normal': '🟢 Normal' };
     function getValorExibicao(campo, valor) {
         if (campo === 'prioridade' && valor && prioridadeMap[valor]) return prioridadeMap[valor];
         return valor;
     }
 
-    // ================================================================
+    // ============================================================
     // PERMISSÃO — APENAS MASTER EDITA
-    // ================================================================
+    // ============================================================
     function podeEditarOS() {
         if (!osData) return false;
         const s = osData.status ? removerAcentos(osData.status.toLowerCase()) : '';
@@ -342,9 +329,7 @@
         if (currentUser.email === MASTER_EMAIL) return true;
         return false;
     }
-    function isMaster() {
-        return currentUser && currentUser.email === MASTER_EMAIL;
-    }
+    function isMaster() { return currentUser && currentUser.email === MASTER_EMAIL; }
     function podeConcluir() {
         if (!currentUserData) return false;
         const f = currentUserData.funcao;
@@ -356,9 +341,6 @@
         return f === 'diretor' || f === 'admin' || isMaster();
     }
 
-    // ================================================================
-    // CARREGAR USUÁRIOS
-    // ================================================================
     function carregarUsuarios() {
         return db.collection('usuarios').where('status', '==', 'ativo').get()
             .then(snapshot => {
@@ -370,9 +352,6 @@
             });
     }
 
-    // ================================================================
-    // CARREGAR OS
-    // ================================================================
     function carregarOS() {
         if (!osId) return;
         historicoContainer.innerHTML = '<p>Carregando...</p>';
@@ -392,12 +371,8 @@
             });
     }
 
-    // ================================================================
-    // RENDERIZAR DETALHE
-    // ================================================================
     function renderizarDetalhe() {
         if (!osData) return;
-
         osNumero.textContent = osData.numero || '---';
         osTitulo.textContent = `📋 OS #${osData.numero || '---'}`;
 
@@ -417,7 +392,8 @@
         const dirNomeOriginal = osData.direcionado_para_nome_original || osData.direcionado_para_nome || '—';
         const dirBadgeOriginal = getBadgeDirecionado({
             direcionado_para: dirOriginal,
-            direcionado_para_nome: dirNomeOriginal
+            direcionado_para_nome: dirNomeOriginal,
+            direcionado_para_funcao: osData.direcionado_para_funcao_original || osData.direcionado_para_funcao
         });
 
         const campos = [
@@ -443,7 +419,6 @@
         );
 
         const podeEditar = podeEditarOS();
-
         let infoHTML = '';
         campos.forEach(campo => {
             let valor = campo.value;
@@ -482,7 +457,7 @@
         osInfoContainer.style.borderLeft = `6px solid ${cor}`;
         osInfoContainer.style.backgroundColor = cor + '22';
 
-        // ---- HISTÓRICO (CARDS) ----
+        // ---- HISTÓRICO ----
         const historico = osData.historico || [];
         const statusConcluida = osData.status && removerAcentos(osData.status.toLowerCase()) === 'concluida';
 
@@ -507,7 +482,8 @@
             if (item.direcionado_para) {
                 direcionadoHtml = `<div class="direcionado">Direcionado para: ${getBadgeDirecionado({
                     direcionado_para: item.direcionado_para,
-                    direcionado_para_nome: item.direcionado_para_nome || item.direcionado_para
+                    direcionado_para_nome: item.direcionado_para_nome || item.direcionado_para,
+                    direcionado_para_funcao: item.direcionado_para_funcao
                 })}</div>`;
             }
 
@@ -549,7 +525,6 @@
             `;
         });
 
-        // ---- ÚLTIMO CARD ----
         if (statusConcluida) {
             html += `<div class="card card-ultimo card-concluida">`;
             html += `<div class="card-header"><span class="usuario" style="font-size:15px;">✅ OS Concluída</span></div>`;
@@ -605,9 +580,6 @@
         });
     }
 
-    // ================================================================
-    // EDIÇÃO INLINE
-    // ================================================================
     function iniciarEdicao(campo, campo2, valorAtual, btn) {
         if (editando.campo) cancelarEdicao();
         editando.campo = campo;
@@ -772,9 +744,6 @@
             .catch(err => alert('Erro ao salvar: ' + err.message));
     }
 
-    // ================================================================
-    // POPULAR DIRECIONAMENTO
-    // ================================================================
     function popularDirecionamento() {
         const select = document.getElementById('acaoDirecionar');
         if (!select) return;
@@ -811,9 +780,6 @@
         });
     }
 
-    // ================================================================
-    // ADICIONAR AÇÃO — COM TRANSAÇÃO (evita perda em concorrência)
-    // ================================================================
     async function adicionarAcao(descricao, direcionarPara) {
         const agora = new Date().toISOString();
         const docRef = db.collection('ordens_servico').doc(osId);
@@ -824,13 +790,11 @@
             const resultado = await db.runTransaction(async (transaction) => {
                 const doc = await transaction.get(docRef);
                 if (!doc.exists) throw new Error('OS não encontrada.');
-
                 const dataAtual = doc.data();
                 const historico = dataAtual.historico || [];
 
                 const novaAcao = {
-                    data: agora,
-                    acao: 'ação',
+                    data: agora, acao: 'ação',
                     usuario_uid: currentUser.uid,
                     usuario: currentUserData?.nome || 'Usuário',
                     mensagem: descricao
@@ -851,7 +815,7 @@
                     upd.direcionado_para_funcao = novaAcao.direcionado_para_funcao || '';
                 }
                 transaction.update(docRef, upd);
-                return { historico, upd, novaAcao };
+                return { historico, upd };
             });
 
             osData.historico = resultado.historico;
@@ -885,9 +849,6 @@
         if (el) el.style.display = 'none';
     }
 
-    // ================================================================
-    // CONCLUIR / REABRIR — COM TRANSAÇÃO
-    // ================================================================
     async function concluirOS() {
         if (!confirm('Deseja concluir esta OS?')) return;
         const agora = new Date().toISOString();
@@ -898,8 +859,7 @@
                 if (!doc.exists) throw new Error('OS não encontrada.');
                 const historico = doc.data().historico || [];
                 historico.push({
-                    data: agora,
-                    acao: 'conclusão',
+                    data: agora, acao: 'conclusão',
                     usuario_uid: currentUser.uid,
                     usuario: currentUserData?.nome || 'Usuário',
                     mensagem: 'OS concluída'
@@ -911,9 +871,7 @@
             osData.historico = resultado;
             osData.atualizado_em = agora;
             renderizarDetalhe();
-        } catch (err) {
-            alert('Erro: ' + err.message);
-        }
+        } catch (err) { alert('Erro: ' + err.message); }
     }
 
     async function reabrirOS() {
@@ -926,8 +884,7 @@
                 if (!doc.exists) throw new Error('OS não encontrada.');
                 const historico = doc.data().historico || [];
                 historico.push({
-                    data: agora,
-                    acao: 'reabertura',
+                    data: agora, acao: 'reabertura',
                     usuario_uid: currentUser.uid,
                     usuario: currentUserData?.nome || 'Usuário',
                     mensagem: 'OS reaberta'
@@ -939,23 +896,9 @@
             osData.historico = resultado;
             osData.atualizado_em = agora;
             renderizarDetalhe();
-        } catch (err) {
-            alert('Erro: ' + err.message);
-        }
+        } catch (err) { alert('Erro: ' + err.message); }
     }
 
-    // ================================================================
-    // HEADER
-    // ================================================================
-    function atualizarHeader(nome, funcao) {
-        userHeaderName.textContent = nome || 'Usuário';
-        userHeaderRole.className = 'uh-funcao ' + (funcao || 'tecnico');
-        userHeaderRole.textContent = roleMap[funcao] || funcao || 'Técnico';
-    }
-
-    // ================================================================
-    // INICIALIZAÇÃO
-    // ================================================================
     function init() {
         const params = new URLSearchParams(window.location.search);
         osId = params.get('id');

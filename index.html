@@ -42,22 +42,16 @@
         .logout-area .btn { display: inline-block; width: auto; padding: 12px 40px; margin-bottom: 0; }
         .timeout-warning { font-size: 13px; color: #558b2f; text-align: right; margin-top: 10px; }
 
-        /* Cabeçalho "Logado como" */
+        /* Cabeçalho "Logado como" — linha simples, sem caixa */
         .user-header {
-            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
-            border: 1px solid #a5d6a7;
-            border-radius: 10px;
-            padding: 8px 14px;
             margin-bottom: 14px;
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            gap: 8px;
+            gap: 6px;
             flex-wrap: wrap;
             font-size: 13px;
             color: #1b5e20;
         }
-        .user-header .uh-left { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
         .user-header .uh-label { font-weight: 500; color: #558b2f; }
         .user-header .uh-nome { font-weight: 700; color: #1b5e20; }
         .user-header .uh-funcao {
@@ -110,11 +104,9 @@
     <!-- DASHBOARD -->
     <div id="dashboard">
         <div class="user-header" id="userHeader">
-            <div class="uh-left">
-                <span class="uh-label">Logado como:</span>
-                <span class="uh-nome" id="userHeaderName">—</span>
-                <span class="uh-funcao tecnico" id="userHeaderRole">—</span>
-            </div>
+            <span class="uh-label">Logado como:</span>
+            <span class="uh-nome" id="userHeaderName">—</span>
+            <span class="uh-funcao tecnico" id="userHeaderRole">—</span>
         </div>
 
         <div class="dashboard-logo">
@@ -140,9 +132,6 @@
 </div>
 
 <script>
-    // ================================================================
-    // CONFIGURAÇÃO FIREBASE
-    // ================================================================
     const firebaseConfig = {
         apiKey: "AIzaSyDx_6oWO30Drh8GkuQA9jk2Oym7H8J3ABg",
         authDomain: "villa-bosque1.firebaseapp.com",
@@ -155,18 +144,12 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // ================================================================
-    // CONSTANTES
-    // ================================================================
     const MASTER_EMAIL = 'administracaovilladobosque@gmail.com';
     const TIMEOUT_MS = 4 * 60 * 60 * 1000;
     const TIMEOUT_KEY = 'vb_lastActivity';
     const TIMEOUT_CHECK_INTERVAL = 30 * 1000;
     let timerInterval = null;
 
-    // ================================================================
-    // ELEMENTOS
-    // ================================================================
     const loginScreen = document.getElementById('loginScreen');
     const dashboardScreen = document.getElementById('dashboard');
     const timerDisplay = document.getElementById('timerDisplay');
@@ -182,26 +165,15 @@
     const userHeaderName = document.getElementById('userHeaderName');
     const userHeaderRole = document.getElementById('userHeaderRole');
 
-    const roleMap = {
-        'master': 'Master',
-        'admin': 'Administrador',
-        'diretor': 'Diretor',
-        'tecnico': 'Técnico'
-    };
-    const roleMapFull = {
-        'master': 'Master (Controle Total)',
-        'admin': 'Administrador',
-        'diretor': 'Diretor',
-        'tecnico': 'Técnico'
-    };
+    const roleMap = { 'master':'Master', 'admin':'Administrador', 'diretor':'Diretor', 'tecnico':'Técnico' };
+    const roleMapFull = { 'master':'Master (Controle Total)', 'admin':'Administrador', 'diretor':'Diretor', 'tecnico':'Técnico' };
 
-    // ================================================================
-    // TIMEOUT (com localStorage + checagem periódica + visibilitychange)
-    // ================================================================
+    // ============================================================
+    // TIMEOUT
+    // ============================================================
     function registrarAtividade() {
         try { localStorage.setItem(TIMEOUT_KEY, Date.now().toString()); } catch(e) {}
     }
-
     function fazerLogoutTimeout() {
         if (window.__fazendoLogout) return;
         window.__fazendoLogout = true;
@@ -216,32 +188,22 @@
             window.location.href = 'index.html';
         });
     }
-
     function verificarTimeoutAgora() {
         const last = parseInt(localStorage.getItem(TIMEOUT_KEY) || '0', 10);
         if (!last) return false;
-        if ((Date.now() - last) > TIMEOUT_MS) {
-            fazerLogoutTimeout();
-            return true;
-        }
+        if ((Date.now() - last) > TIMEOUT_MS) { fazerLogoutTimeout(); return true; }
         return false;
     }
-
     function iniciarMonitorTimeout() {
         if (verificarTimeoutAgora()) return;
         if (!localStorage.getItem(TIMEOUT_KEY)) registrarAtividade();
-
         ['click','mousemove','keydown','scroll','touchstart'].forEach(ev => {
             document.addEventListener(ev, registrarAtividade, { passive: true });
         });
-
         setInterval(verificarTimeoutAgora, TIMEOUT_CHECK_INTERVAL);
-
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') verificarTimeoutAgora();
         });
-
-        // Contador visual
         if (timerInterval) clearInterval(timerInterval);
         timerInterval = setInterval(() => {
             const last = parseInt(localStorage.getItem(TIMEOUT_KEY) || '0', 10);
@@ -253,9 +215,9 @@
         }, 1000);
     }
 
-    // ================================================================
+    // ============================================================
     // TELAS
-    // ================================================================
+    // ============================================================
     function showLoginScreen() {
         loginScreen.classList.remove('hidden');
         dashboardScreen.style.display = 'none';
@@ -294,7 +256,6 @@
 
         atualizarHeader(nomeExibicao, funcao);
 
-        // Menu
         let html = '';
         if (funcao === 'master') {
             html += `<a href="personagens.html" class="btn btn-success">👥 Gerenciar Personagens</a>`;
@@ -311,16 +272,15 @@
         }
         menuButtons.innerHTML = html;
 
-        // Inicia monitor de timeout
         registrarAtividade();
         iniciarMonitorTimeout();
     }
 
     function showMessage(el, text, type) { el.textContent = text; el.className = 'message ' + type; }
 
-    // ================================================================
+    // ============================================================
     // LOGIN / LOGOUT
-    // ================================================================
+    // ============================================================
     loginForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const email = loginEmail.value.trim();
@@ -347,12 +307,8 @@
         auth.signOut();
     });
 
-    // ================================================================
-    // OBSERVADOR DE AUTENTICAÇÃO
-    // ================================================================
     auth.onAuthStateChanged((user) => {
         if (user) {
-            // Bloqueia login se timeout expirou ANTES de mostrar dashboard
             const last = parseInt(localStorage.getItem(TIMEOUT_KEY) || '0', 10);
             if (last && (Date.now() - last) > TIMEOUT_MS) {
                 fazerLogoutTimeout();
@@ -384,7 +340,6 @@
         }
     });
 
-    // Mostra login inicialmente
     showLoginScreen();
 </script>
 </body>

@@ -12,12 +12,8 @@
         body { background: #e8f5e9; padding: 16px 12px; display: flex; justify-content: center; min-height: 100vh; }
         .container { background: #fff; max-width: 1400px; width: 100%; padding: 18px; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,80,0,0.12); border: 1px solid #a5d6a7; }
 
-        /* Cabeçalho "Logado como" */
+        /* Cabeçalho "Logado como" — linha simples */
         .user-header {
-            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
-            border: 1px solid #a5d6a7;
-            border-radius: 10px;
-            padding: 8px 14px;
             margin-bottom: 14px;
             display: flex;
             align-items: center;
@@ -53,16 +49,9 @@
         .filtros { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 16px; align-items: center; }
         .filtros select, .filtros input { padding: 6px 10px; border: 1px solid #a5d6a7; border-radius: 6px; font-size: 14px; background: #fafffe; flex: 0 1 auto; min-width: 120px; }
         .filtros input[type="text"] { flex: 1 1 150px; min-width: 100px; }
-        .filtros .btn-filtrar {
-            background: #2e7d32; color: white; border: none; padding: 6px 16px;
-            border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; transition: 0.2s;
-        }
+        .filtros .btn-filtrar { background: #2e7d32; color: white; border: none; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; transition: 0.2s; }
         .filtros .btn-filtrar:hover { background: #1b5e20; }
-        .filtros .btn-filtrar.pendente {
-            box-shadow: 0 0 0 3px rgba(240, 173, 78, 0.5);
-            background: #f0ad4e; color: #000;
-            animation: pulseBtn 1.6s infinite;
-        }
+        .filtros .btn-filtrar.pendente { box-shadow: 0 0 0 3px rgba(240, 173, 78, 0.5); background: #f0ad4e; color: #000; animation: pulseBtn 1.6s infinite; }
         @keyframes pulseBtn {
             0%, 100% { box-shadow: 0 0 0 3px rgba(240, 173, 78, 0.5); }
             50%      { box-shadow: 0 0 0 6px rgba(240, 173, 78, 0.15); }
@@ -94,24 +83,14 @@
         .badge-diretor { background: #a5d6a7; color: #000; }
         .badge-atrasada { background: #ffcdd2; color: #b71c1c; font-weight: bold; white-space: nowrap; }
         .badge-no-prazo { background: #c8e6c9; color: #1b5e20; white-space: nowrap; }
-        .btn-ver {
-            padding: 4px 12px; background: #2e7d32; color: #fff;
-            border: none; border-radius: 6px; font-size: 12px;
-            font-weight: 600; cursor: pointer; transition: 0.2s;
-            white-space: nowrap;
-        }
+        .btn-ver { padding: 4px 12px; background: #2e7d32; color: #fff; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; white-space: nowrap; }
         .btn-ver:hover { background: #1b5e20; }
         .dias-numero { font-weight: 700; color: #1b5e20; }
         .dias-hoje { color: #558b2f; }
         .empty-message { text-align: center; color: #555; padding: 30px 0; }
 
         .lista-cards { display: none; flex-direction: column; gap: 10px; margin-top: 12px; }
-        .os-card {
-            background: #fff; border: 1px solid #c8e6c9; border-left: 4px solid #2e7d32;
-            border-radius: 12px; padding: 14px; cursor: pointer;
-            transition: transform 0.15s, box-shadow 0.15s;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-        }
+        .os-card { background: #fff; border: 1px solid #c8e6c9; border-left: 4px solid #2e7d32; border-radius: 12px; padding: 14px; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
         .os-card:active { transform: scale(0.985); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
         .os-card.atrasada { border-left-color: #c62828; background: #fff8f8; }
         .os-card .card-topo { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
@@ -145,24 +124,14 @@
             .filtros-toggle:active { background: #e8f5e9; }
             .filtros-toggle .seta { margin-left: auto; transition: transform 0.2s; font-size: 12px; }
             .filtros-toggle.aberto .seta { transform: rotate(180deg); }
-            .filtros-toggle .badge-contador {
-                background: #2e7d32; color: #fff; border-radius: 20px;
-                padding: 1px 8px; font-size: 12px; font-weight: 700; display: none;
-            }
+            .filtros-toggle .badge-contador { background: #2e7d32; color: #fff; border-radius: 20px; padding: 1px 8px; font-size: 12px; font-weight: 700; display: none; }
             .filtros-toggle .badge-contador.ativo { display: inline-block; }
 
-            .filtros {
-                display: none; flex-direction: column; align-items: stretch; gap: 12px;
-                padding: 14px; background: #f8fdf8; border: 1px solid #c8e6c9;
-                border-radius: 12px; margin-bottom: 12px;
-            }
+            .filtros { display: none; flex-direction: column; align-items: stretch; gap: 12px; padding: 14px; background: #f8fdf8; border: 1px solid #c8e6c9; border-radius: 12px; margin-bottom: 12px; }
             .filtros.aberto { display: flex; }
             .filtros .filtro-bloco { display: flex; flex-direction: column; gap: 4px; width: 100%; }
             .filtros .filtro-bloco .filtro-label { display: block; font-size: 13px; font-weight: 700; color: #1b5e20; margin: 0; }
-            .filtros select, .filtros input, .filtros input[type="text"] {
-                width: 100%; min-width: 0; flex: 1 1 auto;
-                padding: 10px 12px; font-size: 15px; border-radius: 8px;
-            }
+            .filtros select, .filtros input, .filtros input[type="text"] { width: 100%; min-width: 0; flex: 1 1 auto; padding: 10px 12px; font-size: 15px; border-radius: 8px; }
             .filtros .grupo-filtro { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; }
             .filtros .grupo-filtro input { width: 100%; min-width: 0; padding: 10px 12px; font-size: 15px; border-radius: 8px; }
             .filtros .btn-filtrar { width: 100%; padding: 12px; font-size: 15px; border-radius: 10px; margin-top: 4px; }
@@ -234,9 +203,6 @@
 </div>
 
 <script>
-    // ================================================================
-    // FIREBASE
-    // ================================================================
     const firebaseConfig = {
         apiKey: "AIzaSyDx_6oWO30Drh8GkuQA9jk2Oym7H8J3ABg",
         authDomain: "villa-bosque1.firebaseapp.com",
@@ -249,30 +215,22 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // ================================================================
-    // CONSTANTES
-    // ================================================================
     const MASTER_EMAIL = 'administracaovilladobosque@gmail.com';
     const TIMEOUT_MS = 4 * 60 * 60 * 1000;
     const TIMEOUT_KEY = 'vb_lastActivity';
     const TIMEOUT_CHECK_INTERVAL = 30 * 1000;
 
     const roleMap = { 'master':'Master', 'admin':'Administrador', 'diretor':'Diretor', 'tecnico':'Técnico' };
+    const funcaoLabelMap = { admin: 'Admin', diretor: 'Diretor', master: 'Master', tecnico: 'Técnico' };
 
-    // ================================================================
+    // ============================================================
     // TIMEOUT
-    // ================================================================
-    function registrarAtividade() {
-        try { localStorage.setItem(TIMEOUT_KEY, Date.now().toString()); } catch(e) {}
-    }
+    // ============================================================
+    function registrarAtividade() { try { localStorage.setItem(TIMEOUT_KEY, Date.now().toString()); } catch(e) {} }
     function fazerLogoutTimeout() {
         if (window.__fazendoLogout) return;
         window.__fazendoLogout = true;
-        try {
-            localStorage.removeItem(TIMEOUT_KEY);
-            localStorage.removeItem('vb_userLoggedIn');
-            sessionStorage.clear();
-        } catch(e) {}
+        try { localStorage.removeItem(TIMEOUT_KEY); localStorage.removeItem('vb_userLoggedIn'); sessionStorage.clear(); } catch(e) {}
         auth.signOut().finally(() => {
             alert('Sessão expirada por inatividade. Faça login novamente.');
             window.location.href = 'index.html';
@@ -296,9 +254,6 @@
         });
     }
 
-    // ================================================================
-    // ELEMENTOS
-    // ================================================================
     const listaDiv = document.getElementById('listaContainer');
     const filtroStatus = document.getElementById('filtroStatus');
     const filtroPendente = document.getElementById('filtroPendente');
@@ -336,18 +291,15 @@
 
     function isMobile() { return window.matchMedia('(max-width: 768px)').matches; }
 
-    // ================================================================
-    // HEADER
-    // ================================================================
     function atualizarHeader(nome, funcao) {
         userHeaderName.textContent = nome || 'Usuário';
         userHeaderRole.className = 'uh-funcao ' + (funcao || 'tecnico');
         userHeaderRole.textContent = roleMap[funcao] || funcao || 'Técnico';
     }
 
-    // ================================================================
-    // FILTROS — toggle/estado
-    // ================================================================
+    // ============================================================
+    // FILTROS
+    // ============================================================
     filtrosToggle.addEventListener('click', () => {
         filtrosPainel.classList.toggle('aberto');
         filtrosToggle.classList.toggle('aberto');
@@ -396,9 +348,26 @@
         }
     }
 
-    // ================================================================
+    // ============================================================
+    // NOME + FUNÇÃO
+    // ============================================================
+    function getNomeComFuncao(nome, uid, funcaoDireta) {
+        const n = nome || '—';
+        let f = funcaoDireta;
+        if (!f && uid && userMap[uid]) f = userMap[uid].funcao;
+        if (!f) {
+            const nl = n.toLowerCase();
+            if (nl.includes('admin')) f = 'admin';
+            else if (nl.includes('diretor')) f = 'diretor';
+            else if (nl.includes('master')) f = 'master';
+        }
+        if (!f) return n;
+        return `${n} (${funcaoLabelMap[f] || f})`;
+    }
+
+    // ============================================================
     // DIAS / SLA
-    // ================================================================
+    // ============================================================
     function calcularDias(dataISO) {
         if (!dataISO) return '—';
         const d = new Date(dataISO);
@@ -458,9 +427,9 @@
         return 'outros';
     }
 
-    // ================================================================
+    // ============================================================
     // ORDENAÇÃO
-    // ================================================================
+    // ============================================================
     function ordenarDados(docs) {
         docs.sort((a, b) => {
             let va, vb;
@@ -491,10 +460,9 @@
         return docs;
     }
 
-    // ================================================================
-    // APRESENTAÇÃO — CORES PADRONIZADAS
-    // admin (grupo ou pessoa) → amarelo | diretor (grupo ou pessoa) → verde
-    // ================================================================
+    // ============================================================
+    // APRESENTAÇÃO
+    // ============================================================
     function getPrioridadeHtml(data) {
         const p = data.prioridade || 'normal';
         const pData = priorityMap[p] || priorityMap['normal'];
@@ -503,8 +471,8 @@
     function getPendenteHtml(data) {
         let cor = '#ced4da';
         let icone = '👥';
-        const texto = data.direcionado_para_nome || '—';
         const alvo = data.direcionado_para;
+        let texto = data.direcionado_para_nome || '—';
 
         if (alvo && alvo.startsWith('group:')) {
             icone = '👥';
@@ -512,16 +480,20 @@
             else if (alvo === 'group:diretor') cor = '#a5d6a7';
         } else {
             icone = '👤';
-            if (alvo && userMap[alvo]) {
-                const f = userMap[alvo].funcao;
-                if (f === 'admin') cor = '#ffe082';
-                else if (f === 'diretor') cor = '#a5d6a7';
-                else if (f === 'master') cor = '#ffcc80';
-            } else {
-                const n = (data.direcionado_para_nome || '').toLowerCase();
-                if (n.includes('admin')) cor = '#ffe082';
-                else if (n.includes('diretor')) cor = '#a5d6a7';
-                else if (n.includes('master')) cor = '#ffcc80';
+            let f = data.direcionado_para_funcao;
+            if (!f && alvo && userMap[alvo]) f = userMap[alvo].funcao;
+            if (!f) {
+                const n = (texto || '').toLowerCase();
+                if (n.includes('admin')) f = 'admin';
+                else if (n.includes('diretor')) f = 'diretor';
+                else if (n.includes('master')) f = 'master';
+            }
+            if (f === 'admin') cor = '#ffe082';
+            else if (f === 'diretor') cor = '#a5d6a7';
+            else if (f === 'master') cor = '#ffcc80';
+            // Adiciona função ao texto (se identificada)
+            if (f) {
+                texto = `${texto} (${funcaoLabelMap[f] || f})`;
             }
         }
         return `<span class="badge" style="background-color:${cor}; color:#000;"><span class="icone">${icone}</span> ${texto}</span>`;
@@ -532,9 +504,9 @@
         return `<span class="badge ${c}">${l.toUpperCase()}</span>`;
     }
 
-    // ================================================================
+    // ============================================================
     // TABELA (DESKTOP)
-    // ================================================================
+    // ============================================================
     function renderizarTabelaDesktop(docs) {
         let html = `<div class="table-responsive"><table>
             <thead><tr>
@@ -560,12 +532,13 @@
             if (ud) diasPendente = calcularDias(ud);
             const atrasoBadge = getAtrasoBadge(data);
             const atrasada = isAtrasada(data);
+            const abertoPorTexto = getNomeComFuncao(data.aberto_por_nome, data.aberto_por);
 
             html += `
                 <tr onclick="window.location.href='os-detalhe.html?id=${id}'" style="cursor:pointer;${atrasada ? ' background:#fff5f5;' : ''}">
                     <td><strong>${data.numero || 'N/A'}</strong></td>
                     <td>${data.titulo || 'Sem título'}</td>
-                    <td>${data.aberto_por_nome || '—'}</td>
+                    <td>${abertoPorTexto}</td>
                     <td>${getPrioridadeHtml(data)}</td>
                     <td>${getStatusHtml(data)}</td>
                     <td>${dataHora}</td>
@@ -581,9 +554,9 @@
         return html;
     }
 
-    // ================================================================
+    // ============================================================
     // CARDS (MOBILE)
-    // ================================================================
+    // ============================================================
     function renderizarCardsMobile(docs) {
         let html = `<div class="lista-cards">`;
         docs.forEach(data => {
@@ -596,6 +569,7 @@
             let diasPendente = '—';
             const ud = getUltimaDataHistorico(data);
             if (ud) diasPendente = calcularDiasTexto(ud);
+            const abertoPorTexto = getNomeComFuncao(data.aberto_por_nome, data.aberto_por);
 
             html += `
                 <div class="os-card ${atrasada ? 'atrasada' : ''}" onclick="window.location.href='os-detalhe.html?id=${id}'">
@@ -616,7 +590,7 @@
                     <div class="card-linha">
                         <span class="icone">✍️</span>
                         <span class="rotulo">Aberto por:</span>
-                        <span class="valor">${data.aberto_por_nome || '—'}</span>
+                        <span class="valor">${abertoPorTexto}</span>
                     </div>
                     <div class="card-linha">
                         <span class="icone">📅</span>
@@ -634,9 +608,6 @@
         return html;
     }
 
-    // ================================================================
-    // RENDER
-    // ================================================================
     function renderizarLista(docs) {
         if (!docs || docs.length === 0) {
             listaDiv.innerHTML = '<p class="empty-message">Nenhuma ordem encontrada com os filtros atuais.</p>';
@@ -659,9 +630,6 @@
         }
     }
 
-    // ================================================================
-    // APLICAR FILTROS
-    // ================================================================
     function aplicarFiltros() {
         let docs = window.allDocs || [];
         const sf = filtroStatus.value;
@@ -700,9 +668,6 @@
         renderizarLista(docs);
     }
 
-    // ================================================================
-    // CARREGAR
-    // ================================================================
     function carregarOS() {
         listaDiv.innerHTML = '<p class="empty-message">Carregando ordens de serviço...</p>';
         db.collection('usuarios').where('status', '==', 'ativo').get()
@@ -731,9 +696,7 @@
             });
     }
 
-    // ================================================================
     // EVENT LISTENERS
-    // ================================================================
     btnFiltrar.addEventListener('click', aplicarFiltros);
     [filtroStatus, filtroPendente,
      filtroQuadraReclamante, filtroLoteReclamante,
@@ -761,12 +724,8 @@
         }
     });
 
-    // ================================================================
-    // AUTH
-    // ================================================================
     auth.onAuthStateChanged((user) => {
         if (!user) { window.location.href = 'index.html'; return; }
-
         registrarAtividade();
         iniciarMonitorTimeout();
 

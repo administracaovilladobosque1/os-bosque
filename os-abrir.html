@@ -12,11 +12,8 @@
         body { background: #e8f5e9; padding: 16px 12px; display: flex; justify-content: center; min-height: 100vh; }
         .container { background: #fff; max-width: 650px; width: 100%; padding: 18px; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,80,0,0.12); border: 1px solid #a5d6a7; }
 
+        /* Cabeçalho "Logado como" — linha simples */
         .user-header {
-            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
-            border: 1px solid #a5d6a7;
-            border-radius: 10px;
-            padding: 8px 14px;
             margin-bottom: 14px;
             display: flex;
             align-items: center;
@@ -45,10 +42,7 @@
         .btn-voltar:hover { background: #33691e; }
         .form-group { margin-bottom: 10px; }
         label { display: block; font-weight: 600; font-size: 13px; color: #1b5e20; margin-bottom: 2px; }
-        input, select, textarea {
-            width: 100%; padding: 6px 10px; border: 1px solid #a5d6a7;
-            border-radius: 6px; font-size: 14px; background: #fafffe;
-        }
+        input, select, textarea { width: 100%; padding: 6px 10px; border: 1px solid #a5d6a7; border-radius: 6px; font-size: 14px; background: #fafffe; }
         textarea { resize: vertical; min-height: 50px; }
         input:focus, select:focus, textarea:focus { outline: none; border-color: #2e7d32; box-shadow: 0 0 0 2px rgba(46,125,50,0.15); }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -72,10 +66,6 @@
             .page-title { font-size: 20px; }
             .bloco { padding: 8px 10px 4px 10px; }
         }
-
-        select option.grupo { background-color: #ced4da; }
-        select option.admin { background-color: #ffe082; }
-        select option.diretor { background-color: #a5d6a7; }
     </style>
 </head>
 <body>
@@ -156,9 +146,6 @@
 </div>
 
 <script>
-    // ================================================================
-    // FIREBASE
-    // ================================================================
     const firebaseConfig = {
         apiKey: "AIzaSyDx_6oWO30Drh8GkuQA9jk2Oym7H8J3ABg",
         authDomain: "villa-bosque1.firebaseapp.com",
@@ -178,17 +165,11 @@
 
     const roleMap = { 'master':'Master', 'admin':'Administrador', 'diretor':'Diretor', 'tecnico':'Técnico' };
 
-    function registrarAtividade() {
-        try { localStorage.setItem(TIMEOUT_KEY, Date.now().toString()); } catch(e) {}
-    }
+    function registrarAtividade() { try { localStorage.setItem(TIMEOUT_KEY, Date.now().toString()); } catch(e) {} }
     function fazerLogoutTimeout() {
         if (window.__fazendoLogout) return;
         window.__fazendoLogout = true;
-        try {
-            localStorage.removeItem(TIMEOUT_KEY);
-            localStorage.removeItem('vb_userLoggedIn');
-            sessionStorage.clear();
-        } catch(e) {}
+        try { localStorage.removeItem(TIMEOUT_KEY); localStorage.removeItem('vb_userLoggedIn'); sessionStorage.clear(); } catch(e) {}
         auth.signOut().finally(() => {
             alert('Sessão expirada por inatividade. Faça login novamente.');
             window.location.href = 'index.html';
@@ -212,9 +193,6 @@
         });
     }
 
-    // ================================================================
-    // ELEMENTOS
-    // ================================================================
     const form = document.getElementById('osForm');
     const tituloInput = document.getElementById('titulo');
     const descricaoInput = document.getElementById('descricao');
@@ -257,9 +235,6 @@
     loteReclamante.addEventListener('blur', aplicarFormatacaoLotes);
     loteReclamado.addEventListener('blur', aplicarFormatacaoLotes);
 
-    // ================================================================
-    // CARREGAR PERSONAGENS
-    // ================================================================
     function carregarPersonagens() {
         direcionadoSelect.innerHTML = '<option value="">Carregando...</option>';
         db.collection('usuarios').where('status', '==', 'ativo').get()

@@ -12,11 +12,8 @@
         body { background: #e8f5e9; padding: 16px 12px; display: flex; justify-content: center; min-height: 100vh; }
         .container { background: #fff; max-width: 1000px; width: 100%; padding: 18px; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,80,0,0.12); border: 1px solid #a5d6a7; }
 
+        /* Cabeçalho "Logado como" — linha simples */
         .user-header {
-            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
-            border: 1px solid #a5d6a7;
-            border-radius: 10px;
-            padding: 8px 14px;
             margin-bottom: 14px;
             display: flex;
             align-items: center;
@@ -204,17 +201,11 @@
 
     const roleMap = { 'master':'Master', 'admin':'Administrador', 'diretor':'Diretor', 'tecnico':'Técnico' };
 
-    function registrarAtividade() {
-        try { localStorage.setItem(TIMEOUT_KEY, Date.now().toString()); } catch(e) {}
-    }
+    function registrarAtividade() { try { localStorage.setItem(TIMEOUT_KEY, Date.now().toString()); } catch(e) {} }
     function fazerLogoutTimeout() {
         if (window.__fazendoLogout) return;
         window.__fazendoLogout = true;
-        try {
-            localStorage.removeItem(TIMEOUT_KEY);
-            localStorage.removeItem('vb_userLoggedIn');
-            sessionStorage.clear();
-        } catch(e) {}
+        try { localStorage.removeItem(TIMEOUT_KEY); localStorage.removeItem('vb_userLoggedIn'); sessionStorage.clear(); } catch(e) {}
         auth.signOut().finally(() => {
             alert('Sessão expirada por inatividade. Faça login novamente.');
             window.location.href = 'index.html';
