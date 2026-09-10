@@ -11,6 +11,31 @@
         * { margin:0; padding:0; box-sizing:border-box; font-family: 'Calibri', 'Segoe UI', Tahoma, sans-serif; }
         body { background: #e8f5e9; padding: 16px 12px; display: flex; justify-content: center; min-height: 100vh; }
         .container { background: #fff; max-width: 650px; width: 100%; padding: 18px; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,80,0,0.12); border: 1px solid #a5d6a7; }
+
+        .user-header {
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+            border: 1px solid #a5d6a7;
+            border-radius: 10px;
+            padding: 8px 14px;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            font-size: 13px;
+            color: #1b5e20;
+        }
+        .user-header .uh-label { font-weight: 500; color: #558b2f; }
+        .user-header .uh-nome { font-weight: 700; color: #1b5e20; }
+        .user-header .uh-funcao {
+            display: inline-block; padding: 2px 10px; border-radius: 20px;
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
+        }
+        .uh-funcao.master { background: #ffcc80; color: #4e342e; }
+        .uh-funcao.admin { background: #ffe082; color: #4e342e; }
+        .uh-funcao.diretor { background: #a5d6a7; color: #1b5e20; }
+        .uh-funcao.tecnico { background: #ced4da; color: #333; }
+
         .page-title { font-size: 24px; color: #1b5e20; background: #c8e6c9; display: inline-block; padding: 4px 18px; border-radius: 30px; margin-bottom: 12px; }
         .btn { padding: 8px 16px; background: #2e7d32; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s; }
         .btn:hover { background: #1b5e20; }
@@ -21,12 +46,8 @@
         .form-group { margin-bottom: 10px; }
         label { display: block; font-weight: 600; font-size: 13px; color: #1b5e20; margin-bottom: 2px; }
         input, select, textarea {
-            width: 100%;
-            padding: 6px 10px;
-            border: 1px solid #a5d6a7;
-            border-radius: 6px;
-            font-size: 14px;
-            background: #fafffe;
+            width: 100%; padding: 6px 10px; border: 1px solid #a5d6a7;
+            border-radius: 6px; font-size: 14px; background: #fafffe;
         }
         textarea { resize: vertical; min-height: 50px; }
         input:focus, select:focus, textarea:focus { outline: none; border-color: #2e7d32; box-shadow: 0 0 0 2px rgba(46,125,50,0.15); }
@@ -59,6 +80,12 @@
 </head>
 <body>
 <div class="container">
+    <div class="user-header" id="userHeader">
+        <span class="uh-label">Logado como:</span>
+        <span class="uh-nome" id="userHeaderName">—</span>
+        <span class="uh-funcao tecnico" id="userHeaderRole">—</span>
+    </div>
+
     <h1 class="page-title">📝 Nova OS</h1>
     <a href="index.html" class="btn-voltar">← Voltar</a>
 
@@ -129,6 +156,9 @@
 </div>
 
 <script>
+    // ================================================================
+    // FIREBASE
+    // ================================================================
     const firebaseConfig = {
         apiKey: "AIzaSyDx_6oWO30Drh8GkuQA9jk2Oym7H8J3ABg",
         authDomain: "villa-bosque1.firebaseapp.com",
@@ -141,39 +171,50 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // ============================================================
-    // TIMEOUT GLOBAL
-    // ============================================================
+    const MASTER_EMAIL = 'administracaovilladobosque@gmail.com';
     const TIMEOUT_MS = 4 * 60 * 60 * 1000;
-    function verificarTimeout() {
-        const lastActivity = sessionStorage.getItem('lastActivity');
-        if (!lastActivity) {
-            sessionStorage.setItem('lastActivity', Date.now().toString());
-            return;
-        }
-        const diff = Date.now() - parseInt(lastActivity);
-        if (diff > TIMEOUT_MS) {
-            sessionStorage.removeItem('lastActivity');
-            sessionStorage.removeItem('userLoggedIn');
-            auth.signOut().then(() => {
-                alert('Sessão expirada por inatividade.');
-                window.location.href = 'index.html';
-            });
-        } else {
-            sessionStorage.setItem('lastActivity', Date.now().toString());
-        }
-    }
-    function resetTimeoutGlobal() {
-        sessionStorage.setItem('lastActivity', Date.now().toString());
-    }
-    ['click','mousemove','keydown','scroll','touchstart'].forEach(ev => {
-        document.addEventListener(ev, resetTimeoutGlobal);
-    });
-    verificarTimeout();
+    const TIMEOUT_KEY = 'vb_lastActivity';
+    const TIMEOUT_CHECK_INTERVAL = 30 * 1000;
 
-    // ============================================================
+    const roleMap = { 'master':'Master', 'admin':'Administrador', 'diretor':'Diretor', 'tecnico':'Técnico' };
+
+    function registrarAtividade() {
+        try { localStorage.setItem(TIMEOUT_KEY, Date.now().toString()); } catch(e) {}
+    }
+    function fazerLogoutTimeout() {
+        if (window.__fazendoLogout) return;
+        window.__fazendoLogout = true;
+        try {
+            localStorage.removeItem(TIMEOUT_KEY);
+            localStorage.removeItem('vb_userLoggedIn');
+            sessionStorage.clear();
+        } catch(e) {}
+        auth.signOut().finally(() => {
+            alert('Sessão expirada por inatividade. Faça login novamente.');
+            window.location.href = 'index.html';
+        });
+    }
+    function verificarTimeoutAgora() {
+        const last = parseInt(localStorage.getItem(TIMEOUT_KEY) || '0', 10);
+        if (!last) return false;
+        if ((Date.now() - last) > TIMEOUT_MS) { fazerLogoutTimeout(); return true; }
+        return false;
+    }
+    function iniciarMonitorTimeout() {
+        if (verificarTimeoutAgora()) return;
+        if (!localStorage.getItem(TIMEOUT_KEY)) registrarAtividade();
+        ['click','mousemove','keydown','scroll','touchstart'].forEach(ev => {
+            document.addEventListener(ev, registrarAtividade, { passive: true });
+        });
+        setInterval(verificarTimeoutAgora, TIMEOUT_CHECK_INTERVAL);
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') verificarTimeoutAgora();
+        });
+    }
+
+    // ================================================================
     // ELEMENTOS
-    // ============================================================
+    // ================================================================
     const form = document.getElementById('osForm');
     const tituloInput = document.getElementById('titulo');
     const descricaoInput = document.getElementById('descricao');
@@ -186,247 +227,189 @@
     const prioridadeSelect = document.getElementById('prioridade');
     const formMsg = document.getElementById('formMessage');
     const btnAbrir = document.getElementById('btnAbrir');
+    const userHeaderName = document.getElementById('userHeaderName');
+    const userHeaderRole = document.getElementById('userHeaderRole');
 
     let currentUser = null;
     let currentUserNome = '';
     let personagensList = [];
 
-    // ============================================================
-    // FUNÇÃO PARA FORMATAR LOTE COM 2 DÍGITOS
-    // ============================================================
     function formatarLote(valor) {
         if (!valor) return '';
         const num = parseInt(valor.trim(), 10);
         if (isNaN(num) || num < 1) return valor.trim();
-        const limitado = Math.min(num, 99);
-        return String(limitado).padStart(2, '0');
+        return String(Math.min(num, 99)).padStart(2, '0');
+    }
+    function atualizarHeader(nome, funcao) {
+        userHeaderName.textContent = nome || 'Usuário';
+        userHeaderRole.className = 'uh-funcao ' + (funcao || 'tecnico');
+        userHeaderRole.textContent = roleMap[funcao] || funcao || 'Técnico';
     }
 
-    // Capitaliza a quadra em tempo real
     document.querySelectorAll('.quadra-input').forEach(input => {
-        input.addEventListener('input', function() {
-            this.value = this.value.toUpperCase();
-        });
+        input.addEventListener('input', function() { this.value = this.value.toUpperCase(); });
     });
 
-    // Aplica formatação do lote ao perder o foco e ao submeter
     function aplicarFormatacaoLotes() {
-        if (loteReclamante.value.trim()) {
-            loteReclamante.value = formatarLote(loteReclamante.value);
-        }
-        if (loteReclamado.value.trim()) {
-            loteReclamado.value = formatarLote(loteReclamado.value);
-        }
+        if (loteReclamante.value.trim()) loteReclamante.value = formatarLote(loteReclamante.value);
+        if (loteReclamado.value.trim()) loteReclamado.value = formatarLote(loteReclamado.value);
     }
-
     loteReclamante.addEventListener('blur', aplicarFormatacaoLotes);
     loteReclamado.addEventListener('blur', aplicarFormatacaoLotes);
 
-    // ============================================================
-    // CARREGAR PERSONAGENS (apenas Admin e Diretor)
-    // ============================================================
+    // ================================================================
+    // CARREGAR PERSONAGENS
+    // ================================================================
     function carregarPersonagens() {
         direcionadoSelect.innerHTML = '<option value="">Carregando...</option>';
-        db.collection('usuarios')
-            .where('status', '==', 'ativo')
-            .get()
+        db.collection('usuarios').where('status', '==', 'ativo').get()
             .then(snapshot => {
-                const admins = [];
-                const diretores = [];
-
+                const admins = [], diretores = [];
                 snapshot.forEach(doc => {
-                    const data = doc.data();
-                    if (data.funcao !== 'admin' && data.funcao !== 'diretor') return;
-                    const item = { id: doc.id, nome: data.nome, funcao: data.funcao };
-                    if (data.funcao === 'admin') admins.push(item);
-                    else if (data.funcao === 'diretor') diretores.push(item);
+                    const d = doc.data();
+                    if (d.funcao !== 'admin' && d.funcao !== 'diretor') return;
+                    const item = { id: doc.id, nome: d.nome, funcao: d.funcao };
+                    if (d.funcao === 'admin') admins.push(item);
+                    else diretores.push(item);
                 });
-
-                admins.sort((a, b) => a.nome.localeCompare(b.nome));
-                diretores.sort((a, b) => a.nome.localeCompare(b.nome));
-
+                admins.sort((a,b) => a.nome.localeCompare(b.nome));
+                diretores.sort((a,b) => a.nome.localeCompare(b.nome));
                 personagensList = [...admins, ...diretores];
 
                 let html = '<option value="">Selecione um destino...</option>';
-
-                html += `<option value="group:admin" class="grupo" style="background-color:#ced4da;">GRUPO: Administradores</option>`;
-                html += `<option value="group:diretor" class="grupo" style="background-color:#ced4da;">GRUPO: Diretores</option>`;
+                html += `<option value="group:admin" style="background-color:#ffe082;">GRUPO: Administradores</option>`;
+                html += `<option value="group:diretor" style="background-color:#a5d6a7;">GRUPO: Diretores</option>`;
 
                 admins.forEach(item => {
                     const isMe = (item.id === currentUser.uid);
                     const label = isMe ? `${item.nome} (você) (${item.funcao})` : `${item.nome} (${item.funcao})`;
-                    html += `<option value="${item.id}" class="admin" style="background-color:#ffe082;">${label}</option>`;
+                    html += `<option value="${item.id}" style="background-color:#ffe082;">${label}</option>`;
                 });
-
                 diretores.forEach(item => {
                     const isMe = (item.id === currentUser.uid);
                     const label = isMe ? `${item.nome} (você) (${item.funcao})` : `${item.nome} (${item.funcao})`;
-                    html += `<option value="${item.id}" class="diretor" style="background-color:#a5d6a7;">${label}</option>`;
+                    html += `<option value="${item.id}" style="background-color:#a5d6a7;">${label}</option>`;
                 });
 
                 if (admins.length === 0 && diretores.length === 0) {
                     html = '<option value="">Nenhum Administrador ou Diretor ativo</option>';
                 }
-
                 direcionadoSelect.innerHTML = html;
             })
             .catch(err => {
-                console.error('Erro ao carregar personagens:', err);
+                console.error(err);
                 direcionadoSelect.innerHTML = `<option value="">Erro: ${err.message}</option>`;
             });
     }
 
-    // ============================================================
-    // GERAR NÚMERO DA OS
-    // ============================================================
     function gerarNumeroOS() {
-        return db.collection('ordens_servico')
-            .orderBy('numero', 'desc')
-            .limit(1)
-            .get()
-            .then(snapshot => {
-                if (snapshot.empty) return 1;
-                const ultimo = snapshot.docs[0].data().numero || 0;
-                return ultimo + 1;
-            });
+        return db.collection('ordens_servico').orderBy('numero','desc').limit(1).get()
+            .then(snapshot => snapshot.empty ? 1 : (snapshot.docs[0].data().numero || 0) + 1);
     }
 
-    // ============================================================
-    // SUBMIT – com formatação e capitalização
-    // ============================================================
     form.addEventListener('submit', (e) => {
         e.preventDefault();
-
-        // Formata os lotes e capitaliza quadras (já feito em tempo real, mas reforça)
         aplicarFormatacaoLotes();
 
         const titulo = tituloInput.value.trim();
         const descricao = descricaoInput.value.trim();
         const tipo = tipoSelect.value;
-        const qReclamante = quadraReclamante.value.trim().toUpperCase();
-        const lReclamante = loteReclamante.value.trim();
-        const qReclamada = quadraReclamada.value.trim().toUpperCase();
-        const lReclamada = loteReclamado.value.trim();
-        const valSelecionado = direcionadoSelect.value;
+        const qR = quadraReclamante.value.trim().toUpperCase();
+        const lR = loteReclamante.value.trim();
+        const qA = quadraReclamada.value.trim().toUpperCase();
+        const lA = loteReclamado.value.trim();
+        const valSel = direcionadoSelect.value;
         const prioridade = prioridadeSelect.value;
 
-        if (!titulo || !descricao) {
-            showMessage(formMsg, 'Preencha título e descrição.', 'error');
-            return;
-        }
-        if (!valSelecionado) {
-            showMessage(formMsg, 'Selecione para quem direcionar a OS.', 'error');
-            return;
-        }
+        if (!titulo || !descricao) { showMessage(formMsg, 'Preencha título e descrição.', 'error'); return; }
+        if (!valSel) { showMessage(formMsg, 'Selecione para quem direcionar a OS.', 'error'); return; }
 
         btnAbrir.disabled = true;
         btnAbrir.textContent = 'Abrindo...';
 
-        let direcionadoPara = valSelecionado;
-        let direcionadoParaNome = '';
-        let direcionadoParaFuncao = '';
+        let dirPara = valSel;
+        let dirNome = '';
+        let dirFuncao = '';
 
-        if (valSelecionado === 'group:admin') {
-            direcionadoParaNome = 'Administradores';
-            direcionadoParaFuncao = 'admin';
-        } else if (valSelecionado === 'group:diretor') {
-            direcionadoParaNome = 'Diretores';
-            direcionadoParaFuncao = 'diretor';
-        } else {
-            const found = personagensList.find(p => p.id === valSelecionado);
+        if (valSel === 'group:admin') { dirNome = 'Administradores'; dirFuncao = 'admin'; }
+        else if (valSel === 'group:diretor') { dirNome = 'Diretores'; dirFuncao = 'diretor'; }
+        else {
+            const found = personagensList.find(p => p.id === valSel);
             if (!found) {
-                showMessage(formMsg, 'Personagem selecionado não encontrado.', 'error');
-                btnAbrir.disabled = false;
-                btnAbrir.textContent = 'Abrir OS';
+                showMessage(formMsg, 'Personagem não encontrado.', 'error');
+                btnAbrir.disabled = false; btnAbrir.textContent = 'Abrir OS';
                 return;
             }
-            direcionadoParaNome = found.nome;
-            direcionadoParaFuncao = found.funcao || '';
+            dirNome = found.nome; dirFuncao = found.funcao || '';
         }
 
-        gerarNumeroOS()
-            .then(numero => {
-                const agora = new Date();
-                const timestampISO = agora.toISOString();
-
-                const osData = {
-                    numero: numero,
-                    titulo: titulo,
-                    descricao: descricao,
-                    tipo: tipo,
-                    quadra_reclamante: qReclamante || null,
-                    lote_reclamante: lReclamante || null,
-                    quadra_reclamada: qReclamada || null,
-                    lote_reclamada: lReclamada || null,
-                    prioridade: prioridade,
-                    status: 'aberta',
-                    aberto_por: currentUser.uid,
-                    aberto_por_nome: currentUserNome,
-                    direcionado_para: direcionadoPara,
-                    direcionado_para_nome: direcionadoParaNome,
-                    direcionado_para_funcao: direcionadoParaFuncao,
-                    // Guarda o original da abertura
-                    direcionado_para_original: direcionadoPara,
-                    direcionado_para_nome_original: direcionadoParaNome,
-                    direcionado_para_funcao_original: direcionadoParaFuncao,
-                    historico: [{
-                        data: timestampISO,
-                        acao: 'abertura',
-                        usuario: currentUserNome,
-                        mensagem: `OS aberta por ${currentUserNome}`,
-                        direcionado_para: direcionadoParaNome
-                    }],
-                    criado_em: timestampISO,
-                    atualizado_em: timestampISO
-                };
-
-                return db.collection('ordens_servico').add(osData);
-            })
-            .then((docRef) => {
-                showMessage(formMsg, `✅ OS #${docRef.id} aberta com sucesso!`, 'success');
-                form.reset();
-                btnAbrir.disabled = false;
-                btnAbrir.textContent = 'Abrir OS';
-                carregarPersonagens();
-                setTimeout(() => {
-                    window.location.href = 'os-list.html';
-                }, 2000);
-            })
-            .catch((error) => {
-                console.error('Erro ao abrir OS:', error);
-                showMessage(formMsg, `Erro ao abrir OS: ${error.message}`, 'error');
-                btnAbrir.disabled = false;
-                btnAbrir.textContent = 'Abrir OS';
-            });
+        gerarNumeroOS().then(numero => {
+            const agora = new Date().toISOString();
+            const osData = {
+                numero, titulo, descricao, tipo,
+                quadra_reclamante: qR || null, lote_reclamante: lR || null,
+                quadra_reclamada: qA || null, lote_reclamada: lA || null,
+                prioridade, status: 'aberta',
+                aberto_por: currentUser.uid,
+                aberto_por_nome: currentUserNome,
+                direcionado_para: dirPara,
+                direcionado_para_nome: dirNome,
+                direcionado_para_funcao: dirFuncao,
+                direcionado_para_original: dirPara,
+                direcionado_para_nome_original: dirNome,
+                direcionado_para_funcao_original: dirFuncao,
+                historico: [{
+                    data: agora, acao: 'abertura',
+                    usuario_uid: currentUser.uid, usuario: currentUserNome,
+                    mensagem: `OS aberta por ${currentUserNome}`,
+                    direcionado_para: dirPara, direcionado_para_nome: dirNome
+                }],
+                criado_em: agora, atualizado_em: agora
+            };
+            return db.collection('ordens_servico').add(osData);
+        })
+        .then((docRef) => {
+            showMessage(formMsg, `✅ OS #${docRef.id} aberta com sucesso!`, 'success');
+            form.reset();
+            btnAbrir.disabled = false; btnAbrir.textContent = 'Abrir OS';
+            carregarPersonagens();
+            setTimeout(() => { window.location.href = 'os-list.html'; }, 2000);
+        })
+        .catch(err => {
+            console.error(err);
+            showMessage(formMsg, 'Erro ao abrir OS: ' + err.message, 'error');
+            btnAbrir.disabled = false; btnAbrir.textContent = 'Abrir OS';
+        });
     });
 
-    function showMessage(el, text, type) {
-        el.textContent = text;
-        el.className = 'message ' + type;
-    }
+    function showMessage(el, text, type) { el.textContent = text; el.className = 'message ' + type; }
 
-    // ============================================================
-    // AUTENTICAÇÃO
-    // ============================================================
     auth.onAuthStateChanged((user) => {
-        if (user) {
-            currentUser = user;
-            db.collection('usuarios').doc(user.uid).get()
-                .then(doc => {
-                    if (doc.exists) {
-                        currentUserNome = doc.data().nome || user.displayName || 'Usuário';
-                    } else {
-                        currentUserNome = user.displayName || 'Usuário';
-                    }
-                    carregarPersonagens();
-                })
-                .catch(() => {
-                    currentUserNome = user.displayName || 'Usuário';
-                    carregarPersonagens();
-                });
-        } else {
-            window.location.href = 'index.html';
-        }
+        if (!user) { window.location.href = 'index.html'; return; }
+        currentUser = user;
+        registrarAtividade();
+        iniciarMonitorTimeout();
+
+        db.collection('usuarios').doc(user.uid).get()
+            .then(doc => {
+                let nome = user.displayName || user.email;
+                let funcao = 'tecnico';
+                if (doc.exists) {
+                    const d = doc.data();
+                    nome = d.nome || nome;
+                    funcao = d.funcao || 'tecnico';
+                }
+                if (user.email === MASTER_EMAIL) funcao = 'master';
+                currentUserNome = nome;
+                atualizarHeader(nome, funcao);
+                carregarPersonagens();
+            })
+            .catch(() => {
+                currentUserNome = user.displayName || user.email;
+                const f = user.email === MASTER_EMAIL ? 'master' : 'tecnico';
+                atualizarHeader(currentUserNome, f);
+                carregarPersonagens();
+            });
     });
 </script>
 </body>

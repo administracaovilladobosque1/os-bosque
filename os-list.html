@@ -11,6 +11,36 @@
         * { margin:0; padding:0; box-sizing:border-box; font-family: 'Calibri', 'Segoe UI', Tahoma, sans-serif; }
         body { background: #e8f5e9; padding: 16px 12px; display: flex; justify-content: center; min-height: 100vh; }
         .container { background: #fff; max-width: 1400px; width: 100%; padding: 18px; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,80,0,0.12); border: 1px solid #a5d6a7; }
+
+        /* Cabeçalho "Logado como" */
+        .user-header {
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+            border: 1px solid #a5d6a7;
+            border-radius: 10px;
+            padding: 8px 14px;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            font-size: 13px;
+            color: #1b5e20;
+        }
+        .user-header .uh-label { font-weight: 500; color: #558b2f; }
+        .user-header .uh-nome { font-weight: 700; color: #1b5e20; }
+        .user-header .uh-funcao {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .uh-funcao.master { background: #ffcc80; color: #4e342e; }
+        .uh-funcao.admin { background: #ffe082; color: #4e342e; }
+        .uh-funcao.diretor { background: #a5d6a7; color: #1b5e20; }
+        .uh-funcao.tecnico { background: #ced4da; color: #333; }
+
         .page-title { font-size: 24px; color: #1b5e20; background: #c8e6c9; display: inline-block; padding: 4px 18px; border-radius: 30px; margin-bottom: 12px; }
         .header-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; align-items: center; }
         .btn { padding: 8px 16px; background: #2e7d32; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s; text-decoration: none; display: inline-block; }
@@ -20,74 +50,29 @@
         .btn-voltar { background: #558b2f; }
         .btn-voltar:hover { background: #33691e; }
 
-        /* ============================================================ */
-        /* FILTROS - DESKTOP                                             */
-        /* ============================================================ */
-        .filtros {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin: 12px 0 16px;
-            align-items: center;
-        }
-        .filtros select, .filtros input {
-            padding: 6px 10px;
-            border: 1px solid #a5d6a7;
-            border-radius: 6px;
-            font-size: 14px;
-            background: #fafffe;
-            flex: 0 1 auto;
-            min-width: 120px;
-        }
-        .filtros input[type="text"] {
-            flex: 1 1 150px;
-            min-width: 100px;
-        }
+        .filtros { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 16px; align-items: center; }
+        .filtros select, .filtros input { padding: 6px 10px; border: 1px solid #a5d6a7; border-radius: 6px; font-size: 14px; background: #fafffe; flex: 0 1 auto; min-width: 120px; }
+        .filtros input[type="text"] { flex: 1 1 150px; min-width: 100px; }
         .filtros .btn-filtrar {
-            background: #2e7d32;
-            color: white;
-            border: none;
-            padding: 6px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            transition: 0.2s;
-            position: relative;
+            background: #2e7d32; color: white; border: none; padding: 6px 16px;
+            border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; transition: 0.2s;
         }
         .filtros .btn-filtrar:hover { background: #1b5e20; }
         .filtros .btn-filtrar.pendente {
             box-shadow: 0 0 0 3px rgba(240, 173, 78, 0.5);
-            background: #f0ad4e;
-            color: #000;
+            background: #f0ad4e; color: #000;
             animation: pulseBtn 1.6s infinite;
         }
         @keyframes pulseBtn {
             0%, 100% { box-shadow: 0 0 0 3px rgba(240, 173, 78, 0.5); }
             50%      { box-shadow: 0 0 0 6px rgba(240, 173, 78, 0.15); }
         }
-        .filtros .grupo-filtro {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            flex-wrap: wrap;
-        }
-        .filtros .grupo-filtro label {
-            font-size: 12px;
-            font-weight: 600;
-            color: #1b5e20;
-            margin-right: 2px;
-        }
-        .filtros .grupo-filtro input {
-            min-width: 70px;
-            flex: 0 1 80px;
-        }
+        .filtros .grupo-filtro { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+        .filtros .grupo-filtro label { font-size: 12px; font-weight: 600; color: #1b5e20; margin-right: 2px; }
+        .filtros .grupo-filtro input { min-width: 70px; flex: 0 1 80px; }
         .filtro-label { display: none; }
         .filtros-toggle { display: none; }
 
-        /* ============================================================ */
-        /* TABELA (DESKTOP)                                              */
-        /* ============================================================ */
         .table-responsive { overflow-x: auto; margin-top: 12px; }
         table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 1180px; }
         th { background: #c8e6c9; padding: 10px 8px; text-align: left; color: #1b5e20; border-bottom: 2px solid #81c784; white-space: nowrap; cursor: pointer; user-select: none; position: relative; }
@@ -95,14 +80,7 @@
         th .sorter { display: inline-block; margin-left: 4px; font-size: 12px; }
         td { padding: 10px 8px; border-bottom: 1px solid #c8e6c9; vertical-align: middle; }
 
-        .badge {
-            display: inline-block;
-            padding: 3px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            white-space: nowrap;
-        }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; }
         .badge .icone { margin-right: 4px; }
         .badge-aberta { background: #e3f2fd; color: #0d47a1; }
         .badge-em_andamento { background: #fff3e0; color: #e65100; }
@@ -127,211 +105,67 @@
         .dias-hoje { color: #558b2f; }
         .empty-message { text-align: center; color: #555; padding: 30px 0; }
 
-        /* ============================================================ */
-        /* CARDS (MOBILE)                                                */
-        /* ============================================================ */
         .lista-cards { display: none; flex-direction: column; gap: 10px; margin-top: 12px; }
         .os-card {
-            background: #fff;
-            border: 1px solid #c8e6c9;
-            border-left: 4px solid #2e7d32;
-            border-radius: 12px;
-            padding: 14px;
-            cursor: pointer;
+            background: #fff; border: 1px solid #c8e6c9; border-left: 4px solid #2e7d32;
+            border-radius: 12px; padding: 14px; cursor: pointer;
             transition: transform 0.15s, box-shadow 0.15s;
             box-shadow: 0 2px 6px rgba(0,0,0,0.05);
         }
         .os-card:active { transform: scale(0.985); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
         .os-card.atrasada { border-left-color: #c62828; background: #fff8f8; }
-
-        .os-card .card-topo {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 8px;
-            flex-wrap: wrap;
-        }
-        .os-card .card-numero {
-            font-weight: 700;
-            color: #1b5e20;
-            font-size: 15px;
-            background: #e8f5e9;
-            padding: 2px 10px;
-            border-radius: 6px;
-        }
-        .os-card .card-badges-topo {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-        }
-        .os-card .card-titulo {
-            font-size: 16px;
-            font-weight: 600;
-            color: #222;
-            line-height: 1.3;
-            margin-bottom: 10px;
-            word-break: break-word;
-        }
-        .os-card .card-divisor {
-            border-top: 1px dashed #d0e7d0;
-            margin: 8px 0;
-        }
-        .os-card .card-linha {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
-            color: #444;
-            padding: 3px 0;
-            flex-wrap: wrap;
-        }
-        .os-card .card-linha .icone {
-            flex-shrink: 0;
-            font-size: 14px;
-            width: 18px;
-            text-align: center;
-        }
-        .os-card .card-linha .rotulo {
-            font-weight: 600;
-            color: #1b5e20;
-            font-size: 12px;
-            min-width: 78px;
-        }
-        .os-card .card-linha .valor {
-            color: #333;
-            flex: 1;
-            word-break: break-word;
-        }
-        .os-card .card-rodape {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 8px;
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px solid #e8f5e9;
-            flex-wrap: wrap;
-        }
+        .os-card .card-topo { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+        .os-card .card-numero { font-weight: 700; color: #1b5e20; font-size: 15px; background: #e8f5e9; padding: 2px 10px; border-radius: 6px; }
+        .os-card .card-badges-topo { display: flex; gap: 6px; flex-wrap: wrap; }
+        .os-card .card-titulo { font-size: 16px; font-weight: 600; color: #222; line-height: 1.3; margin-bottom: 10px; word-break: break-word; }
+        .os-card .card-divisor { border-top: 1px dashed #d0e7d0; margin: 8px 0; }
+        .os-card .card-linha { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #444; padding: 3px 0; flex-wrap: wrap; }
+        .os-card .card-linha .icone { flex-shrink: 0; font-size: 14px; width: 18px; text-align: center; }
+        .os-card .card-linha .rotulo { font-weight: 600; color: #1b5e20; font-size: 12px; min-width: 78px; }
+        .os-card .card-linha .valor { color: #333; flex: 1; word-break: break-word; }
+        .os-card .card-rodape { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #e8f5e9; flex-wrap: wrap; }
         .os-card .card-status { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-        .os-card .card-dias {
-            font-size: 12px;
-            color: #666;
-            text-align: right;
-        }
+        .os-card .card-dias { font-size: 12px; color: #666; text-align: right; }
         .os-card .card-dias strong { color: #1b5e20; }
 
-        /* ============================================================ */
-        /* MOBILE                                                        */
-        /* ============================================================ */
         @media (max-width: 768px) {
             body { padding: 10px 8px; }
             .container { padding: 14px 12px; border-radius: 12px; }
             .page-title { font-size: 20px; padding: 4px 14px; }
-
-            .header-actions {
-                flex-direction: row;
-                gap: 8px;
-                margin-bottom: 12px;
-            }
-            .header-actions .btn {
-                flex: 1;
-                text-align: center;
-                padding: 10px 12px;
-                font-size: 14px;
-            }
+            .header-actions { flex-direction: row; gap: 8px; margin-bottom: 12px; }
+            .header-actions .btn { flex: 1; text-align: center; padding: 10px 12px; font-size: 14px; }
 
             .filtros-toggle {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 8px;
-                width: 100%;
-                padding: 12px 14px;
-                background: #f1f8e9;
-                border: 1.5px solid #a5d6a7;
-                border-radius: 10px;
-                color: #1b5e20;
-                font-size: 15px;
-                font-weight: 700;
-                cursor: pointer;
-                margin-bottom: 8px;
-                position: relative;
+                display: flex; align-items: center; justify-content: center; gap: 8px;
+                width: 100%; padding: 12px 14px;
+                background: #f1f8e9; border: 1.5px solid #a5d6a7;
+                border-radius: 10px; color: #1b5e20; font-size: 15px; font-weight: 700;
+                cursor: pointer; margin-bottom: 8px; position: relative;
             }
             .filtros-toggle:active { background: #e8f5e9; }
-            .filtros-toggle .seta {
-                margin-left: auto;
-                transition: transform 0.2s;
-                font-size: 12px;
-            }
+            .filtros-toggle .seta { margin-left: auto; transition: transform 0.2s; font-size: 12px; }
             .filtros-toggle.aberto .seta { transform: rotate(180deg); }
             .filtros-toggle .badge-contador {
-                background: #2e7d32;
-                color: #fff;
-                border-radius: 20px;
-                padding: 1px 8px;
-                font-size: 12px;
-                font-weight: 700;
-                display: none;
+                background: #2e7d32; color: #fff; border-radius: 20px;
+                padding: 1px 8px; font-size: 12px; font-weight: 700; display: none;
             }
             .filtros-toggle .badge-contador.ativo { display: inline-block; }
 
             .filtros {
-                display: none;
-                flex-direction: column;
-                align-items: stretch;
-                gap: 12px;
-                padding: 14px;
-                background: #f8fdf8;
-                border: 1px solid #c8e6c9;
-                border-radius: 12px;
-                margin-bottom: 12px;
+                display: none; flex-direction: column; align-items: stretch; gap: 12px;
+                padding: 14px; background: #f8fdf8; border: 1px solid #c8e6c9;
+                border-radius: 12px; margin-bottom: 12px;
             }
             .filtros.aberto { display: flex; }
-
-            .filtros .filtro-bloco {
-                display: flex;
-                flex-direction: column;
-                gap: 4px;
-                width: 100%;
+            .filtros .filtro-bloco { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+            .filtros .filtro-bloco .filtro-label { display: block; font-size: 13px; font-weight: 700; color: #1b5e20; margin: 0; }
+            .filtros select, .filtros input, .filtros input[type="text"] {
+                width: 100%; min-width: 0; flex: 1 1 auto;
+                padding: 10px 12px; font-size: 15px; border-radius: 8px;
             }
-            .filtros .filtro-bloco .filtro-label {
-                display: block;
-                font-size: 13px;
-                font-weight: 700;
-                color: #1b5e20;
-                margin: 0;
-            }
-            .filtros select,
-            .filtros input,
-            .filtros input[type="text"] {
-                width: 100%;
-                min-width: 0;
-                flex: 1 1 auto;
-                padding: 10px 12px;
-                font-size: 15px;
-                border-radius: 8px;
-            }
-            .filtros .grupo-filtro {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 8px;
-                width: 100%;
-            }
-            .filtros .grupo-filtro input {
-                width: 100%;
-                min-width: 0;
-                padding: 10px 12px;
-                font-size: 15px;
-                border-radius: 8px;
-            }
-            .filtros .btn-filtrar {
-                width: 100%;
-                padding: 12px;
-                font-size: 15px;
-                border-radius: 10px;
-                margin-top: 4px;
-            }
+            .filtros .grupo-filtro { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; }
+            .filtros .grupo-filtro input { width: 100%; min-width: 0; padding: 10px 12px; font-size: 15px; border-radius: 8px; }
+            .filtros .btn-filtrar { width: 100%; padding: 12px; font-size: 15px; border-radius: 10px; margin-top: 4px; }
 
             .table-responsive { display: none; }
             .lista-cards { display: flex; }
@@ -340,6 +174,12 @@
 </head>
 <body>
 <div class="container">
+    <div class="user-header" id="userHeader">
+        <span class="uh-label">Logado como:</span>
+        <span class="uh-nome" id="userHeaderName">—</span>
+        <span class="uh-funcao tecnico" id="userHeaderRole">—</span>
+    </div>
+
     <h1 class="page-title">📋 Ordens de Serviço</h1>
     <div class="header-actions">
         <a href="index.html" class="btn btn-voltar">← Voltar</a>
@@ -395,7 +235,7 @@
 
 <script>
     // ================================================================
-    // FIREBASE CONFIG
+    // FIREBASE
     // ================================================================
     const firebaseConfig = {
         apiKey: "AIzaSyDx_6oWO30Drh8GkuQA9jk2Oym7H8J3ABg",
@@ -410,34 +250,51 @@
     const db = firebase.firestore();
 
     // ================================================================
-    // TIMEOUT GLOBAL
+    // CONSTANTES
     // ================================================================
+    const MASTER_EMAIL = 'administracaovilladobosque@gmail.com';
     const TIMEOUT_MS = 4 * 60 * 60 * 1000;
-    function verificarTimeout() {
-        const lastActivity = sessionStorage.getItem('lastActivity');
-        if (!lastActivity) {
-            sessionStorage.setItem('lastActivity', Date.now().toString());
-            return;
-        }
-        const diff = Date.now() - parseInt(lastActivity);
-        if (diff > TIMEOUT_MS) {
-            sessionStorage.removeItem('lastActivity');
-            sessionStorage.removeItem('userLoggedIn');
-            auth.signOut().then(() => {
-                alert('Sessão expirada por inatividade.');
-                window.location.href = 'index.html';
-            });
-        } else {
-            sessionStorage.setItem('lastActivity', Date.now().toString());
-        }
+    const TIMEOUT_KEY = 'vb_lastActivity';
+    const TIMEOUT_CHECK_INTERVAL = 30 * 1000;
+
+    const roleMap = { 'master':'Master', 'admin':'Administrador', 'diretor':'Diretor', 'tecnico':'Técnico' };
+
+    // ================================================================
+    // TIMEOUT
+    // ================================================================
+    function registrarAtividade() {
+        try { localStorage.setItem(TIMEOUT_KEY, Date.now().toString()); } catch(e) {}
     }
-    function resetTimeoutGlobal() {
-        sessionStorage.setItem('lastActivity', Date.now().toString());
+    function fazerLogoutTimeout() {
+        if (window.__fazendoLogout) return;
+        window.__fazendoLogout = true;
+        try {
+            localStorage.removeItem(TIMEOUT_KEY);
+            localStorage.removeItem('vb_userLoggedIn');
+            sessionStorage.clear();
+        } catch(e) {}
+        auth.signOut().finally(() => {
+            alert('Sessão expirada por inatividade. Faça login novamente.');
+            window.location.href = 'index.html';
+        });
     }
-    ['click','mousemove','keydown','scroll','touchstart'].forEach(ev => {
-        document.addEventListener(ev, resetTimeoutGlobal);
-    });
-    verificarTimeout();
+    function verificarTimeoutAgora() {
+        const last = parseInt(localStorage.getItem(TIMEOUT_KEY) || '0', 10);
+        if (!last) return false;
+        if ((Date.now() - last) > TIMEOUT_MS) { fazerLogoutTimeout(); return true; }
+        return false;
+    }
+    function iniciarMonitorTimeout() {
+        if (verificarTimeoutAgora()) return;
+        if (!localStorage.getItem(TIMEOUT_KEY)) registrarAtividade();
+        ['click','mousemove','keydown','scroll','touchstart'].forEach(ev => {
+            document.addEventListener(ev, registrarAtividade, { passive: true });
+        });
+        setInterval(verificarTimeoutAgora, TIMEOUT_CHECK_INTERVAL);
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') verificarTimeoutAgora();
+        });
+    }
 
     // ================================================================
     // ELEMENTOS
@@ -454,21 +311,17 @@
     const filtrosToggle = document.getElementById('filtrosToggle');
     const filtrosPainel = document.getElementById('filtrosPainel');
     const filtrosContador = document.getElementById('filtrosContador');
+    const userHeaderName = document.getElementById('userHeaderName');
+    const userHeaderRole = document.getElementById('userHeaderRole');
 
     let sortField = 'numero';
     let sortAsc = false;
     let userMap = {};
     let docsRenderizados = [];
 
-    // Snapshot dos filtros atualmente APLICADOS (para detectar mudanças pendentes)
     let filtrosAplicados = {
-        status: 'aberto',
-        pendente: 'todos',
-        qReclamante: '',
-        lReclamante: '',
-        qReclamada: '',
-        lReclamada: '',
-        busca: ''
+        status: 'aberto', pendente: 'todos',
+        qReclamante: '', lReclamante: '', qReclamada: '', lReclamada: '', busca: ''
     };
 
     const priorityMap = {
@@ -476,33 +329,33 @@
         'urgente': { label: 'Urgente', class: 'badge-urgente', icon: '🟡' },
         'normal': { label: 'Normal', class: 'badge-normal', icon: '🟢' }
     };
-
     const statusLabelMap = {
-        'aberta': 'Aberta',
-        'em_andamento': 'Em andamento',
-        'concluida': 'Concluída',
-        'cancelada': 'Cancelada'
+        'aberta': 'Aberta', 'em_andamento': 'Em andamento',
+        'concluida': 'Concluída', 'cancelada': 'Cancelada'
     };
 
-    function isMobile() {
-        return window.matchMedia('(max-width: 768px)').matches;
+    function isMobile() { return window.matchMedia('(max-width: 768px)').matches; }
+
+    // ================================================================
+    // HEADER
+    // ================================================================
+    function atualizarHeader(nome, funcao) {
+        userHeaderName.textContent = nome || 'Usuário';
+        userHeaderRole.className = 'uh-funcao ' + (funcao || 'tecnico');
+        userHeaderRole.textContent = roleMap[funcao] || funcao || 'Técnico';
     }
 
     // ================================================================
-    // TOGGLE DOS FILTROS (MOBILE)
+    // FILTROS — toggle/estado
     // ================================================================
     filtrosToggle.addEventListener('click', () => {
         filtrosPainel.classList.toggle('aberto');
         filtrosToggle.classList.toggle('aberto');
     });
 
-    // ================================================================
-    // ESTADO ATUAL DOS CAMPOS DE FILTRO
-    // ================================================================
     function lerFiltrosDoFormulario() {
         return {
-            status: filtroStatus.value,
-            pendente: filtroPendente.value,
+            status: filtroStatus.value, pendente: filtroPendente.value,
             qReclamante: filtroQuadraReclamante.value.trim(),
             lReclamante: filtroLoteReclamante.value.trim(),
             qReclamada: filtroQuadraReclamada.value.trim(),
@@ -510,41 +363,30 @@
             busca: filtroBusca.value.trim()
         };
     }
-
     function filtrosMudaram() {
-        const atual = lerFiltrosDoFormulario();
-        return atual.status !== filtrosAplicados.status ||
-               atual.pendente !== filtrosAplicados.pendente ||
-               atual.qReclamante !== filtrosAplicados.qReclamante ||
-               atual.lReclamante !== filtrosAplicados.lReclamante ||
-               atual.qReclamada !== filtrosAplicados.qReclamada ||
-               atual.lReclamada !== filtrosAplicados.lReclamada ||
-               atual.busca !== filtrosAplicados.busca;
+        const a = lerFiltrosDoFormulario();
+        return a.status !== filtrosAplicados.status ||
+               a.pendente !== filtrosAplicados.pendente ||
+               a.qReclamante !== filtrosAplicados.qReclamante ||
+               a.lReclamante !== filtrosAplicados.lReclamante ||
+               a.qReclamada !== filtrosAplicados.qReclamada ||
+               a.lReclamada !== filtrosAplicados.lReclamada ||
+               a.busca !== filtrosAplicados.busca;
     }
-
-    // ================================================================
-    // CONTADOR + DESTAQUE DO BOTÃO (visual)
-    // ================================================================
     function atualizarEstadoVisual() {
-        const atual = lerFiltrosDoFormulario();
+        const a = lerFiltrosDoFormulario();
         let n = 0;
-        if (atual.status !== 'todos') n++;
-        if (atual.pendente !== 'todos') n++;
-        if (atual.qReclamante) n++;
-        if (atual.lReclamante) n++;
-        if (atual.qReclamada) n++;
-        if (atual.lReclamada) n++;
-        if (atual.busca) n++;
+        if (a.status !== 'todos') n++;
+        if (a.pendente !== 'todos') n++;
+        if (a.qReclamante) n++;
+        if (a.lReclamante) n++;
+        if (a.qReclamada) n++;
+        if (a.lReclamada) n++;
+        if (a.busca) n++;
 
-        if (n > 0) {
-            filtrosContador.textContent = n;
-            filtrosContador.classList.add('ativo');
-        } else {
-            filtrosContador.textContent = '0';
-            filtrosContador.classList.remove('ativo');
-        }
+        if (n > 0) { filtrosContador.textContent = n; filtrosContador.classList.add('ativo'); }
+        else { filtrosContador.textContent = '0'; filtrosContador.classList.remove('ativo'); }
 
-        // Destaca o botão "Aplicar" se houver mudanças não aplicadas
         if (filtrosMudaram()) {
             btnFiltrar.classList.add('pendente');
             btnFiltrar.textContent = 'Aplicar Filtros •';
@@ -555,82 +397,60 @@
     }
 
     // ================================================================
-    // CÁLCULO DE DIAS
+    // DIAS / SLA
     // ================================================================
     function calcularDias(dataISO) {
         if (!dataISO) return '—';
-        const data = new Date(dataISO);
-        const agora = new Date();
-        const dataSemHora = new Date(data.getFullYear(), data.getMonth(), data.getDate());
-        const agoraSemHora = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
-        const diffMs = agoraSemHora - dataSemHora;
-        const diffDias = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-        if (diffDias === 0) return '<span class="dias-hoje">Hoje</span>';
-        if (diffDias === 1) return '1 dia';
-        return `${diffDias} dias`;
+        const d = new Date(dataISO);
+        const a = new Date();
+        const ds = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        const as = new Date(a.getFullYear(), a.getMonth(), a.getDate());
+        const diff = Math.floor((as - ds) / (1000*60*60*24));
+        if (diff === 0) return '<span class="dias-hoje">Hoje</span>';
+        if (diff === 1) return '1 dia';
+        return `${diff} dias`;
     }
-
     function calcularDiasTexto(dataISO) {
         if (!dataISO) return '—';
-        const data = new Date(dataISO);
-        const agora = new Date();
-        const dataSemHora = new Date(data.getFullYear(), data.getMonth(), data.getDate());
-        const agoraSemHora = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
-        const diffMs = agoraSemHora - dataSemHora;
-        const diffDias = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-        if (diffDias === 0) return 'Hoje';
-        if (diffDias === 1) return '1 dia';
-        return `${diffDias} dias`;
+        const d = new Date(dataISO);
+        const a = new Date();
+        const ds = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        const as = new Date(a.getFullYear(), a.getMonth(), a.getDate());
+        const diff = Math.floor((as - ds) / (1000*60*60*24));
+        if (diff === 0) return 'Hoje';
+        if (diff === 1) return '1 dia';
+        return `${diff} dias`;
     }
-
-    // ================================================================
-    // SLA
-    // ================================================================
-    const SLA_HORAS = {
-        'emergencial': 24,
-        'urgente': 72,
-        'normal': 168
-    };
-
+    const SLA_HORAS = { 'emergencial': 24, 'urgente': 72, 'normal': 168 };
     function isAtrasada(data) {
         if (!data) return false;
-        const status = (data.status || '').toLowerCase();
-        if (status === 'concluida' || status === 'cancelada') return false;
+        const s = (data.status || '').toLowerCase();
+        if (s === 'concluida' || s === 'cancelada') return false;
         if (!data.criado_em) return false;
-        const prioridade = data.prioridade || 'normal';
-        const limiteHoras = SLA_HORAS[prioridade] || 168;
-        const criado = new Date(data.criado_em).getTime();
-        const horas = (Date.now() - criado) / (1000 * 60 * 60);
-        return horas > limiteHoras;
+        const limite = SLA_HORAS[data.prioridade || 'normal'] || 168;
+        const horas = (Date.now() - new Date(data.criado_em).getTime()) / (1000*60*60);
+        return horas > limite;
     }
-
     function getAtrasoBadge(data) {
-        if (isAtrasada(data)) {
-            return `<span class="badge badge-atrasada">⚠️ Atrasada</span>`;
-        }
-        const status = (data.status || '').toLowerCase();
-        if (status === 'concluida' || status === 'cancelada') {
-            return `<span class="badge" style="background:#e0e0e0; color:#424242;">—</span>`;
-        }
+        if (isAtrasada(data)) return `<span class="badge badge-atrasada">⚠️ Atrasada</span>`;
+        const s = (data.status || '').toLowerCase();
+        if (s === 'concluida' || s === 'cancelada') return `<span class="badge" style="background:#e0e0e0; color:#424242;">—</span>`;
         return `<span class="badge badge-no-prazo">✓ No prazo</span>`;
     }
-
     function getUltimaDataHistorico(data) {
         if (data.historico && data.historico.length > 0) {
-            const ultimo = data.historico[data.historico.length - 1];
-            return ultimo.data || data.criado_em;
+            return data.historico[data.historico.length - 1].data || data.criado_em;
         }
         return data.criado_em;
     }
-
     function getPendenteCategoria(data) {
         if (data.direcionado_para === 'group:admin') return 'admin';
         if (data.direcionado_para === 'group:diretor') return 'diretoria';
         const uid = data.direcionado_para;
         if (uid && userMap[uid]) {
-            const funcao = userMap[uid].funcao;
-            if (funcao === 'admin') return 'admin';
-            if (funcao === 'diretor') return 'diretoria';
+            const f = userMap[uid].funcao;
+            if (f === 'admin') return 'admin';
+            if (f === 'diretor') return 'diretoria';
         }
         const nome = (data.direcionado_para_nome || '').toLowerCase();
         if (nome.includes('admin')) return 'admin';
@@ -643,79 +463,77 @@
     // ================================================================
     function ordenarDados(docs) {
         docs.sort((a, b) => {
-            let valA, valB;
+            let va, vb;
             switch (sortField) {
-                case 'numero': valA = a.numero || 0; valB = b.numero || 0; break;
-                case 'titulo': valA = (a.titulo || '').toLowerCase(); valB = (b.titulo || '').toLowerCase(); break;
-                case 'aberto_por_nome': valA = (a.aberto_por_nome || '').toLowerCase(); valB = (b.aberto_por_nome || '').toLowerCase(); break;
+                case 'numero': va = a.numero || 0; vb = b.numero || 0; break;
+                case 'titulo': va = (a.titulo || '').toLowerCase(); vb = (b.titulo || '').toLowerCase(); break;
+                case 'aberto_por_nome': va = (a.aberto_por_nome || '').toLowerCase(); vb = (b.aberto_por_nome || '').toLowerCase(); break;
                 case 'prioridade': {
-                    const prioOrder = { 'emergencial': 0, 'urgente': 1, 'normal': 2 };
-                    valA = prioOrder[a.prioridade] !== undefined ? prioOrder[a.prioridade] : 99;
-                    valB = prioOrder[b.prioridade] !== undefined ? prioOrder[b.prioridade] : 99;
+                    const o = { 'emergencial':0, 'urgente':1, 'normal':2 };
+                    va = o[a.prioridade] !== undefined ? o[a.prioridade] : 99;
+                    vb = o[b.prioridade] !== undefined ? o[b.prioridade] : 99;
                     break;
                 }
-                case 'status': valA = (a.status || '').toLowerCase(); valB = (b.status || '').toLowerCase(); break;
-                case 'criado_em': valA = a.criado_em ? new Date(a.criado_em).getTime() : 0; valB = b.criado_em ? new Date(b.criado_em).getTime() : 0; break;
-                case 'pendente_em': valA = (a.direcionado_para_nome || '').toLowerCase(); valB = (b.direcionado_para_nome || '').toLowerCase(); break;
+                case 'status': va = (a.status || '').toLowerCase(); vb = (b.status || '').toLowerCase(); break;
+                case 'criado_em': va = a.criado_em ? new Date(a.criado_em).getTime() : 0; vb = b.criado_em ? new Date(b.criado_em).getTime() : 0; break;
+                case 'pendente_em': va = (a.direcionado_para_nome || '').toLowerCase(); vb = (b.direcionado_para_nome || '').toLowerCase(); break;
                 case 'dias_pendente': {
-                    valA = getUltimaDataHistorico(a); valB = getUltimaDataHistorico(b);
-                    valA = valA ? new Date(valA).getTime() : 0; valB = valB ? new Date(valB).getTime() : 0;
+                    va = getUltimaDataHistorico(a); vb = getUltimaDataHistorico(b);
+                    va = va ? new Date(va).getTime() : 0; vb = vb ? new Date(vb).getTime() : 0;
                     break;
                 }
-                case 'dias_aberto': valA = a.criado_em ? new Date(a.criado_em).getTime() : 0; valB = b.criado_em ? new Date(b.criado_em).getTime() : 0; break;
-                default: valA = 0; valB = 0;
+                case 'dias_aberto': va = a.criado_em ? new Date(a.criado_em).getTime() : 0; vb = b.criado_em ? new Date(b.criado_em).getTime() : 0; break;
+                default: va = 0; vb = 0;
             }
-            if (typeof valA === 'string') {
-                return sortAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
-            }
-            return sortAsc ? valA - valB : valB - valA;
+            if (typeof va === 'string') return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+            return sortAsc ? va - vb : vb - va;
         });
         return docs;
     }
 
     // ================================================================
-    // HELPERS DE APRESENTAÇÃO
+    // APRESENTAÇÃO — CORES PADRONIZADAS
+    // admin (grupo ou pessoa) → amarelo | diretor (grupo ou pessoa) → verde
     // ================================================================
     function getPrioridadeHtml(data) {
         const p = data.prioridade || 'normal';
         const pData = priorityMap[p] || priorityMap['normal'];
         return `<span class="badge ${pData.class}"><span class="icone">${pData.icon}</span> ${pData.label}</span>`;
     }
-
     function getPendenteHtml(data) {
-        let pendenteCor = '#ced4da';
+        let cor = '#ced4da';
         let icone = '👥';
-        let texto = data.direcionado_para_nome || '—';
+        const texto = data.direcionado_para_nome || '—';
+        const alvo = data.direcionado_para;
 
-        if (data.direcionado_para && data.direcionado_para.startsWith('group:')) {
+        if (alvo && alvo.startsWith('group:')) {
             icone = '👥';
-            pendenteCor = '#ced4da';
+            if (alvo === 'group:admin') cor = '#ffe082';
+            else if (alvo === 'group:diretor') cor = '#a5d6a7';
         } else {
-            const uid = data.direcionado_para;
             icone = '👤';
-            if (uid && userMap[uid]) {
-                const funcao = userMap[uid].funcao;
-                if (funcao === 'admin') pendenteCor = '#ffe082';
-                else if (funcao === 'diretor') pendenteCor = '#a5d6a7';
-                else pendenteCor = '#ced4da';
+            if (alvo && userMap[alvo]) {
+                const f = userMap[alvo].funcao;
+                if (f === 'admin') cor = '#ffe082';
+                else if (f === 'diretor') cor = '#a5d6a7';
+                else if (f === 'master') cor = '#ffcc80';
             } else {
-                const nome = (data.direcionado_para_nome || '').toLowerCase();
-                if (nome.includes('admin')) { pendenteCor = '#ffe082'; icone = '👤'; }
-                else if (nome.includes('diretor')) { pendenteCor = '#a5d6a7'; icone = '👤'; }
-                else { pendenteCor = '#ced4da'; icone = '👤'; }
+                const n = (data.direcionado_para_nome || '').toLowerCase();
+                if (n.includes('admin')) cor = '#ffe082';
+                else if (n.includes('diretor')) cor = '#a5d6a7';
+                else if (n.includes('master')) cor = '#ffcc80';
             }
         }
-        return `<span class="badge" style="background-color:${pendenteCor}; color:#000;"><span class="icone">${icone}</span> ${texto}</span>`;
+        return `<span class="badge" style="background-color:${cor}; color:#000;"><span class="icone">${icone}</span> ${texto}</span>`;
     }
-
     function getStatusHtml(data) {
-        const statusClass = `badge-${data.status || 'aberta'}`;
-        const label = statusLabelMap[data.status] || (data.status || 'aberta').replace('_',' ');
-        return `<span class="badge ${statusClass}">${label.toUpperCase()}</span>`;
+        const c = `badge-${data.status || 'aberta'}`;
+        const l = statusLabelMap[data.status] || (data.status || 'aberta').replace('_',' ');
+        return `<span class="badge ${c}">${l.toUpperCase()}</span>`;
     }
 
     // ================================================================
-    // RENDERIZAR — TABELA (DESKTOP)
+    // TABELA (DESKTOP)
     // ================================================================
     function renderizarTabelaDesktop(docs) {
         let html = `<div class="table-responsive"><table>
@@ -738,9 +556,8 @@
             const dataHora = data.criado_em ? new Date(data.criado_em).toLocaleString('pt-BR') : '—';
             const diasAberto = data.criado_em ? calcularDias(data.criado_em) : '—';
             let diasPendente = '—';
-            const ultData = getUltimaDataHistorico(data);
-            if (ultData) diasPendente = calcularDias(ultData);
-
+            const ud = getUltimaDataHistorico(data);
+            if (ud) diasPendente = calcularDias(ud);
             const atrasoBadge = getAtrasoBadge(data);
             const atrasada = isAtrasada(data);
 
@@ -765,27 +582,23 @@
     }
 
     // ================================================================
-    // RENDERIZAR — CARDS (MOBILE)
+    // CARDS (MOBILE)
     // ================================================================
     function renderizarCardsMobile(docs) {
         let html = `<div class="lista-cards">`;
-
         docs.forEach(data => {
             const id = data.id;
             const atrasada = isAtrasada(data);
-
             const dataHora = data.criado_em
                 ? new Date(data.criado_em).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' })
                 : '—';
             const diasAberto = data.criado_em ? calcularDiasTexto(data.criado_em) : '—';
-
             let diasPendente = '—';
-            const ultData = getUltimaDataHistorico(data);
-            if (ultData) diasPendente = calcularDiasTexto(ultData);
+            const ud = getUltimaDataHistorico(data);
+            if (ud) diasPendente = calcularDiasTexto(ud);
 
             html += `
-                <div class="os-card ${atrasada ? 'atrasada' : ''}"
-                     onclick="window.location.href='os-detalhe.html?id=${id}'">
+                <div class="os-card ${atrasada ? 'atrasada' : ''}" onclick="window.location.href='os-detalhe.html?id=${id}'">
                     <div class="card-topo">
                         <span class="card-numero">OS #${data.numero || '—'}</span>
                         <span class="card-badges-topo">
@@ -793,64 +606,53 @@
                             ${atrasada ? `<span class="badge badge-atrasada">⚠️ Atrasada</span>` : ''}
                         </span>
                     </div>
-
                     <div class="card-titulo">${data.titulo || 'Sem título'}</div>
-
                     <div class="card-divisor"></div>
-
                     <div class="card-linha">
                         <span class="icone">👤</span>
                         <span class="rotulo">Pendente:</span>
                         <span class="valor">${getPendenteHtml(data)}</span>
                     </div>
-
                     <div class="card-linha">
                         <span class="icone">✍️</span>
                         <span class="rotulo">Aberto por:</span>
                         <span class="valor">${data.aberto_por_nome || '—'}</span>
                     </div>
-
                     <div class="card-linha">
                         <span class="icone">📅</span>
                         <span class="rotulo">Abertura:</span>
                         <span class="valor">${dataHora}</span>
                     </div>
-
                     <div class="card-rodape">
                         <span class="card-status">${getStatusHtml(data)}</span>
-                        <span class="card-dias">
-                            Aberto há <strong>${diasAberto}</strong> · Pendente há <strong>${diasPendente}</strong>
-                        </span>
+                        <span class="card-dias">Aberto há <strong>${diasAberto}</strong> · Pendente há <strong>${diasPendente}</strong></span>
                     </div>
                 </div>
             `;
         });
-
         html += `</div>`;
         return html;
     }
 
     // ================================================================
-    // RENDERIZAR PRINCIPAL
+    // RENDER
     // ================================================================
     function renderizarLista(docs) {
         if (!docs || docs.length === 0) {
             listaDiv.innerHTML = '<p class="empty-message">Nenhuma ordem encontrada com os filtros atuais.</p>';
             return;
         }
-
         docs = ordenarDados(docs);
         docsRenderizados = docs;
-
         if (isMobile()) {
             listaDiv.innerHTML = renderizarCardsMobile(docs);
         } else {
             listaDiv.innerHTML = renderizarTabelaDesktop(docs);
             document.querySelectorAll('th[data-sort]').forEach(th => {
                 th.addEventListener('click', () => {
-                    const field = th.dataset.sort;
-                    if (sortField === field) sortAsc = !sortAsc;
-                    else { sortField = field; sortAsc = false; }
+                    const f = th.dataset.sort;
+                    if (sortField === f) sortAsc = !sortAsc;
+                    else { sortField = f; sortAsc = false; }
                     renderizarLista(docsRenderizados);
                 });
             });
@@ -858,62 +660,48 @@
     }
 
     // ================================================================
-    // APLICAR FILTROS (somente quando clicar no botão)
+    // APLICAR FILTROS
     // ================================================================
     function aplicarFiltros() {
         let docs = window.allDocs || [];
+        const sf = filtroStatus.value;
+        if (sf === 'aberto') docs = docs.filter(d => d.status === 'aberta' || d.status === 'em_andamento');
+        else if (sf === 'fechado') docs = docs.filter(d => d.status === 'concluida' || d.status === 'cancelada');
 
-        const statusFiltro = filtroStatus.value;
-        if (statusFiltro === 'aberto') {
-            docs = docs.filter(d => d.status === 'aberta' || d.status === 'em_andamento');
-        } else if (statusFiltro === 'fechado') {
-            docs = docs.filter(d => d.status === 'concluida' || d.status === 'cancelada');
-        }
+        const pf = filtroPendente.value;
+        if (pf === 'diretoria') docs = docs.filter(d => getPendenteCategoria(d) === 'diretoria');
+        else if (pf === 'admin') docs = docs.filter(d => getPendenteCategoria(d) === 'admin');
 
-        const pendenteFiltro = filtroPendente.value;
-        if (pendenteFiltro === 'diretoria') {
-            docs = docs.filter(d => getPendenteCategoria(d) === 'diretoria');
-        } else if (pendenteFiltro === 'admin') {
-            docs = docs.filter(d => getPendenteCategoria(d) === 'admin');
-        }
+        const qr = filtroQuadraReclamante.value.trim().toLowerCase();
+        const lr = filtroLoteReclamante.value.trim().toLowerCase();
+        if (qr) docs = docs.filter(d => (d.quadra_reclamante || '').toLowerCase().includes(qr));
+        if (lr) docs = docs.filter(d => (d.lote_reclamante || '').toLowerCase().includes(lr));
 
-        const qReclamante = filtroQuadraReclamante.value.trim().toLowerCase();
-        const lReclamante = filtroLoteReclamante.value.trim().toLowerCase();
-        if (qReclamante) docs = docs.filter(d => (d.quadra_reclamante || '').toLowerCase().includes(qReclamante));
-        if (lReclamante) docs = docs.filter(d => (d.lote_reclamante || '').toLowerCase().includes(lReclamante));
-
-        const qReclamada = filtroQuadraReclamada.value.trim().toLowerCase();
-        const lReclamada = filtroLoteReclamada.value.trim().toLowerCase();
-        if (qReclamada) docs = docs.filter(d => (d.quadra_reclamada || '').toLowerCase().includes(qReclamada));
-        if (lReclamada) docs = docs.filter(d => (d.lote_reclamada || '').toLowerCase().includes(lReclamada));
+        const qa = filtroQuadraReclamada.value.trim().toLowerCase();
+        const la = filtroLoteReclamada.value.trim().toLowerCase();
+        if (qa) docs = docs.filter(d => (d.quadra_reclamada || '').toLowerCase().includes(qa));
+        if (la) docs = docs.filter(d => (d.lote_reclamada || '').toLowerCase().includes(la));
 
         const busca = filtroBusca.value.trim().toLowerCase();
-        if (busca) {
-            docs = docs.filter(d => {
-                const num = d.numero ? String(d.numero) : '';
-                const tit = (d.titulo || '').toLowerCase();
-                const resp = (d.aberto_por_nome || '').toLowerCase();
-                return num.includes(busca) || tit.includes(busca) || resp.includes(busca);
-            });
-        }
+        if (busca) docs = docs.filter(d => {
+            const num = d.numero ? String(d.numero) : '';
+            const tit = (d.titulo || '').toLowerCase();
+            const r = (d.aberto_por_nome || '').toLowerCase();
+            return num.includes(busca) || tit.includes(busca) || r.includes(busca);
+        });
 
-        // Salva o snapshot dos filtros aplicados
         filtrosAplicados = lerFiltrosDoFormulario();
-
-        // Atualiza estado visual (contador + destaque do botão)
         atualizarEstadoVisual();
 
-        // No mobile, fecha o painel de filtros ao aplicar
         if (isMobile()) {
             filtrosPainel.classList.remove('aberto');
             filtrosToggle.classList.remove('aberto');
         }
-
         renderizarLista(docs);
     }
 
     // ================================================================
-    // CARREGAR DADOS
+    // CARREGAR
     // ================================================================
     function carregarOS() {
         listaDiv.innerHTML = '<p class="empty-message">Carregando ordens de serviço...</p>';
@@ -921,8 +709,8 @@
             .then(snapshot => {
                 userMap = {};
                 snapshot.forEach(doc => {
-                    const data = doc.data();
-                    userMap[doc.id] = { nome: data.nome, funcao: data.funcao };
+                    const d = doc.data();
+                    userMap[doc.id] = { nome: d.nome, funcao: d.funcao };
                 });
                 return db.collection('ordens_servico').get();
             })
@@ -932,15 +720,13 @@
                     listaDiv.innerHTML = '<p class="empty-message">Nenhuma ordem de serviço encontrada.</p>';
                     return;
                 }
-                let docs = [];
-                snapshot.forEach(doc => {
-                    docs.push({ id: doc.id, ...doc.data() });
-                });
+                const docs = [];
+                snapshot.forEach(doc => docs.push({ id: doc.id, ...doc.data() }));
                 window.allDocs = docs;
                 aplicarFiltros();
             })
             .catch(err => {
-                console.error('Erro ao carregar OS:', err);
+                console.error(err);
                 listaDiv.innerHTML = `<p style="color:red;">Erro ao carregar: ${err.message}</p>`;
             });
     }
@@ -948,59 +734,60 @@
     // ================================================================
     // EVENT LISTENERS
     // ================================================================
-
-    // Botão "Aplicar Filtros" — única ação que dispara a filtragem
     btnFiltrar.addEventListener('click', aplicarFiltros);
-
-    // Enter dentro dos campos também aplica (conveniência desktop)
     [filtroStatus, filtroPendente,
      filtroQuadraReclamante, filtroLoteReclamante,
      filtroQuadraReclamada, filtroLoteReclamada,
      filtroBusca].forEach(el => {
         el.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                aplicarFiltros();
-            }
+            if (e.key === 'Enter') { e.preventDefault(); aplicarFiltros(); }
         });
     });
-
-    // Mudanças nos campos: APENAS atualizam o estado visual (contador + destaque do botão),
-    // NÃO aplicam os filtros.
-    [filtroStatus, filtroPendente].forEach(el => {
-        el.addEventListener('change', atualizarEstadoVisual);
-    });
+    [filtroStatus, filtroPendente].forEach(el => el.addEventListener('change', atualizarEstadoVisual));
     [filtroQuadraReclamante, filtroLoteReclamante,
      filtroQuadraReclamada, filtroLoteReclamada,
-     filtroBusca].forEach(el => {
-        el.addEventListener('input', atualizarEstadoVisual);
-    });
+     filtroBusca].forEach(el => el.addEventListener('input', atualizarEstadoVisual));
 
-    // Re-renderiza quando muda entre mobile/desktop
     let lastIsMobile = isMobile();
     window.addEventListener('resize', () => {
-        const nowMobile = isMobile();
-        if (nowMobile !== lastIsMobile) {
-            lastIsMobile = nowMobile;
-            if (!nowMobile) {
+        const nm = isMobile();
+        if (nm !== lastIsMobile) {
+            lastIsMobile = nm;
+            if (!nm) {
                 filtrosPainel.classList.remove('aberto');
                 filtrosToggle.classList.remove('aberto');
             }
-            if (docsRenderizados.length > 0) {
-                renderizarLista(docsRenderizados);
-            }
+            if (docsRenderizados.length > 0) renderizarLista(docsRenderizados);
         }
     });
 
     // ================================================================
-    // AUTENTICAÇÃO
+    // AUTH
     // ================================================================
     auth.onAuthStateChanged((user) => {
-        if (user) {
-            carregarOS();
-        } else {
-            window.location.href = 'index.html';
-        }
+        if (!user) { window.location.href = 'index.html'; return; }
+
+        registrarAtividade();
+        iniciarMonitorTimeout();
+
+        db.collection('usuarios').doc(user.uid).get()
+            .then(doc => {
+                let nome = user.displayName || user.email;
+                let funcao = 'tecnico';
+                if (doc.exists) {
+                    const d = doc.data();
+                    nome = d.nome || nome;
+                    funcao = d.funcao || 'tecnico';
+                }
+                if (user.email === MASTER_EMAIL) funcao = 'master';
+                atualizarHeader(nome, funcao);
+                carregarOS();
+            })
+            .catch(() => {
+                const funcao = user.email === MASTER_EMAIL ? 'master' : 'tecnico';
+                atualizarHeader(user.displayName || user.email, funcao);
+                carregarOS();
+            });
     });
 </script>
 </body>

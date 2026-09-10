@@ -11,6 +11,31 @@
         * { margin:0; padding:0; box-sizing:border-box; font-family: 'Calibri', 'Segoe UI', Tahoma, sans-serif; }
         body { background: #e8f5e9; padding: 16px 12px; display: flex; justify-content: center; min-height: 100vh; }
         .container { background: #fff; max-width: 1000px; width: 100%; padding: 18px; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,80,0,0.12); border: 1px solid #a5d6a7; }
+
+        .user-header {
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+            border: 1px solid #a5d6a7;
+            border-radius: 10px;
+            padding: 8px 14px;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            font-size: 13px;
+            color: #1b5e20;
+        }
+        .user-header .uh-label { font-weight: 500; color: #558b2f; }
+        .user-header .uh-nome { font-weight: 700; color: #1b5e20; }
+        .user-header .uh-funcao {
+            display: inline-block; padding: 2px 10px; border-radius: 20px;
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
+        }
+        .uh-funcao.master { background: #ffcc80; color: #4e342e; }
+        .uh-funcao.admin { background: #ffe082; color: #4e342e; }
+        .uh-funcao.diretor { background: #a5d6a7; color: #1b5e20; }
+        .uh-funcao.tecnico { background: #ced4da; color: #333; }
+
         .page-title { font-size: 24px; color: #1b5e20; background: #c8e6c9; display: inline-block; padding: 4px 18px; border-radius: 30px; margin-bottom: 12px; }
         .btn { padding: 8px 16px; background: #2e7d32; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s; text-decoration: none; display: inline-block; }
         .btn:hover { background: #1b5e20; }
@@ -39,7 +64,7 @@
         td { padding: 8px; border-bottom: 1px solid #c8e6c9; vertical-align: middle; }
         .badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; }
         .badge-master { background: #ffcc80; color: #4e342e; }
-        .badge-admin { background: #c8e6c9; color: #1b5e20; }
+        .badge-admin { background: #ffe082; color: #4e342e; }
         .badge-diretor { background: #a5d6a7; color: #1b5e20; }
         .badge-ativo { background: #c8e6c9; color: #1b5e20; }
         .badge-inativo { background: #ffcdd2; color: #b71c1c; }
@@ -50,8 +75,6 @@
             table { font-size: 13px; min-width: 400px; }
             th, td { padding: 6px; }
         }
-
-        /* MODAL */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -63,11 +86,8 @@
         }
         .modal-overlay.active { display: flex; }
         .modal-box {
-            background: #fff;
-            max-width: 450px;
-            width: 90%;
-            padding: 25px;
-            border-radius: 16px;
+            background: #fff; max-width: 450px; width: 90%;
+            padding: 25px; border-radius: 16px;
             box-shadow: 0 8px 30px rgba(0,0,0,0.2);
             border: 1px solid #a5d6a7;
         }
@@ -78,6 +98,12 @@
 </head>
 <body>
 <div class="container">
+    <div class="user-header" id="userHeader">
+        <span class="uh-label">Logado como:</span>
+        <span class="uh-nome" id="userHeaderName">—</span>
+        <span class="uh-funcao master" id="userHeaderRole">—</span>
+    </div>
+
     <h1 class="page-title">👥 Gerenciar Personagens</h1>
     <a href="index.html" class="btn btn-voltar" style="margin-bottom:12px;">← Voltar ao Painel</a>
 
@@ -126,7 +152,6 @@
     <div id="listaContainer"><p>Carregando...</p></div>
 </div>
 
-<!-- MODAL EDIÇÃO -->
 <div class="modal-overlay" id="editModal">
     <div class="modal-box">
         <h2>✏️ Editar Personagem</h2>
@@ -160,9 +185,6 @@
 </div>
 
 <script>
-    // ================================================================
-    // FIREBASE CONFIG
-    // ================================================================
     const firebaseConfig = {
         apiKey: "AIzaSyDx_6oWO30Drh8GkuQA9jk2Oym7H8J3ABg",
         authDomain: "villa-bosque1.firebaseapp.com",
@@ -175,39 +197,47 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // ================================================================
-    // TIMEOUT GLOBAL
-    // ================================================================
+    const MASTER_EMAIL = 'administracaovilladobosque@gmail.com';
     const TIMEOUT_MS = 4 * 60 * 60 * 1000;
-    function verificarTimeout() {
-        const lastActivity = sessionStorage.getItem('lastActivity');
-        if (!lastActivity) {
-            sessionStorage.setItem('lastActivity', Date.now().toString());
-            return;
-        }
-        const diff = Date.now() - parseInt(lastActivity);
-        if (diff > TIMEOUT_MS) {
-            sessionStorage.removeItem('lastActivity');
-            sessionStorage.removeItem('userLoggedIn');
-            auth.signOut().then(() => {
-                alert('Sessão expirada por inatividade.');
-                window.location.href = 'index.html';
-            });
-        } else {
-            sessionStorage.setItem('lastActivity', Date.now().toString());
-        }
-    }
-    function resetTimeoutGlobal() {
-        sessionStorage.setItem('lastActivity', Date.now().toString());
-    }
-    ['click','mousemove','keydown','scroll','touchstart'].forEach(ev => {
-        document.addEventListener(ev, resetTimeoutGlobal);
-    });
-    verificarTimeout();
+    const TIMEOUT_KEY = 'vb_lastActivity';
+    const TIMEOUT_CHECK_INTERVAL = 30 * 1000;
 
-    // ================================================================
-    // REFERÊNCIAS
-    // ================================================================
+    const roleMap = { 'master':'Master', 'admin':'Administrador', 'diretor':'Diretor', 'tecnico':'Técnico' };
+
+    function registrarAtividade() {
+        try { localStorage.setItem(TIMEOUT_KEY, Date.now().toString()); } catch(e) {}
+    }
+    function fazerLogoutTimeout() {
+        if (window.__fazendoLogout) return;
+        window.__fazendoLogout = true;
+        try {
+            localStorage.removeItem(TIMEOUT_KEY);
+            localStorage.removeItem('vb_userLoggedIn');
+            sessionStorage.clear();
+        } catch(e) {}
+        auth.signOut().finally(() => {
+            alert('Sessão expirada por inatividade. Faça login novamente.');
+            window.location.href = 'index.html';
+        });
+    }
+    function verificarTimeoutAgora() {
+        const last = parseInt(localStorage.getItem(TIMEOUT_KEY) || '0', 10);
+        if (!last) return false;
+        if ((Date.now() - last) > TIMEOUT_MS) { fazerLogoutTimeout(); return true; }
+        return false;
+    }
+    function iniciarMonitorTimeout() {
+        if (verificarTimeoutAgora()) return;
+        if (!localStorage.getItem(TIMEOUT_KEY)) registrarAtividade();
+        ['click','mousemove','keydown','scroll','touchstart'].forEach(ev => {
+            document.addEventListener(ev, registrarAtividade, { passive: true });
+        });
+        setInterval(verificarTimeoutAgora, TIMEOUT_CHECK_INTERVAL);
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') verificarTimeoutAgora();
+        });
+    }
+
     const form = document.getElementById('personagemForm');
     const nomeInput = document.getElementById('nome');
     const emailInput = document.getElementById('email');
@@ -226,11 +256,15 @@
     const editMsg = document.getElementById('editMessage');
     let editUid = null;
 
-    const MASTER_EMAIL = 'administracaovilladobosque@gmail.com';
+    const userHeaderName = document.getElementById('userHeaderName');
+    const userHeaderRole = document.getElementById('userHeaderRole');
 
-    // ================================================================
-    // MODAL
-    // ================================================================
+    function atualizarHeader(nome, funcao) {
+        userHeaderName.textContent = nome || 'Usuário';
+        userHeaderRole.className = 'uh-funcao ' + (funcao || 'master');
+        userHeaderRole.textContent = roleMap[funcao] || funcao;
+    }
+
     function abrirModal(uid, nome, funcao, status) {
         editUid = uid;
         editNome.value = nome || '';
@@ -252,10 +286,7 @@
         const nome = editNome.value.trim();
         const funcao = editFuncao.value;
         const status = editStatus.value;
-        if (!nome) {
-            showMessage(editMsg, 'O nome não pode ficar vazio.', 'error');
-            return;
-        }
+        if (!nome) { showMessage(editMsg, 'O nome não pode ficar vazio.', 'error'); return; }
         db.collection('usuarios').doc(editUid).update({ nome, funcao, status })
             .then(() => {
                 showMessage(editMsg, '✅ Personagem atualizado com sucesso!', 'success');
@@ -265,9 +296,6 @@
             .catch(err => showMessage(editMsg, 'Erro: ' + err.message, 'error'));
     });
 
-    // ================================================================
-    // LISTA
-    // ================================================================
     function carregarLista() {
         listaDiv.innerHTML = '<p>Carregando...</p>';
         db.collection('usuarios').orderBy('criado_em', 'desc').get()
@@ -279,14 +307,14 @@
                     const data = doc.data();
                     const uid = doc.id;
                     const isMaster = (data.email === MASTER_EMAIL);
-                    const roleClass = data.funcao === 'master' ? 'badge-master' : (data.funcao === 'admin' ? 'badge-admin' : 'badge-diretor');
-                    const statusClass = data.status === 'ativo' ? 'badge-ativo' : 'badge-inativo';
+                    const rc = data.funcao === 'master' ? 'badge-master' : (data.funcao === 'admin' ? 'badge-admin' : 'badge-diretor');
+                    const sc = data.status === 'ativo' ? 'badge-ativo' : 'badge-inativo';
                     html += `
                         <tr>
                             <td><strong>${data.nome || 'Sem nome'}</strong></td>
                             <td>${data.email}</td>
-                            <td><span class="badge ${roleClass}">${data.funcao || 'tecnico'}</span></td>
-                            <td><span class="badge ${statusClass}">${data.status || 'ativo'}</span></td>
+                            <td><span class="badge ${rc}">${data.funcao || 'tecnico'}</span></td>
+                            <td><span class="badge ${sc}">${data.status || 'ativo'}</span></td>
                             <td>
                                 ${!isMaster ? `
                                     <button class="btn btn-sm btn-warning" onclick="abrirModal('${uid}','${data.nome || ''}','${data.funcao || 'admin'}','${data.status || 'ativo'}')">✏️ Editar</button>
@@ -306,13 +334,12 @@
     }
 
     window.toggleStatus = function(uid, currentStatus) {
-        const novoStatus = currentStatus === 'ativo' ? 'inativo' : 'ativo';
-        if (!confirm(`Deseja ${novoStatus === 'ativo' ? 'ativar' : 'inativar'} este usuário?`)) return;
-        db.collection('usuarios').doc(uid).update({ status: novoStatus })
-            .then(() => { alert(`Status alterado para ${novoStatus}.`); carregarLista(); })
+        const novo = currentStatus === 'ativo' ? 'inativo' : 'ativo';
+        if (!confirm(`Deseja ${novo === 'ativo' ? 'ativar' : 'inativar'} este usuário?`)) return;
+        db.collection('usuarios').doc(uid).update({ status: novo })
+            .then(() => { alert(`Status alterado para ${novo}.`); carregarLista(); })
             .catch(err => alert('Erro: ' + err.message));
     };
-
     window.excluir = function(uid) {
         if (!confirm('Excluir este personagem do sistema? (A conta de autenticação continuará, mas o vínculo será removido)')) return;
         db.collection('usuarios').doc(uid).delete()
@@ -320,9 +347,6 @@
             .catch(err => alert('Erro: ' + err.message));
     };
 
-    // ================================================================
-    // CRIAR PERSONAGEM
-    // ================================================================
     form.addEventListener('submit', (e) => {
         e.preventDefault();
         const nome = nomeInput.value.trim();
@@ -333,26 +357,23 @@
         const masterPass = masterPasswordInput.value;
 
         if (!nome || !email || !senha || !masterPass) {
-            showMessage(formMsg, 'Preencha todos os campos, inclusive sua senha de Master.', 'error');
-            return;
+            showMessage(formMsg, 'Preencha todos os campos, inclusive sua senha de Master.', 'error'); return;
         }
         if (senha.length < 6) {
-            showMessage(formMsg, 'A senha do novo personagem deve ter pelo menos 6 caracteres.', 'error');
-            return;
+            showMessage(formMsg, 'A senha do novo personagem deve ter pelo menos 6 caracteres.', 'error'); return;
         }
 
         const masterUser = auth.currentUser;
         if (!masterUser || masterUser.email !== MASTER_EMAIL) {
-            showMessage(formMsg, 'Apenas o Master pode cadastrar personagens.', 'error');
-            return;
+            showMessage(formMsg, 'Apenas o Master pode cadastrar personagens.', 'error'); return;
         }
 
         auth.signInWithEmailAndPassword(masterUser.email, masterPass)
             .then(() => auth.createUserWithEmailAndPassword(email, senha))
-            .then((userCredential) => {
-                const newUser = userCredential.user;
-                return newUser.updateProfile({ displayName: nome })
-                    .then(() => db.collection('usuarios').doc(newUser.uid).set({
+            .then((cred) => {
+                const nu = cred.user;
+                return nu.updateProfile({ displayName: nome })
+                    .then(() => db.collection('usuarios').doc(nu.uid).set({
                         nome, email, funcao, status,
                         criado_por: auth.currentUser.uid,
                         criado_em: firebase.firestore.FieldValue.serverTimestamp()
@@ -369,24 +390,20 @@
                 if (error.code === 'auth/email-already-in-use') msg = 'E-mail já em uso.';
                 else if (error.code === 'auth/wrong-password') msg = 'Senha do Master incorreta. Verifique e tente novamente.';
                 else if (error.code === 'auth/user-not-found') msg = 'Usuário Master não encontrado.';
-                else if (error.code === 'auth/too-many-requests') msg = 'Muitas tentativas. Aguarde um momento antes de tentar novamente.';
-                else if (error.code === 'auth/weak-password') msg = 'A senha do novo personagem é muito fraca (mínimo 6 caracteres).';
+                else if (error.code === 'auth/too-many-requests') msg = 'Muitas tentativas. Aguarde um momento.';
+                else if (error.code === 'auth/weak-password') msg = 'A senha do novo personagem é muito fraca.';
                 else if (error.code === 'auth/invalid-email') msg = 'E-mail inválido.';
                 showMessage(formMsg, msg, 'error');
-                // Não faz signOut nem redirect — o Master permanece logado e pode tentar de novo.
             });
     });
 
-    function showMessage(el, text, type) {
-        el.textContent = text;
-        el.className = 'message ' + type;
-    }
+    function showMessage(el, text, type) { el.textContent = text; el.className = 'message ' + type; }
 
-    // ================================================================
-    // AUTENTICAÇÃO
-    // ================================================================
     auth.onAuthStateChanged((user) => {
         if (user && user.email === MASTER_EMAIL) {
+            registrarAtividade();
+            iniciarMonitorTimeout();
+            atualizarHeader('Master', 'master');
             carregarLista();
         } else if (user) {
             alert('Apenas o Master pode acessar esta página.');
