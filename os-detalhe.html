@@ -293,8 +293,23 @@
     }
 
     // ============================================================
-    // DETECÇÃO E FORMATAÇÃO DE FUNÇÃO
+    // HELPERS DE DETECÇÃO
     // ============================================================
+    function nomeEhGrupo(nome) {
+        if (!nome) return false;
+        const n = nome.trim().toLowerCase();
+        return n === 'admin' || n === 'administração' || n === 'administracao' || n === 'administradores' ||
+               n === 'diretor' || n === 'diretores' || n === 'diretoria' ||
+               n === 'master' || n === 'masters';
+    }
+
+    function ehGrupo(alvo, nome) {
+        if (alvo === 'group:admin' || alvo === 'group:diretor') return true;
+        if (alvo && !alvo.startsWith('group:')) return false;
+        if (!alvo) return nomeEhGrupo(nome);
+        return false;
+    }
+
     function detectarFuncao(nome, uid, funcaoDireta) {
         if (funcaoDireta) return funcaoDireta;
         if (uid && userMap[uid]) return userMap[uid].funcao;
@@ -308,8 +323,20 @@
     function getCategoriaDestino(direcionadoPara, direcionadoFuncao, direcionadoNome) {
         if (direcionadoPara === 'group:admin') return 'admin';
         if (direcionadoPara === 'group:diretor') return 'diretor';
+        // Se alvo é UID real, prioriza função do userMap
+        if (direcionadoPara && !direcionadoPara.startsWith('group:') && userMap[direcionadoPara]) {
+            return userMap[direcionadoPara].funcao || 'outros';
+        }
+        // Se alvo está vazio mas nome é grupo, classifica
+        if (!direcionadoPara || direcionadoPara.startsWith('group:')) {
+            if (nomeEhGrupo(direcionadoNome)) {
+                const n = (direcionadoNome || '').toLowerCase();
+                if (n.includes('diretor')) return 'diretor';
+                if (n.includes('admin')) return 'admin';
+                if (n.includes('master')) return 'master';
+            }
+        }
         if (direcionadoFuncao) return direcionadoFuncao;
-        if (direcionadoPara && userMap[direcionadoPara]) return userMap[direcionadoPara].funcao || 'outros';
         const n = (direcionadoNome || '').toLowerCase();
         if (n.includes('admin')) return 'admin';
         if (n.includes('diretor')) return 'diretor';
@@ -356,6 +383,7 @@
         return { dirPara, dirNome, dirFuncao: dirFuncao || '', dirEm };
     }
 
+    // Badge de perfil (autor de resposta) — sempre pessoa, então mantém "Nome (função)"
     function getBadgePerfil(uid, nome) {
         const nomeBase = nome || '—';
         const f = detectarFuncao(nomeBase, uid, null);
@@ -371,20 +399,32 @@
         return `<span class="badge ${classe}">${texto}</span>`;
     }
 
+    // Badge de direcionamento — grupo mostra só o nome, pessoa mostra "Nome (função)"
     function getBadgeDirecionado(data) {
         const alvo = data.direcionado_para;
+        const nome = data.direcionado_para_nome || '';
+        const funcao = data.direcionado_para_funcao;
+        const grupo = ehGrupo(alvo, nome);
+
         let classe = 'badge-grupo';
         let texto;
 
-        if (alvo === 'group:admin') {
-            classe = 'badge-admin';
-            texto = GRUPO_ADMIN_TEXTO;
-        } else if (alvo === 'group:diretor') {
-            classe = 'badge-diretor';
-            texto = GRUPO_DIRETOR_TEXTO;
+        if (grupo) {
+            const nomeLower = nome.toLowerCase();
+            const ehDiretor = alvo === 'group:diretor'
+                          || nomeLower.includes('diretor')
+                          || nomeLower.includes('diretoria')
+                          || funcao === 'diretor';
+            if (ehDiretor) {
+                classe = 'badge-diretor';
+                texto = GRUPO_DIRETOR_TEXTO;
+            } else {
+                classe = 'badge-admin';
+                texto = GRUPO_ADMIN_TEXTO;
+            }
         } else {
-            const nomeBase = data.direcionado_para_nome || '—';
-            const f = detectarFuncao(nomeBase, alvo, data.direcionado_para_funcao);
+            const nomeBase = nome || '—';
+            const f = detectarFuncao(nomeBase, alvo, funcao);
             if (f === 'admin') classe = 'badge-admin';
             else if (f === 'diretor') classe = 'badge-diretor';
             else if (f === 'master') classe = 'badge-master';
@@ -436,10 +476,6 @@
         return f === 'diretor' || f === 'admin' || isMaster();
     }
 
-    // ============================================================
-    // CARREGAR USUÁRIOS — só o necessário
-    // ============================================================
-    // Extrai UIDs relevantes de uma OS (aberto_por, histórico e direcionados)
     function extrairUidsDaOS(os) {
         const uids = new Set();
         if (os.aberto_por) uids.add(os.aberto_por);
@@ -452,7 +488,6 @@
         return Array.from(uids).filter(Boolean);
     }
 
-    // Busca usuários por UIDs (em lotes de 10, limite do 'in' do Firestore)
     async function buscarUsuariosPorUids(uids) {
         const resultado = {};
         if (!uids || uids.length === 0) return resultado;
@@ -472,7 +507,6 @@
         return resultado;
     }
 
-    // Busca admins e diretores ativos (para o select de direcionamento)
     async function buscarAdminsEDiretores() {
         const resultado = {};
         const snap = await db.collection('usuarios').where('status', '==', 'ativo').get();
@@ -485,9 +519,6 @@
         return resultado;
     }
 
-    // Preenche userMap de forma otimizada:
-    //   1) Se tem cache de sessionStorage → usa (zero reads)
-    //   2) Senão, carrega só os UIDs da OS + admins/diretores (2 reads)
     async function prepararUserMap(os) {
         const cache = lerUserMapDoCache();
         if (cache) {

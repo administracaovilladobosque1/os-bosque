@@ -213,7 +213,6 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // Cache offline do Firestore
     db.enablePersistence({ synchronizeTabs: true }).catch(err => {
         if (err.code === 'failed-precondition') console.warn('Persistência: múltiplas abas abertas.');
         else if (err.code === 'unimplemented') console.warn('Persistência: navegador não suporta.');
@@ -224,7 +223,6 @@
     const TIMEOUT_KEY = 'vb_lastActivity';
     const TIMEOUT_CHECK_INTERVAL = 30 * 1000;
 
-    // Cache de usuários em sessionStorage (TTL: 10 min)
     const USER_CACHE_KEY = 'vb_userMapCache';
     const USER_CACHE_TTL = 10 * 60 * 1000;
 
@@ -247,9 +245,6 @@
             }
             return obj.dados || null;
         } catch(e) { return null; }
-    }
-    function limparCacheUserMap() {
-        try { sessionStorage.removeItem(USER_CACHE_KEY); } catch(e) {}
     }
 
     function registrarAtividade() { try { localStorage.setItem(TIMEOUT_KEY, Date.now().toString()); } catch(e) {} }
@@ -373,6 +368,30 @@
         }
     }
 
+    // ============================================================
+    // HELPERS DE DETECÇÃO
+    // ============================================================
+
+    // Detecta se um nome (string solta) parece ser um grupo
+    function nomeEhGrupo(nome) {
+        if (!nome) return false;
+        const n = nome.trim().toLowerCase();
+        return n === 'admin' || n === 'administração' || n === 'administracao' || n === 'administradores' ||
+               n === 'diretor' || n === 'diretores' || n === 'diretoria' ||
+               n === 'master' || n === 'masters';
+    }
+
+    // Decide se um direcionamento é para grupo. Regra:
+    //   1) Se o alvo começa com 'group:' → é grupo
+    //   2) Se o alvo é um UID preenchido (não começa com group:) → é pessoa
+    //   3) Se o alvo está vazio → decide pelo nome
+    function ehGrupo(alvo, nome) {
+        if (alvo === 'group:admin' || alvo === 'group:diretor') return true;
+        if (alvo && !alvo.startsWith('group:')) return false;
+        if (!alvo) return nomeEhGrupo(nome);
+        return false;
+    }
+
     function detectarFuncao(nome, uid, funcaoDireta) {
         if (funcaoDireta) return funcaoDireta;
         if (uid && userMap[uid]) return userMap[uid].funcao;
@@ -382,8 +401,13 @@
         if (n.includes('master')) return 'master';
         return null;
     }
+
     function getNomeComFuncao(nome, uid, funcaoDireta) {
         const n = nome || '—';
+        // Se o nome parece ser de grupo, não adiciona função
+        if (nomeEhGrupo(n) && (!uid || (typeof uid === 'string' && uid.startsWith('group:')))) {
+            return n;
+        }
         const f = detectarFuncao(n, uid, funcaoDireta);
         if (!f) return n;
         if (n.includes('(')) return n;
@@ -436,14 +460,18 @@
         if (data.direcionado_para === 'group:admin') return 'admin';
         if (data.direcionado_para === 'group:diretor') return 'diretoria';
         const uid = data.direcionado_para;
-        if (uid && userMap[uid]) {
+        // Se é UID real, checa via userMap
+        if (uid && !uid.startsWith('group:') && userMap[uid]) {
             const f = userMap[uid].funcao;
             if (f === 'admin') return 'admin';
             if (f === 'diretor') return 'diretoria';
         }
-        const nome = (data.direcionado_para_nome || '').toLowerCase();
-        if (nome.includes('admin')) return 'admin';
-        if (nome.includes('diretor')) return 'diretoria';
+        // Se alvo vazio mas nome é grupo, classifica
+        if (!uid || uid.startsWith('group:')) {
+            const nome = (data.direcionado_para_nome || '').toLowerCase();
+            if (nome.includes('admin')) return 'admin';
+            if (nome.includes('diretor')) return 'diretoria';
+        }
         return 'outros';
     }
 
@@ -482,33 +510,49 @@
         const pData = priorityMap[p] || priorityMap['normal'];
         return `<span class="badge ${pData.class}"><span class="icone">${pData.icon}</span> ${pData.label}</span>`;
     }
+
+    // Exibe "Pendente em" — agora robusto contra OS antigas
     function getPendenteHtml(data) {
+        const alvo = data.direcionado_para;
+        const nome = data.direcionado_para_nome || '';
+        const funcao = data.direcionado_para_funcao;
+
+        // Detecta se é grupo (por prefixo OU por nome quando alvo vazio)
+        const grupo = ehGrupo(alvo, nome);
+
         let cor = '#ced4da';
         let icone = '👥';
-        const alvo = data.direcionado_para;
         let texto;
 
-        if (alvo === 'group:admin') {
+        if (grupo) {
             icone = '👥';
-            cor = '#ffe082';
-            texto = GRUPO_ADMIN_TEXTO;
-        } else if (alvo === 'group:diretor') {
-            icone = '👥';
-            cor = '#a5d6a7';
-            texto = GRUPO_DIRETOR_TEXTO;
+            // Decide entre admin e diretor
+            const nomeLower = nome.toLowerCase();
+            const ehDiretor = alvo === 'group:diretor'
+                          || nomeLower.includes('diretor')
+                          || nomeLower.includes('diretoria')
+                          || funcao === 'diretor';
+            if (ehDiretor) {
+                cor = '#a5d6a7';
+                texto = GRUPO_DIRETOR_TEXTO;
+            } else {
+                cor = '#ffe082';
+                texto = GRUPO_ADMIN_TEXTO;
+            }
         } else {
             icone = '👤';
-            const f = detectarFuncao(data.direcionado_para_nome, alvo, data.direcionado_para_funcao);
+            const f = detectarFuncao(nome, alvo, funcao);
             if (f === 'admin') cor = '#ffe082';
             else if (f === 'diretor') cor = '#a5d6a7';
             else if (f === 'master') cor = '#ffcc80';
-            texto = data.direcionado_para_nome || '—';
+            texto = nome || '—';
             if (f && !texto.includes('(')) {
                 texto = `${texto} (${f})`;
             }
         }
         return `<span class="badge" style="background-color:${cor}; color:#000;"><span class="icone">${icone}</span> ${texto}</span>`;
     }
+
     function getStatusHtml(data) {
         const c = `badge-${data.status || 'aberta'}`;
         const l = statusLabelMap[data.status] || (data.status || 'aberta').replace('_',' ');
@@ -673,9 +717,6 @@
         renderizarLista(docs);
     }
 
-    // ============================================================
-    // CARREGAR — usa cache de usuários quando disponível
-    // ============================================================
     function renderizarDocs(docs) {
         if (!docs || docs.length === 0) {
             window.allDocs = [];
@@ -689,7 +730,6 @@
     function carregarOS() {
         listaDiv.innerHTML = '<p class="empty-message">Carregando ordens de serviço...</p>';
 
-        // 1) Tenta usar cache de usuários — pula a leitura de usuarios
         const cache = lerUserMapDoCache();
         if (cache) {
             userMap = cache;
@@ -706,7 +746,6 @@
             return;
         }
 
-        // 2) Sem cache: busca usuários e ordens em paralelo
         Promise.all([
             db.collection('usuarios').where('status', '==', 'ativo').get(),
             db.collection('ordens_servico').get()
