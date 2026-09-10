@@ -19,6 +19,10 @@
         .btn-success:hover { background: #2e7d32; }
         .btn-voltar { background: #558b2f; }
         .btn-voltar:hover { background: #33691e; }
+
+        /* ============================================================ */
+        /* FILTROS - DESKTOP                                             */
+        /* ============================================================ */
         .filtros {
             display: flex;
             flex-wrap: wrap;
@@ -47,7 +51,9 @@
             border-radius: 6px;
             cursor: pointer;
             font-size: 14px;
+            font-weight: 600;
         }
+        .filtros .btn-filtrar:hover { background: #1b5e20; }
         .filtros .grupo-filtro {
             display: flex;
             align-items: center;
@@ -64,12 +70,21 @@
             min-width: 70px;
             flex: 0 1 80px;
         }
+        /* Labels que só aparecem no mobile */
+        .filtro-label { display: none; }
+        /* Botão toggle que só aparece no mobile */
+        .filtros-toggle { display: none; }
+
+        /* ============================================================ */
+        /* TABELA (DESKTOP)                                              */
+        /* ============================================================ */
         .table-responsive { overflow-x: auto; margin-top: 12px; }
         table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 1180px; }
         th { background: #c8e6c9; padding: 10px 8px; text-align: left; color: #1b5e20; border-bottom: 2px solid #81c784; white-space: nowrap; cursor: pointer; user-select: none; position: relative; }
         th:hover { background: #b8d9b9; }
         th .sorter { display: inline-block; margin-left: 4px; font-size: 12px; }
         td { padding: 10px 8px; border-bottom: 1px solid #c8e6c9; vertical-align: middle; }
+
         .badge {
             display: inline-block;
             padding: 3px 10px;
@@ -101,15 +116,217 @@
         .dias-numero { font-weight: 700; color: #1b5e20; }
         .dias-hoje { color: #558b2f; }
         .empty-message { text-align: center; color: #555; padding: 30px 0; }
-        @media (max-width: 600px) {
-            .container { padding: 14px; }
-            .filtros { flex-wrap: nowrap; overflow-x: auto; gap: 6px; padding-bottom: 4px; }
-            .filtros select, .filtros input { flex: 0 0 auto; min-width: 100px; font-size: 13px; padding: 5px 8px; }
-            .filtros input[type="text"] { flex: 1 1 120px; min-width: 80px; }
-            .filtros .grupo-filtro input { min-width: 60px; flex: 0 1 70px; }
-            .filtros .btn-filtrar { padding: 5px 12px; font-size: 13px; flex-shrink: 0; }
-            table { font-size: 13px; min-width: 900px; }
-            th, td { padding: 6px 6px; }
+
+        /* ============================================================ */
+        /* CARDS (MOBILE) - escondidos por padrão no desktop             */
+        /* ============================================================ */
+        .lista-cards { display: none; flex-direction: column; gap: 10px; margin-top: 12px; }
+        .os-card {
+            background: #fff;
+            border: 1px solid #c8e6c9;
+            border-left: 4px solid #2e7d32;
+            border-radius: 12px;
+            padding: 14px;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        .os-card:active { transform: scale(0.985); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .os-card.atrasada { border-left-color: #c62828; background: #fff8f8; }
+
+        .os-card .card-topo {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+        .os-card .card-numero {
+            font-weight: 700;
+            color: #1b5e20;
+            font-size: 15px;
+            background: #e8f5e9;
+            padding: 2px 10px;
+            border-radius: 6px;
+        }
+        .os-card .card-badges-topo {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .os-card .card-titulo {
+            font-size: 16px;
+            font-weight: 600;
+            color: #222;
+            line-height: 1.3;
+            margin-bottom: 10px;
+            word-break: break-word;
+        }
+        .os-card .card-divisor {
+            border-top: 1px dashed #d0e7d0;
+            margin: 8px 0;
+        }
+        .os-card .card-linha {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #444;
+            padding: 3px 0;
+            flex-wrap: wrap;
+        }
+        .os-card .card-linha .icone {
+            flex-shrink: 0;
+            font-size: 14px;
+            width: 18px;
+            text-align: center;
+        }
+        .os-card .card-linha .rotulo {
+            font-weight: 600;
+            color: #1b5e20;
+            font-size: 12px;
+            min-width: 78px;
+        }
+        .os-card .card-linha .valor {
+            color: #333;
+            flex: 1;
+            word-break: break-word;
+        }
+        .os-card .card-rodape {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e8f5e9;
+            flex-wrap: wrap;
+        }
+        .os-card .card-status { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+        .os-card .card-dias {
+            font-size: 12px;
+            color: #666;
+            text-align: right;
+        }
+        .os-card .card-dias strong { color: #1b5e20; }
+
+        /* ============================================================ */
+        /* MOBILE                                                        */
+        /* ============================================================ */
+        @media (max-width: 768px) {
+            body { padding: 10px 8px; }
+            .container { padding: 14px 12px; border-radius: 12px; }
+            .page-title { font-size: 20px; padding: 4px 14px; }
+
+            .header-actions {
+                flex-direction: row;
+                gap: 8px;
+                margin-bottom: 12px;
+            }
+            .header-actions .btn {
+                flex: 1;
+                text-align: center;
+                padding: 10px 12px;
+                font-size: 14px;
+            }
+
+            /* ---- Filtros mobile ---- */
+            .filtros-toggle {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                width: 100%;
+                padding: 12px 14px;
+                background: #f1f8e9;
+                border: 1.5px solid #a5d6a7;
+                border-radius: 10px;
+                color: #1b5e20;
+                font-size: 15px;
+                font-weight: 700;
+                cursor: pointer;
+                margin-bottom: 8px;
+                position: relative;
+            }
+            .filtros-toggle:active { background: #e8f5e9; }
+            .filtros-toggle .seta {
+                margin-left: auto;
+                transition: transform 0.2s;
+                font-size: 12px;
+            }
+            .filtros-toggle.aberto .seta { transform: rotate(180deg); }
+            .filtros-toggle .badge-contador {
+                background: #2e7d32;
+                color: #fff;
+                border-radius: 20px;
+                padding: 1px 8px;
+                font-size: 12px;
+                font-weight: 700;
+                display: none;
+            }
+            .filtros-toggle .badge-contador.ativo { display: inline-block; }
+
+            .filtros {
+                display: none;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+                padding: 14px;
+                background: #f8fdf8;
+                border: 1px solid #c8e6c9;
+                border-radius: 12px;
+                margin-bottom: 12px;
+            }
+            .filtros.aberto { display: flex; }
+
+            .filtros .filtro-bloco {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+                width: 100%;
+            }
+            .filtros .filtro-bloco .filtro-label {
+                display: block;
+                font-size: 13px;
+                font-weight: 700;
+                color: #1b5e20;
+                margin: 0;
+            }
+            .filtros select,
+            .filtros input,
+            .filtros input[type="text"] {
+                width: 100%;
+                min-width: 0;
+                flex: 1 1 auto;
+                padding: 10px 12px;
+                font-size: 15px;
+                border-radius: 8px;
+            }
+            .filtros .grupo-filtro {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                width: 100%;
+            }
+            .filtros .grupo-filtro input {
+                width: 100%;
+                min-width: 0;
+                padding: 10px 12px;
+                font-size: 15px;
+                border-radius: 8px;
+            }
+            .filtros .btn-filtrar {
+                width: 100%;
+                padding: 12px;
+                font-size: 15px;
+                border-radius: 10px;
+                margin-top: 4px;
+            }
+
+            /* ---- Lista mobile: cards ---- */
+            .table-responsive { display: none; }
+            .lista-cards { display: flex; }
         }
     </style>
 </head>
@@ -117,33 +334,53 @@
 <div class="container">
     <h1 class="page-title">📋 Ordens de Serviço</h1>
     <div class="header-actions">
-        <a href="index.html" class="btn btn-voltar">← Voltar ao Painel</a>
+        <a href="index.html" class="btn btn-voltar">← Voltar</a>
         <a href="os-abrir.html" class="btn btn-success">📝 Nova OS</a>
     </div>
 
-    <div class="filtros">
-        <select id="filtroStatus">
-            <option value="todos">Status: Todos</option>
-            <option value="aberto" selected>Aberto</option>
-            <option value="fechado">Fechado</option>
-        </select>
-        <select id="filtroPendente">
-            <option value="todos">Pendente: Todos</option>
-            <option value="diretoria">Diretoria</option>
-            <option value="admin">Admin</option>
-        </select>
-        <span class="grupo-filtro">
-            <label>Reclamante:</label>
-            <input type="text" id="filtroQuadraReclamante" placeholder="Quadra">
-            <input type="text" id="filtroLoteReclamante" placeholder="Lote">
-        </span>
-        <span class="grupo-filtro">
-            <label>Reclamado:</label>
-            <input type="text" id="filtroQuadraReclamada" placeholder="Quadra">
-            <input type="text" id="filtroLoteReclamada" placeholder="Lote">
-        </span>
-        <input type="text" id="filtroBusca" placeholder="Buscar...">
-        <button class="btn-filtrar" id="btnFiltrar">Filtrar</button>
+    <!-- Botão toggle de filtros (só aparece no mobile) -->
+    <button class="filtros-toggle" id="filtrosToggle" type="button">
+        🔍 Filtros
+        <span class="badge-contador" id="filtrosContador">0</span>
+        <span class="seta">▼</span>
+    </button>
+
+    <div class="filtros" id="filtrosPainel">
+        <div class="filtro-bloco">
+            <label class="filtro-label" for="filtroStatus">Status</label>
+            <select id="filtroStatus">
+                <option value="todos">Todos</option>
+                <option value="aberto" selected>Aberto</option>
+                <option value="fechado">Fechado</option>
+            </select>
+        </div>
+        <div class="filtro-bloco">
+            <label class="filtro-label" for="filtroPendente">Pendente</label>
+            <select id="filtroPendente">
+                <option value="todos">Todos</option>
+                <option value="diretoria">Diretoria</option>
+                <option value="admin">Admin</option>
+            </select>
+        </div>
+        <div class="filtro-bloco">
+            <label class="filtro-label">Reclamante (Quadra / Lote)</label>
+            <span class="grupo-filtro">
+                <input type="text" id="filtroQuadraReclamante" placeholder="Quadra">
+                <input type="text" id="filtroLoteReclamante" placeholder="Lote">
+            </span>
+        </div>
+        <div class="filtro-bloco">
+            <label class="filtro-label">Reclamado (Quadra / Lote)</label>
+            <span class="grupo-filtro">
+                <input type="text" id="filtroQuadraReclamada" placeholder="Quadra">
+                <input type="text" id="filtroLoteReclamada" placeholder="Lote">
+            </span>
+        </div>
+        <div class="filtro-bloco">
+            <label class="filtro-label" for="filtroBusca">Buscar</label>
+            <input type="text" id="filtroBusca" placeholder="Nº, título ou responsável...">
+        </div>
+        <button class="btn-filtrar" id="btnFiltrar">Aplicar Filtros</button>
     </div>
 
     <div id="listaContainer"><p class="empty-message">Carregando ordens de serviço...</p></div>
@@ -207,16 +444,61 @@
     const filtroLoteReclamante = document.getElementById('filtroLoteReclamante');
     const filtroQuadraReclamada = document.getElementById('filtroQuadraReclamada');
     const filtroLoteReclamada = document.getElementById('filtroLoteReclamada');
+    const filtrosToggle = document.getElementById('filtrosToggle');
+    const filtrosPainel = document.getElementById('filtrosPainel');
+    const filtrosContador = document.getElementById('filtrosContador');
 
     let sortField = 'numero';
     let sortAsc = false;
     let userMap = {};
+    let docsRenderizados = []; // guarda o último conjunto filtrado
 
     const priorityMap = {
         'emergencial': { label: 'Emergencial', class: 'badge-emergencial', icon: '🔴' },
         'urgente': { label: 'Urgente', class: 'badge-urgente', icon: '🟡' },
         'normal': { label: 'Normal', class: 'badge-normal', icon: '🟢' }
     };
+
+    const statusLabelMap = {
+        'aberta': 'Aberta',
+        'em_andamento': 'Em andamento',
+        'concluida': 'Concluída',
+        'cancelada': 'Cancelada'
+    };
+
+    // ================================================================
+    // DETECTAR MOBILE
+    // ================================================================
+    function isMobile() {
+        return window.matchMedia('(max-width: 768px)').matches;
+    }
+
+    // ================================================================
+    // TOGGLE DOS FILTROS (MOBILE)
+    // ================================================================
+    filtrosToggle.addEventListener('click', () => {
+        filtrosPainel.classList.toggle('aberto');
+        filtrosToggle.classList.toggle('aberto');
+    });
+
+    function atualizarContadorFiltros() {
+        let n = 0;
+        if (filtroStatus.value !== 'todos') n++;
+        if (filtroPendente.value !== 'todos') n++;
+        if (filtroQuadraReclamante.value.trim()) n++;
+        if (filtroLoteReclamante.value.trim()) n++;
+        if (filtroQuadraReclamada.value.trim()) n++;
+        if (filtroLoteReclamada.value.trim()) n++;
+        if (filtroBusca.value.trim()) n++;
+
+        if (n > 0) {
+            filtrosContador.textContent = n;
+            filtrosContador.classList.add('ativo');
+        } else {
+            filtrosContador.textContent = '0';
+            filtrosContador.classList.remove('ativo');
+        }
+    }
 
     // ================================================================
     // CÁLCULO DE DIAS
@@ -234,13 +516,26 @@
         return `${diffDias} dias`;
     }
 
+    function calcularDiasTexto(dataISO) {
+        if (!dataISO) return '—';
+        const data = new Date(dataISO);
+        const agora = new Date();
+        const dataSemHora = new Date(data.getFullYear(), data.getMonth(), data.getDate());
+        const agoraSemHora = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+        const diffMs = agoraSemHora - dataSemHora;
+        const diffDias = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        if (diffDias === 0) return 'Hoje';
+        if (diffDias === 1) return '1 dia';
+        return `${diffDias} dias`;
+    }
+
     // ================================================================
     // SLA — prazo máximo (em horas) por prioridade
     // ================================================================
     const SLA_HORAS = {
         'emergencial': 24,
         'urgente': 72,
-        'normal': 168   // 7 dias
+        'normal': 168
     };
 
     function isAtrasada(data) {
@@ -325,16 +620,50 @@
     }
 
     // ================================================================
-    // RENDERIZAR TABELA (OS LIST)
+    // HELPERS DE APRESENTAÇÃO (compartilhados tabela/cards)
     // ================================================================
-    function renderizarTabela(docs) {
-        if (!docs || docs.length === 0) {
-            listaDiv.innerHTML = '<p class="empty-message">Nenhuma ordem encontrada com os filtros atuais.</p>';
-            return;
+    function getPrioridadeHtml(data) {
+        const p = data.prioridade || 'normal';
+        const pData = priorityMap[p] || priorityMap['normal'];
+        return `<span class="badge ${pData.class}"><span class="icone">${pData.icon}</span> ${pData.label}</span>`;
+    }
+
+    function getPendenteHtml(data) {
+        let pendenteCor = '#ced4da';
+        let icone = '👥';
+        let texto = data.direcionado_para_nome || '—';
+
+        if (data.direcionado_para && data.direcionado_para.startsWith('group:')) {
+            icone = '👥';
+            pendenteCor = '#ced4da';
+        } else {
+            const uid = data.direcionado_para;
+            icone = '👤';
+            if (uid && userMap[uid]) {
+                const funcao = userMap[uid].funcao;
+                if (funcao === 'admin') pendenteCor = '#ffe082';
+                else if (funcao === 'diretor') pendenteCor = '#a5d6a7';
+                else pendenteCor = '#ced4da';
+            } else {
+                const nome = (data.direcionado_para_nome || '').toLowerCase();
+                if (nome.includes('admin')) { pendenteCor = '#ffe082'; icone = '👤'; }
+                else if (nome.includes('diretor')) { pendenteCor = '#a5d6a7'; icone = '👤'; }
+                else { pendenteCor = '#ced4da'; icone = '👤'; }
+            }
         }
+        return `<span class="badge" style="background-color:${pendenteCor}; color:#000;"><span class="icone">${icone}</span> ${texto}</span>`;
+    }
 
-        docs = ordenarDados(docs);
+    function getStatusHtml(data) {
+        const statusClass = `badge-${data.status || 'aberta'}`;
+        const label = statusLabelMap[data.status] || (data.status || 'aberta').replace('_',' ');
+        return `<span class="badge ${statusClass}">${label.toUpperCase()}</span>`;
+    }
 
+    // ================================================================
+    // RENDERIZAR — TABELA (DESKTOP)
+    // ================================================================
+    function renderizarTabelaDesktop(docs) {
         let html = `<div class="table-responsive"><table>
             <thead><tr>
                 <th data-sort="numero">Nº <span class="sorter">${sortField === 'numero' ? (sortAsc ? '▲' : '▼') : '⇅'}</span></th>
@@ -352,39 +681,6 @@
 
         docs.forEach(data => {
             const id = data.id;
-            const statusClass = `badge-${data.status || 'aberta'}`;
-            const statusLabel = data.status || 'aberta';
-
-            const p = data.prioridade || 'normal';
-            const pData = priorityMap[p] || priorityMap['normal'];
-            const prioridadeHtml = `<span class="badge ${pData.class}"><span class="icone">${pData.icon}</span> ${pData.label}</span>`;
-
-            // ---- PENDENTE EM ----
-            let pendenteCor = '#ced4da';
-            let icone = '👥';
-            let texto = data.direcionado_para_nome || '—';
-
-            if (data.direcionado_para && data.direcionado_para.startsWith('group:')) {
-                icone = '👥';
-                pendenteCor = '#ced4da';
-            } else {
-                const uid = data.direcionado_para;
-                icone = '👤';
-                if (uid && userMap[uid]) {
-                    const funcao = userMap[uid].funcao;
-                    if (funcao === 'admin') pendenteCor = '#ffe082';
-                    else if (funcao === 'diretor') pendenteCor = '#a5d6a7';
-                    else pendenteCor = '#ced4da';
-                } else {
-                    const nome = (data.direcionado_para_nome || '').toLowerCase();
-                    if (nome.includes('admin')) { pendenteCor = '#ffe082'; icone = '👤'; }
-                    else if (nome.includes('diretor')) { pendenteCor = '#a5d6a7'; icone = '👤'; }
-                    else { pendenteCor = '#ced4da'; icone = '👤'; }
-                }
-            }
-
-            const pendenteHtml = `<span class="badge" style="background-color:${pendenteCor}; color:#000;"><span class="icone">${icone}</span> ${texto}</span>`;
-
             const dataHora = data.criado_em ? new Date(data.criado_em).toLocaleString('pt-BR') : '—';
             const diasAberto = data.criado_em ? calcularDias(data.criado_em) : '—';
             let diasPendente = '—';
@@ -399,10 +695,10 @@
                     <td><strong>${data.numero || 'N/A'}</strong></td>
                     <td>${data.titulo || 'Sem título'}</td>
                     <td>${data.aberto_por_nome || '—'}</td>
-                    <td>${prioridadeHtml}</td>
-                    <td><span class="badge ${statusClass}">${statusLabel.replace('_',' ').toUpperCase()}</span></td>
+                    <td>${getPrioridadeHtml(data)}</td>
+                    <td>${getStatusHtml(data)}</td>
                     <td>${dataHora}</td>
-                    <td>${pendenteHtml}</td>
+                    <td>${getPendenteHtml(data)}</td>
                     <td><span class="dias-numero">${diasPendente}</span></td>
                     <td><span class="dias-numero">${diasAberto}</span></td>
                     <td>${atrasoBadge}</td>
@@ -411,16 +707,102 @@
             `;
         });
         html += `</tbody></table></div>`;
-        listaDiv.innerHTML = html;
+        return html;
+    }
 
-        document.querySelectorAll('th[data-sort]').forEach(th => {
-            th.addEventListener('click', () => {
-                const field = th.dataset.sort;
-                if (sortField === field) sortAsc = !sortAsc;
-                else { sortField = field; sortAsc = false; }
-                aplicarFiltros();
-            });
+    // ================================================================
+    // RENDERIZAR — CARDS (MOBILE)
+    // ================================================================
+    function renderizarCardsMobile(docs) {
+        let html = `<div class="lista-cards">`;
+
+        docs.forEach(data => {
+            const id = data.id;
+            const atrasada = isAtrasada(data);
+
+            const dataHora = data.criado_em
+                ? new Date(data.criado_em).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' })
+                : '—';
+            const diasAberto = data.criado_em ? calcularDiasTexto(data.criado_em) : '—';
+
+            let diasPendente = '—';
+            const ultData = getUltimaDataHistorico(data);
+            if (ultData) diasPendente = calcularDiasTexto(ultData);
+
+            html += `
+                <div class="os-card ${atrasada ? 'atrasada' : ''}"
+                     onclick="window.location.href='os-detalhe.html?id=${id}'">
+                    <div class="card-topo">
+                        <span class="card-numero">OS #${data.numero || '—'}</span>
+                        <span class="card-badges-topo">
+                            ${getPrioridadeHtml(data)}
+                            ${atrasada ? `<span class="badge badge-atrasada">⚠️ Atrasada</span>` : ''}
+                        </span>
+                    </div>
+
+                    <div class="card-titulo">${data.titulo || 'Sem título'}</div>
+
+                    <div class="card-divisor"></div>
+
+                    <div class="card-linha">
+                        <span class="icone">👤</span>
+                        <span class="rotulo">Pendente:</span>
+                        <span class="valor">${getPendenteHtml(data)}</span>
+                    </div>
+
+                    <div class="card-linha">
+                        <span class="icone">✍️</span>
+                        <span class="rotulo">Aberto por:</span>
+                        <span class="valor">${data.aberto_por_nome || '—'}</span>
+                    </div>
+
+                    <div class="card-linha">
+                        <span class="icone">📅</span>
+                        <span class="rotulo">Abertura:</span>
+                        <span class="valor">${dataHora}</span>
+                    </div>
+
+                    <div class="card-rodape">
+                        <span class="card-status">${getStatusHtml(data)}</span>
+                        <span class="card-dias">
+                            Aberto há <strong>${diasAberto}</strong> · Pendente há <strong>${diasPendente}</strong>
+                        </span>
+                    </div>
+                </div>
+            `;
         });
+
+        html += `</div>`;
+        return html;
+    }
+
+    // ================================================================
+    // RENDERIZAR PRINCIPAL (decide entre tabela e cards)
+    // ================================================================
+    function renderizarLista(docs) {
+        if (!docs || docs.length === 0) {
+            listaDiv.innerHTML = '<p class="empty-message">Nenhuma ordem encontrada com os filtros atuais.</p>';
+            return;
+        }
+
+        docs = ordenarDados(docs);
+        docsRenderizados = docs;
+
+        if (isMobile()) {
+            listaDiv.innerHTML = renderizarCardsMobile(docs);
+        } else {
+            listaDiv.innerHTML = renderizarTabelaDesktop(docs);
+
+            // Listener de ordenação só faz sentido no desktop (th clicável)
+            document.querySelectorAll('th[data-sort]').forEach(th => {
+                th.addEventListener('click', () => {
+                    const field = th.dataset.sort;
+                    if (sortField === field) sortAsc = !sortAsc;
+                    else { sortField = field; sortAsc = false; }
+                    aplicarFiltros();
+                });
+            });
+        }
     }
 
     // ================================================================
@@ -463,7 +845,15 @@
             });
         }
 
-        renderizarTabela(docs);
+        atualizarContadorFiltros();
+
+        // No mobile, fecha o painel de filtros ao aplicar
+        if (isMobile()) {
+            filtrosPainel.classList.remove('aberto');
+            filtrosToggle.classList.remove('aberto');
+        }
+
+        renderizarLista(docs);
     }
 
     // ================================================================
@@ -503,13 +893,35 @@
     // EVENT LISTENERS
     // ================================================================
     btnFiltrar.addEventListener('click', aplicarFiltros);
-    [filtroStatus, filtroPendente].forEach(el => el.addEventListener('change', aplicarFiltros));
+    [filtroStatus, filtroPendente].forEach(el => el.addEventListener('change', () => {
+        atualizarContadorFiltros();
+        aplicarFiltros();
+    }));
+
     let timeoutBusca;
     [filtroQuadraReclamante, filtroLoteReclamante, filtroQuadraReclamada, filtroLoteReclamada, filtroBusca].forEach(input => {
         input.addEventListener('input', () => {
+            atualizarContadorFiltros();
             clearTimeout(timeoutBusca);
             timeoutBusca = setTimeout(aplicarFiltros, 300);
         });
+    });
+
+    // Re-renderiza quando muda entre mobile/desktop (resize, rotação de tela)
+    let lastIsMobile = isMobile();
+    window.addEventListener('resize', () => {
+        const nowMobile = isMobile();
+        if (nowMobile !== lastIsMobile) {
+            lastIsMobile = nowMobile;
+            // Se passou pra desktop, garante que o painel de filtros apareça
+            if (!nowMobile) {
+                filtrosPainel.classList.remove('aberto');
+                filtrosToggle.classList.remove('aberto');
+            }
+            if (docsRenderizados.length > 0 || (window.allDocs && window.allDocs.length > 0)) {
+                renderizarLista(docsRenderizados);
+            }
+        }
     });
 
     // ================================================================
