@@ -104,7 +104,6 @@
         .card .card-body .direcionado { font-size: 13px; color: #555; margin-top: 4px; }
         .card .card-body .mensagem { margin-top: 4px; }
 
-        /* Botão X para apagar card (só master) */
         .btn-delete-card {
             background: #fff;
             border: 1px solid #c62828;
@@ -290,6 +289,59 @@
         if (n.includes('diretor')) return 'diretor';
         if (n.includes('master')) return 'master';
         return null;
+    }
+
+    // ============================================================
+    // RECALCULAR ESTADO (após apagar ação)
+    // ============================================================
+    // Percorre o histórico restante em ordem cronológica partindo da
+    // abertura e reconstrói:
+    //   - qual é o destino atual (dirPara/dirNome/dirFuncao)
+    //   - quando a categoria desse destino foi definida (dirEm)
+    // Regra idêntica ao adicionarAcao: dirEm só avança quando a
+    // categoria muda. Isso restaura corretamente o contador de atraso
+    // se a ação apagada era a única que havia mudado a categoria.
+    function recalcularEstado(historico, osAtual) {
+        // Estado inicial = definido na abertura
+        const abertura = historico.find(h => h.acao === 'abertura');
+        let dirPara = (abertura && abertura.direcionado_para)
+            || osAtual.direcionado_para_original
+            || osAtual.direcionado_para
+            || null;
+        let dirNome = (abertura && abertura.direcionado_para_nome)
+            || osAtual.direcionado_para_nome_original
+            || osAtual.direcionado_para_nome
+            || null;
+        let dirFuncao = osAtual.direcionado_para_funcao_original
+            || osAtual.direcionado_para_funcao
+            || '';
+        let dirEm = osAtual.criado_em || null;
+        let catAtual = getCategoriaDestino(dirPara, dirFuncao, dirNome);
+
+        // Ações (sem abertura, sem edição) em ordem cronológica
+        const acoes = (historico || [])
+            .filter(h => h.acao && h.acao !== 'abertura' && h.acao !== 'edicao')
+            .sort((a, b) => (a.data || '').localeCompare(b.data || ''));
+
+        acoes.forEach(acao => {
+            if (!acao.direcionado_para) return;
+            const catNova = getCategoriaDestino(
+                acao.direcionado_para,
+                acao.direcionado_para_funcao,
+                acao.direcionado_para_nome
+            );
+            // Atualiza o destino vigente
+            dirPara = acao.direcionado_para;
+            dirNome = acao.direcionado_para_nome || dirNome;
+            dirFuncao = acao.direcionado_para_funcao || dirFuncao;
+            // Só reinicia o contador se a categoria mudou
+            if (catNova !== catAtual) {
+                dirEm = acao.data;
+                catAtual = catNova;
+            }
+        });
+
+        return { dirPara, dirNome, dirFuncao: dirFuncao || '', dirEm };
     }
 
     function getBadgePerfil(uid, nome) {
@@ -600,7 +652,6 @@
         document.getElementById('btnConcluir')?.addEventListener('click', concluirOS);
         document.getElementById('btnReabrir')?.addEventListener('click', reabrirOS);
 
-        // Listeners dos botões ✕ (apenas master vê, mas dupla proteção)
         historicoContainer.querySelectorAll('.btn-delete-card').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -627,7 +678,7 @@
     }
 
     // ============================================================
-    // APAGAR CARD (apenas master)
+    // APAGAR CARD (apenas master) — recalcula estado após apagar
     // ============================================================
     async function apagarAcao(dataISO) {
         if (!isMaster()) {
@@ -641,14 +692,27 @@
             await db.runTransaction(async (transaction) => {
                 const doc = await transaction.get(docRef);
                 if (!doc.exists) throw new Error('OS não encontrada.');
-                const historico = doc.data().historico || [];
+                const osAtual = doc.data();
+                const historico = osAtual.historico || [];
                 const idx = historico.findIndex(h => h.data === dataISO);
                 if (idx === -1) throw new Error('Ação não encontrada.');
                 historico.splice(idx, 1);
-                transaction.update(docRef, {
+
+                // Recalcula destino atual e "pendente desde" com base no
+                // que sobrou do histórico. Se a ação apagada era a única
+                // que havia mudado a categoria de destino, o contador
+                // volta ao estado anterior (possivelmente atrasado).
+                const recalc = recalcularEstado(historico, osAtual);
+
+                const upd = {
                     historico,
-                    atualizado_em: new Date().toISOString()
-                });
+                    atualizado_em: new Date().toISOString(),
+                    direcionado_para: recalc.dirPara,
+                    direcionado_para_nome: recalc.dirNome,
+                    direcionado_para_funcao: recalc.dirFuncao || '',
+                    direcionado_em: recalc.dirEm
+                };
+                transaction.update(docRef, upd);
             });
             carregarOS();
         } catch (err) {
@@ -776,8 +840,6 @@
             upd.direcionado_para_nome = nome || valorNovo;
             upd.direcionado_para_funcao = funcao || '';
 
-            // Regra anti-jeitinho: só reseta o "pendente desde" se a
-            // categoria de destino realmente mudou (ex: admin → diretor).
             const catAtual = getCategoriaDestino(
                 osData.direcionado_para,
                 osData.direcionado_para_funcao,
@@ -904,8 +966,6 @@
                         novaAcao.direcionado_para_funcao = userMap[direcionarPara].funcao;
                     }
 
-                    // Anti-jeitinho: só reinicia o "pendente desde" se a
-                    // categoria de destino realmente mudou.
                     const catAtual = getCategoriaDestino(
                         dataAtual.direcionado_para,
                         dataAtual.direcionado_para_funcao,
@@ -1008,8 +1068,6 @@
                     usuario: currentUserData?.nome || 'Usuário',
                     mensagem: 'OS reaberta'
                 });
-                // Reabertura NÃO reinicia o contador de atraso — o destino
-                // continua o mesmo, então o tempo pendente segue contando.
                 transaction.update(docRef, { status: 'em_andamento', historico, atualizado_em: agora });
                 return historico;
             });
