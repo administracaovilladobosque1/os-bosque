@@ -52,8 +52,20 @@
             cursor: pointer;
             font-size: 14px;
             font-weight: 600;
+            transition: 0.2s;
+            position: relative;
         }
         .filtros .btn-filtrar:hover { background: #1b5e20; }
+        .filtros .btn-filtrar.pendente {
+            box-shadow: 0 0 0 3px rgba(240, 173, 78, 0.5);
+            background: #f0ad4e;
+            color: #000;
+            animation: pulseBtn 1.6s infinite;
+        }
+        @keyframes pulseBtn {
+            0%, 100% { box-shadow: 0 0 0 3px rgba(240, 173, 78, 0.5); }
+            50%      { box-shadow: 0 0 0 6px rgba(240, 173, 78, 0.15); }
+        }
         .filtros .grupo-filtro {
             display: flex;
             align-items: center;
@@ -70,9 +82,7 @@
             min-width: 70px;
             flex: 0 1 80px;
         }
-        /* Labels que só aparecem no mobile */
         .filtro-label { display: none; }
-        /* Botão toggle que só aparece no mobile */
         .filtros-toggle { display: none; }
 
         /* ============================================================ */
@@ -118,7 +128,7 @@
         .empty-message { text-align: center; color: #555; padding: 30px 0; }
 
         /* ============================================================ */
-        /* CARDS (MOBILE) - escondidos por padrão no desktop             */
+        /* CARDS (MOBILE)                                                */
         /* ============================================================ */
         .lista-cards { display: none; flex-direction: column; gap: 10px; margin-top: 12px; }
         .os-card {
@@ -231,7 +241,6 @@
                 font-size: 14px;
             }
 
-            /* ---- Filtros mobile ---- */
             .filtros-toggle {
                 display: flex;
                 align-items: center;
@@ -324,7 +333,6 @@
                 margin-top: 4px;
             }
 
-            /* ---- Lista mobile: cards ---- */
             .table-responsive { display: none; }
             .lista-cards { display: flex; }
         }
@@ -338,7 +346,6 @@
         <a href="os-abrir.html" class="btn btn-success">📝 Nova OS</a>
     </div>
 
-    <!-- Botão toggle de filtros (só aparece no mobile) -->
     <button class="filtros-toggle" id="filtrosToggle" type="button">
         🔍 Filtros
         <span class="badge-contador" id="filtrosContador">0</span>
@@ -451,7 +458,18 @@
     let sortField = 'numero';
     let sortAsc = false;
     let userMap = {};
-    let docsRenderizados = []; // guarda o último conjunto filtrado
+    let docsRenderizados = [];
+
+    // Snapshot dos filtros atualmente APLICADOS (para detectar mudanças pendentes)
+    let filtrosAplicados = {
+        status: 'aberto',
+        pendente: 'todos',
+        qReclamante: '',
+        lReclamante: '',
+        qReclamada: '',
+        lReclamada: '',
+        busca: ''
+    };
 
     const priorityMap = {
         'emergencial': { label: 'Emergencial', class: 'badge-emergencial', icon: '🔴' },
@@ -466,9 +484,6 @@
         'cancelada': 'Cancelada'
     };
 
-    // ================================================================
-    // DETECTAR MOBILE
-    // ================================================================
     function isMobile() {
         return window.matchMedia('(max-width: 768px)').matches;
     }
@@ -481,15 +496,45 @@
         filtrosToggle.classList.toggle('aberto');
     });
 
-    function atualizarContadorFiltros() {
+    // ================================================================
+    // ESTADO ATUAL DOS CAMPOS DE FILTRO
+    // ================================================================
+    function lerFiltrosDoFormulario() {
+        return {
+            status: filtroStatus.value,
+            pendente: filtroPendente.value,
+            qReclamante: filtroQuadraReclamante.value.trim(),
+            lReclamante: filtroLoteReclamante.value.trim(),
+            qReclamada: filtroQuadraReclamada.value.trim(),
+            lReclamada: filtroLoteReclamada.value.trim(),
+            busca: filtroBusca.value.trim()
+        };
+    }
+
+    function filtrosMudaram() {
+        const atual = lerFiltrosDoFormulario();
+        return atual.status !== filtrosAplicados.status ||
+               atual.pendente !== filtrosAplicados.pendente ||
+               atual.qReclamante !== filtrosAplicados.qReclamante ||
+               atual.lReclamante !== filtrosAplicados.lReclamante ||
+               atual.qReclamada !== filtrosAplicados.qReclamada ||
+               atual.lReclamada !== filtrosAplicados.lReclamada ||
+               atual.busca !== filtrosAplicados.busca;
+    }
+
+    // ================================================================
+    // CONTADOR + DESTAQUE DO BOTÃO (visual)
+    // ================================================================
+    function atualizarEstadoVisual() {
+        const atual = lerFiltrosDoFormulario();
         let n = 0;
-        if (filtroStatus.value !== 'todos') n++;
-        if (filtroPendente.value !== 'todos') n++;
-        if (filtroQuadraReclamante.value.trim()) n++;
-        if (filtroLoteReclamante.value.trim()) n++;
-        if (filtroQuadraReclamada.value.trim()) n++;
-        if (filtroLoteReclamada.value.trim()) n++;
-        if (filtroBusca.value.trim()) n++;
+        if (atual.status !== 'todos') n++;
+        if (atual.pendente !== 'todos') n++;
+        if (atual.qReclamante) n++;
+        if (atual.lReclamante) n++;
+        if (atual.qReclamada) n++;
+        if (atual.lReclamada) n++;
+        if (atual.busca) n++;
 
         if (n > 0) {
             filtrosContador.textContent = n;
@@ -497,6 +542,15 @@
         } else {
             filtrosContador.textContent = '0';
             filtrosContador.classList.remove('ativo');
+        }
+
+        // Destaca o botão "Aplicar" se houver mudanças não aplicadas
+        if (filtrosMudaram()) {
+            btnFiltrar.classList.add('pendente');
+            btnFiltrar.textContent = 'Aplicar Filtros •';
+        } else {
+            btnFiltrar.classList.remove('pendente');
+            btnFiltrar.textContent = 'Aplicar Filtros';
         }
     }
 
@@ -530,7 +584,7 @@
     }
 
     // ================================================================
-    // SLA — prazo máximo (em horas) por prioridade
+    // SLA
     // ================================================================
     const SLA_HORAS = {
         'emergencial': 24,
@@ -620,7 +674,7 @@
     }
 
     // ================================================================
-    // HELPERS DE APRESENTAÇÃO (compartilhados tabela/cards)
+    // HELPERS DE APRESENTAÇÃO
     // ================================================================
     function getPrioridadeHtml(data) {
         const p = data.prioridade || 'normal';
@@ -777,7 +831,7 @@
     }
 
     // ================================================================
-    // RENDERIZAR PRINCIPAL (decide entre tabela e cards)
+    // RENDERIZAR PRINCIPAL
     // ================================================================
     function renderizarLista(docs) {
         if (!docs || docs.length === 0) {
@@ -792,21 +846,19 @@
             listaDiv.innerHTML = renderizarCardsMobile(docs);
         } else {
             listaDiv.innerHTML = renderizarTabelaDesktop(docs);
-
-            // Listener de ordenação só faz sentido no desktop (th clicável)
             document.querySelectorAll('th[data-sort]').forEach(th => {
                 th.addEventListener('click', () => {
                     const field = th.dataset.sort;
                     if (sortField === field) sortAsc = !sortAsc;
                     else { sortField = field; sortAsc = false; }
-                    aplicarFiltros();
+                    renderizarLista(docsRenderizados);
                 });
             });
         }
     }
 
     // ================================================================
-    // APLICAR FILTROS
+    // APLICAR FILTROS (somente quando clicar no botão)
     // ================================================================
     function aplicarFiltros() {
         let docs = window.allDocs || [];
@@ -845,7 +897,11 @@
             });
         }
 
-        atualizarContadorFiltros();
+        // Salva o snapshot dos filtros aplicados
+        filtrosAplicados = lerFiltrosDoFormulario();
+
+        // Atualiza estado visual (contador + destaque do botão)
+        atualizarEstadoVisual();
 
         // No mobile, fecha o painel de filtros ao aplicar
         if (isMobile()) {
@@ -892,33 +948,45 @@
     // ================================================================
     // EVENT LISTENERS
     // ================================================================
-    btnFiltrar.addEventListener('click', aplicarFiltros);
-    [filtroStatus, filtroPendente].forEach(el => el.addEventListener('change', () => {
-        atualizarContadorFiltros();
-        aplicarFiltros();
-    }));
 
-    let timeoutBusca;
-    [filtroQuadraReclamante, filtroLoteReclamante, filtroQuadraReclamada, filtroLoteReclamada, filtroBusca].forEach(input => {
-        input.addEventListener('input', () => {
-            atualizarContadorFiltros();
-            clearTimeout(timeoutBusca);
-            timeoutBusca = setTimeout(aplicarFiltros, 300);
+    // Botão "Aplicar Filtros" — única ação que dispara a filtragem
+    btnFiltrar.addEventListener('click', aplicarFiltros);
+
+    // Enter dentro dos campos também aplica (conveniência desktop)
+    [filtroStatus, filtroPendente,
+     filtroQuadraReclamante, filtroLoteReclamante,
+     filtroQuadraReclamada, filtroLoteReclamada,
+     filtroBusca].forEach(el => {
+        el.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                aplicarFiltros();
+            }
         });
     });
 
-    // Re-renderiza quando muda entre mobile/desktop (resize, rotação de tela)
+    // Mudanças nos campos: APENAS atualizam o estado visual (contador + destaque do botão),
+    // NÃO aplicam os filtros.
+    [filtroStatus, filtroPendente].forEach(el => {
+        el.addEventListener('change', atualizarEstadoVisual);
+    });
+    [filtroQuadraReclamante, filtroLoteReclamante,
+     filtroQuadraReclamada, filtroLoteReclamada,
+     filtroBusca].forEach(el => {
+        el.addEventListener('input', atualizarEstadoVisual);
+    });
+
+    // Re-renderiza quando muda entre mobile/desktop
     let lastIsMobile = isMobile();
     window.addEventListener('resize', () => {
         const nowMobile = isMobile();
         if (nowMobile !== lastIsMobile) {
             lastIsMobile = nowMobile;
-            // Se passou pra desktop, garante que o painel de filtros apareça
             if (!nowMobile) {
                 filtrosPainel.classList.remove('aberto');
                 filtrosToggle.classList.remove('aberto');
             }
-            if (docsRenderizados.length > 0 || (window.allDocs && window.allDocs.length > 0)) {
+            if (docsRenderizados.length > 0) {
                 renderizarLista(docsRenderizados);
             }
         }
