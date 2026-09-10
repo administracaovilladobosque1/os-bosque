@@ -42,7 +42,7 @@
         .logout-area .btn { display: inline-block; width: auto; padding: 12px 40px; margin-bottom: 0; }
         .timeout-warning { font-size: 13px; color: #558b2f; text-align: right; margin-top: 10px; }
 
-        /* Cabeçalho "Logado como" — linha simples, sem caixa */
+        /* Cabeçalho "Logado como" — linha simples, badge único com nome + função */
         .user-header {
             margin-bottom: 14px;
             display: flex;
@@ -53,19 +53,19 @@
             color: #1b5e20;
         }
         .user-header .uh-label { font-weight: 500; color: #558b2f; }
-        .user-header .uh-nome { font-weight: 700; color: #1b5e20; }
-        .user-header .uh-funcao {
+        .uh-badge {
             display: inline-block;
-            padding: 2px 10px;
+            padding: 3px 12px;
             border-radius: 20px;
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 700;
-            text-transform: uppercase;
+            color: #000;
+            white-space: nowrap;
         }
-        .uh-funcao.master { background: #ffcc80; color: #4e342e; }
-        .uh-funcao.admin { background: #ffe082; color: #4e342e; }
-        .uh-funcao.diretor { background: #a5d6a7; color: #1b5e20; }
-        .uh-funcao.tecnico { background: #ced4da; color: #333; }
+        .uh-badge.master { background: #ffcc80; }
+        .uh-badge.admin { background: #ffe082; }
+        .uh-badge.diretor { background: #a5d6a7; }
+        .uh-badge.tecnico { background: #ced4da; }
 
         .menu-panel { background: #f1f8e9; border-radius: 16px; padding: 20px; margin-top: 20px; border: 1px solid #a5d6a7; }
         .menu-panel h2 { font-size: 20px; margin: 0 0 15px; color: #2e7d32; border-bottom: 2px solid #c8e6c9; padding-bottom: 10px; }
@@ -81,7 +81,6 @@
 </head>
 <body>
 <div class="container" id="app">
-    <!-- TELA DE LOGIN -->
     <div id="loginScreen">
         <div class="logo-area">
             <img src="logo.png" alt="Logo Villa do Bosque">
@@ -101,12 +100,10 @@
         <div id="loginMessage" class="message"></div>
     </div>
 
-    <!-- DASHBOARD -->
     <div id="dashboard">
         <div class="user-header" id="userHeader">
             <span class="uh-label">Logado como:</span>
-            <span class="uh-nome" id="userHeaderName">—</span>
-            <span class="uh-funcao tecnico" id="userHeaderRole">—</span>
+            <span class="uh-badge tecnico" id="userHeaderBadge">—</span>
         </div>
 
         <div class="dashboard-logo">
@@ -162,11 +159,7 @@
     const userEmail = document.getElementById('userEmail');
     const menuButtons = document.getElementById('menuButtons');
     const menuTitle = document.getElementById('menuTitle');
-    const userHeaderName = document.getElementById('userHeaderName');
-    const userHeaderRole = document.getElementById('userHeaderRole');
-
-    const roleMap = { 'master':'Master', 'admin':'Administrador', 'diretor':'Diretor', 'tecnico':'Técnico' };
-    const roleMapFull = { 'master':'Master (Controle Total)', 'admin':'Administrador', 'diretor':'Diretor', 'tecnico':'Técnico' };
+    const userHeaderBadge = document.getElementById('userHeaderBadge');
 
     // ============================================================
     // TIMEOUT
@@ -232,9 +225,9 @@
     }
 
     function atualizarHeader(nome, funcao) {
-        userHeaderName.textContent = nome || 'Usuário';
-        userHeaderRole.className = 'uh-funcao ' + (funcao || 'tecnico');
-        userHeaderRole.textContent = roleMap[funcao] || funcao;
+        const f = funcao || 'tecnico';
+        userHeaderBadge.className = 'uh-badge ' + f;
+        userHeaderBadge.textContent = `${nome || 'Usuário'} (${f})`;
     }
 
     function showDashboard(user, userData) {
@@ -261,14 +254,14 @@
             html += `<a href="personagens.html" class="btn btn-success">👥 Gerenciar Personagens</a>`;
             html += `<a href="os-list.html" class="btn btn-secondary">📋 Listar Ordens de Serviço</a>`;
             html += `<a href="os-abrir.html" class="btn" style="background:#2e7d32;">📝 Nova Ordem de Serviço</a>`;
-            menuTitle.textContent = '👑 Painel do Master';
+            menuTitle.textContent = '👑 Painel do master';
         } else if (funcao === 'admin' || funcao === 'diretor') {
             html += `<a href="os-list.html" class="btn btn-secondary">📋 Listar Ordens de Serviço</a>`;
             html += `<a href="os-abrir.html" class="btn" style="background:#2e7d32;">📝 Nova Ordem de Serviço</a>`;
-            menuTitle.textContent = `📌 Painel do ${roleMapFull[funcao]}`;
+            menuTitle.textContent = `📌 Painel do ${funcao}`;
         } else {
             html += `<a href="os-list.html" class="btn btn-secondary">📋 Listar Ordens de Serviço</a>`;
-            menuTitle.textContent = `📌 Painel do ${roleMapFull[funcao]}`;
+            menuTitle.textContent = `📌 Painel do ${funcao}`;
         }
         menuButtons.innerHTML = html;
 

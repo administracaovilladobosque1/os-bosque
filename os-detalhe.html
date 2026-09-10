@@ -12,7 +12,6 @@
         body { background: #e8f5e9; padding: 16px 12px; display: flex; justify-content: center; min-height: 100vh; }
         .container { background: #fff; max-width: 900px; width: 100%; padding: 20px; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,80,0,0.12); border: 1px solid #a5d6a7; }
 
-        /* Cabeçalho "Logado como" — linha simples */
         .user-header {
             margin-bottom: 14px;
             display: flex;
@@ -23,15 +22,19 @@
             color: #1b5e20;
         }
         .user-header .uh-label { font-weight: 500; color: #558b2f; }
-        .user-header .uh-nome { font-weight: 700; color: #1b5e20; }
-        .user-header .uh-funcao {
-            display: inline-block; padding: 2px 10px; border-radius: 20px;
-            font-size: 11px; font-weight: 700; text-transform: uppercase;
+        .uh-badge {
+            display: inline-block;
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #000;
+            white-space: nowrap;
         }
-        .uh-funcao.master { background: #ffcc80; color: #4e342e; }
-        .uh-funcao.admin { background: #ffe082; color: #4e342e; }
-        .uh-funcao.diretor { background: #a5d6a7; color: #1b5e20; }
-        .uh-funcao.tecnico { background: #ced4da; color: #333; }
+        .uh-badge.master { background: #ffcc80; }
+        .uh-badge.admin { background: #ffe082; }
+        .uh-badge.diretor { background: #a5d6a7; }
+        .uh-badge.tecnico { background: #ced4da; }
 
         .page-title { font-size: 24px; color: #1b5e20; background: #c8e6c9; display: inline-block; padding: 4px 18px; border-radius: 30px; margin-bottom: 12px; }
         .btn { padding: 8px 16px; background: #2e7d32; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s; text-decoration: none; display: inline-block; }
@@ -131,8 +134,7 @@
 <div class="container">
     <div class="user-header" id="userHeader">
         <span class="uh-label">Logado como:</span>
-        <span class="uh-nome" id="userHeaderName">—</span>
-        <span class="uh-funcao tecnico" id="userHeaderRole">—</span>
+        <span class="uh-badge tecnico" id="userHeaderBadge">—</span>
     </div>
 
     <div class="header-actions">
@@ -165,12 +167,9 @@
     const TIMEOUT_KEY = 'vb_lastActivity';
     const TIMEOUT_CHECK_INTERVAL = 30 * 1000;
 
-    const roleMap = { 'master':'Master', 'admin':'Administrador', 'diretor':'Diretor', 'tecnico':'Técnico' };
-    const funcaoLabelMap = { admin: 'Admin', diretor: 'Diretor', master: 'Master', tecnico: 'Técnico' };
+    const GRUPO_ADMIN_TEXTO = 'Administração';
+    const GRUPO_DIRETOR_TEXTO = 'Diretores';
 
-    // ============================================================
-    // TIMEOUT
-    // ============================================================
     function registrarAtividade() { try { localStorage.setItem(TIMEOUT_KEY, Date.now().toString()); } catch(e) {} }
     function fazerLogoutTimeout() {
         if (window.__fazendoLogout) return;
@@ -211,8 +210,7 @@
     const osStatusBadge = document.getElementById('osStatusBadge');
     const osInfoContainer = document.getElementById('osInfoContainer');
     const historicoContainer = document.getElementById('historicoContainer');
-    const userHeaderName = document.getElementById('userHeaderName');
-    const userHeaderRole = document.getElementById('userHeaderRole');
+    const userHeaderBadge = document.getElementById('userHeaderBadge');
 
     function removerAcentos(str) { return str.normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
     function formatarDataHora(dataISO) {
@@ -236,64 +234,62 @@
     }
 
     function atualizarHeader(nome, funcao) {
-        userHeaderName.textContent = nome || 'Usuário';
-        userHeaderRole.className = 'uh-funcao ' + (funcao || 'tecnico');
-        userHeaderRole.textContent = roleMap[funcao] || funcao || 'Técnico';
+        const f = funcao || 'tecnico';
+        userHeaderBadge.className = 'uh-badge ' + f;
+        userHeaderBadge.textContent = `${nome || 'Usuário'} (${f})`;
     }
 
     // ============================================================
-    // BADGES — nome + função no texto
+    // DETECÇÃO E FORMATAÇÃO DE FUNÇÃO
     // ============================================================
-    function getBadgePerfil(uid, nome) {
-        const textoBase = nome || '—';
-        let classe = 'badge-grupo';
-        let funcao = null;
-        if (uid && userMap[uid]) funcao = userMap[uid].funcao;
-        if (!funcao) {
-            const n = textoBase.toLowerCase();
-            if (n.includes('admin')) funcao = 'admin';
-            else if (n.includes('diretor')) funcao = 'diretor';
-            else if (n.includes('master')) funcao = 'master';
-        }
-        if (funcao === 'admin') classe = 'badge-admin';
-        else if (funcao === 'diretor') classe = 'badge-diretor';
-        else if (funcao === 'master') classe = 'badge-master';
+    function detectarFuncao(nome, uid, funcaoDireta) {
+        if (funcaoDireta) return funcaoDireta;
+        if (uid && userMap[uid]) return userMap[uid].funcao;
+        const n = (nome || '').toLowerCase();
+        if (n.includes('admin')) return 'admin';
+        if (n.includes('diretor')) return 'diretor';
+        if (n.includes('master')) return 'master';
+        return null;
+    }
 
-        // Adiciona função ao texto se identificada e ainda não presente
-        let texto = textoBase;
-        if (funcao && !textoBase.includes('(')) {
-            texto = `${textoBase} (${funcaoLabelMap[funcao] || funcao})`;
+    // Badge de perfil (pessoa) — Nome (função)
+    function getBadgePerfil(uid, nome) {
+        const nomeBase = nome || '—';
+        const f = detectarFuncao(nomeBase, uid, null);
+        let classe = 'badge-grupo';
+        if (f === 'admin') classe = 'badge-admin';
+        else if (f === 'diretor') classe = 'badge-diretor';
+        else if (f === 'master') classe = 'badge-master';
+
+        let texto = nomeBase;
+        if (f && !nomeBase.includes('(')) {
+            texto = `${nomeBase} (${f})`;
         }
         return `<span class="badge ${classe}">${texto}</span>`;
     }
 
+    // Badge de direcionamento — grupos com texto fixo, pessoas com Nome (função)
     function getBadgeDirecionado(data) {
         const alvo = data.direcionado_para;
-        let texto = data.direcionado_para_nome || '—';
         let classe = 'badge-grupo';
+        let texto;
 
-        if (alvo && alvo.startsWith('group:')) {
-            // Grupo — deixa texto como está ("Administradores" / "Diretores")
-            if (alvo === 'group:admin') classe = 'badge-admin';
-            else if (alvo === 'group:diretor') classe = 'badge-diretor';
+        if (alvo === 'group:admin') {
+            classe = 'badge-admin';
+            texto = GRUPO_ADMIN_TEXTO;
+        } else if (alvo === 'group:diretor') {
+            classe = 'badge-diretor';
+            texto = GRUPO_DIRETOR_TEXTO;
         } else {
-            // Pessoa — busca função
-            let f = null;
-            if (alvo && userMap[alvo]) f = userMap[alvo].funcao;
-            if (!f && data.direcionado_para_funcao) f = data.direcionado_para_funcao;
-            if (!f) {
-                const n = (texto || '').toLowerCase();
-                if (n.includes('admin')) f = 'admin';
-                else if (n.includes('diretor')) f = 'diretor';
-                else if (n.includes('master')) f = 'master';
-            }
+            const nomeBase = data.direcionado_para_nome || '—';
+            const f = detectarFuncao(nomeBase, alvo, data.direcionado_para_funcao);
             if (f === 'admin') classe = 'badge-admin';
             else if (f === 'diretor') classe = 'badge-diretor';
             else if (f === 'master') classe = 'badge-master';
 
-            // Adiciona função ao texto
-            if (f && texto && !texto.includes('(')) {
-                texto = `${texto} (${funcaoLabelMap[f] || f})`;
+            texto = nomeBase;
+            if (f && !nomeBase.includes('(')) {
+                texto = `${nomeBase} (${f})`;
             }
         }
         return `<span class="badge ${classe}">${texto}</span>`;
@@ -318,9 +314,6 @@
         return valor;
     }
 
-    // ============================================================
-    // PERMISSÃO — APENAS MASTER EDITA
-    // ============================================================
     function podeEditarOS() {
         if (!osData) return false;
         const s = osData.status ? removerAcentos(osData.status.toLowerCase()) : '';
@@ -457,7 +450,6 @@
         osInfoContainer.style.borderLeft = `6px solid ${cor}`;
         osInfoContainer.style.backgroundColor = cor + '22';
 
-        // ---- HISTÓRICO ----
         const historico = osData.historico || [];
         const statusConcluida = osData.status && removerAcentos(osData.status.toLowerCase()) === 'concluida';
 
@@ -640,8 +632,8 @@
                 } else {
                     input = document.createElement('select');
                     input.innerHTML = `<option value="">Manter destino atual</option>
-                        <option value="group:admin">Administradores</option>
-                        <option value="group:diretor">Diretores</option>`;
+                        <option value="group:admin">${GRUPO_ADMIN_TEXTO}</option>
+                        <option value="group:diretor">${GRUPO_DIRETOR_TEXTO}</option>`;
                 }
             } else {
                 input = document.createElement('input');
@@ -689,8 +681,8 @@
         upd[campo] = valorNovo;
         if (campo === 'direcionado_para') {
             let nome = '', funcao = '';
-            if (valorNovo === 'group:admin') { nome = 'Administradores'; funcao = 'admin'; }
-            else if (valorNovo === 'group:diretor') { nome = 'Diretores'; funcao = 'diretor'; }
+            if (valorNovo === 'group:admin') { nome = GRUPO_ADMIN_TEXTO; funcao = 'admin'; }
+            else if (valorNovo === 'group:diretor') { nome = GRUPO_DIRETOR_TEXTO; funcao = 'diretor'; }
             else {
                 const u = userMap[valorNovo];
                 if (u) { nome = u.nome; funcao = u.funcao; }
@@ -752,11 +744,11 @@
         optDef.value = ''; optDef.textContent = 'Manter destino atual'; select.appendChild(optDef);
 
         const optGA = document.createElement('option');
-        optGA.value = 'group:admin'; optGA.textContent = 'GRUPO: Administradores';
+        optGA.value = 'group:admin'; optGA.textContent = `GRUPO: ${GRUPO_ADMIN_TEXTO}`;
         optGA.style.backgroundColor = '#ffe082'; select.appendChild(optGA);
 
         const optGD = document.createElement('option');
-        optGD.value = 'group:diretor'; optGD.textContent = 'GRUPO: Diretores';
+        optGD.value = 'group:diretor'; optGD.textContent = `GRUPO: ${GRUPO_DIRETOR_TEXTO}`;
         optGD.style.backgroundColor = '#a5d6a7'; select.appendChild(optGD);
 
         const admins = [], diretores = [];
@@ -783,8 +775,6 @@
     async function adicionarAcao(descricao, direcionarPara) {
         const agora = new Date().toISOString();
         const docRef = db.collection('ordens_servico').doc(osId);
-        const select = document.getElementById('acaoDirecionar');
-        const destinoNome = select?.options[select.selectedIndex]?.text || direcionarPara;
 
         try {
             const resultado = await db.runTransaction(async (transaction) => {
@@ -801,10 +791,16 @@
                 };
                 if (direcionarPara) {
                     novaAcao.direcionado_para = direcionarPara;
-                    novaAcao.direcionado_para_nome = destinoNome;
-                    if (direcionarPara === 'group:admin') novaAcao.direcionado_para_funcao = 'admin';
-                    else if (direcionarPara === 'group:diretor') novaAcao.direcionado_para_funcao = 'diretor';
-                    else if (userMap[direcionarPara]) novaAcao.direcionado_para_funcao = userMap[direcionarPara].funcao;
+                    if (direcionarPara === 'group:admin') {
+                        novaAcao.direcionado_para_nome = GRUPO_ADMIN_TEXTO;
+                        novaAcao.direcionado_para_funcao = 'admin';
+                    } else if (direcionarPara === 'group:diretor') {
+                        novaAcao.direcionado_para_nome = GRUPO_DIRETOR_TEXTO;
+                        novaAcao.direcionado_para_funcao = 'diretor';
+                    } else if (userMap[direcionarPara]) {
+                        novaAcao.direcionado_para_nome = userMap[direcionarPara].nome;
+                        novaAcao.direcionado_para_funcao = userMap[direcionarPara].funcao;
+                    }
                 }
                 historico.push(novaAcao);
 

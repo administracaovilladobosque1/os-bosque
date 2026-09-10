@@ -12,7 +12,6 @@
         body { background: #e8f5e9; padding: 16px 12px; display: flex; justify-content: center; min-height: 100vh; }
         .container { background: #fff; max-width: 1000px; width: 100%; padding: 18px; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,80,0,0.12); border: 1px solid #a5d6a7; }
 
-        /* Cabeçalho "Logado como" — linha simples */
         .user-header {
             margin-bottom: 14px;
             display: flex;
@@ -23,15 +22,19 @@
             color: #1b5e20;
         }
         .user-header .uh-label { font-weight: 500; color: #558b2f; }
-        .user-header .uh-nome { font-weight: 700; color: #1b5e20; }
-        .user-header .uh-funcao {
-            display: inline-block; padding: 2px 10px; border-radius: 20px;
-            font-size: 11px; font-weight: 700; text-transform: uppercase;
+        .uh-badge {
+            display: inline-block;
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #000;
+            white-space: nowrap;
         }
-        .uh-funcao.master { background: #ffcc80; color: #4e342e; }
-        .uh-funcao.admin { background: #ffe082; color: #4e342e; }
-        .uh-funcao.diretor { background: #a5d6a7; color: #1b5e20; }
-        .uh-funcao.tecnico { background: #ced4da; color: #333; }
+        .uh-badge.master { background: #ffcc80; }
+        .uh-badge.admin { background: #ffe082; }
+        .uh-badge.diretor { background: #a5d6a7; }
+        .uh-badge.tecnico { background: #ced4da; }
 
         .page-title { font-size: 24px; color: #1b5e20; background: #c8e6c9; display: inline-block; padding: 4px 18px; border-radius: 30px; margin-bottom: 12px; }
         .btn { padding: 8px 16px; background: #2e7d32; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s; text-decoration: none; display: inline-block; }
@@ -97,8 +100,7 @@
 <div class="container">
     <div class="user-header" id="userHeader">
         <span class="uh-label">Logado como:</span>
-        <span class="uh-nome" id="userHeaderName">—</span>
-        <span class="uh-funcao master" id="userHeaderRole">—</span>
+        <span class="uh-badge master" id="userHeaderBadge">—</span>
     </div>
 
     <h1 class="page-title">👥 Gerenciar Personagens</h1>
@@ -199,8 +201,6 @@
     const TIMEOUT_KEY = 'vb_lastActivity';
     const TIMEOUT_CHECK_INTERVAL = 30 * 1000;
 
-    const roleMap = { 'master':'Master', 'admin':'Administrador', 'diretor':'Diretor', 'tecnico':'Técnico' };
-
     function registrarAtividade() { try { localStorage.setItem(TIMEOUT_KEY, Date.now().toString()); } catch(e) {} }
     function fazerLogoutTimeout() {
         if (window.__fazendoLogout) return;
@@ -247,13 +247,12 @@
     const editMsg = document.getElementById('editMessage');
     let editUid = null;
 
-    const userHeaderName = document.getElementById('userHeaderName');
-    const userHeaderRole = document.getElementById('userHeaderRole');
+    const userHeaderBadge = document.getElementById('userHeaderBadge');
 
     function atualizarHeader(nome, funcao) {
-        userHeaderName.textContent = nome || 'Usuário';
-        userHeaderRole.className = 'uh-funcao ' + (funcao || 'master');
-        userHeaderRole.textContent = roleMap[funcao] || funcao;
+        const f = funcao || 'master';
+        userHeaderBadge.className = 'uh-badge ' + f;
+        userHeaderBadge.textContent = `${nome || 'Usuário'} (${f})`;
     }
 
     function abrirModal(uid, nome, funcao, status) {
@@ -298,17 +297,18 @@
                     const data = doc.data();
                     const uid = doc.id;
                     const isMaster = (data.email === MASTER_EMAIL);
-                    const rc = data.funcao === 'master' ? 'badge-master' : (data.funcao === 'admin' ? 'badge-admin' : 'badge-diretor');
+                    const funcao = data.funcao || 'tecnico';
+                    const rc = funcao === 'master' ? 'badge-master' : (funcao === 'admin' ? 'badge-admin' : 'badge-diretor');
                     const sc = data.status === 'ativo' ? 'badge-ativo' : 'badge-inativo';
                     html += `
                         <tr>
                             <td><strong>${data.nome || 'Sem nome'}</strong></td>
                             <td>${data.email}</td>
-                            <td><span class="badge ${rc}">${data.funcao || 'tecnico'}</span></td>
+                            <td><span class="badge ${rc}">${funcao}</span></td>
                             <td><span class="badge ${sc}">${data.status || 'ativo'}</span></td>
                             <td>
                                 ${!isMaster ? `
-                                    <button class="btn btn-sm btn-warning" onclick="abrirModal('${uid}','${data.nome || ''}','${data.funcao || 'admin'}','${data.status || 'ativo'}')">✏️ Editar</button>
+                                    <button class="btn btn-sm btn-warning" onclick="abrirModal('${uid}','${data.nome || ''}','${funcao}','${data.status || 'ativo'}')">✏️ Editar</button>
                                     <button class="btn btn-sm btn-secondary" onclick="toggleStatus('${uid}','${data.status}')">
                                         ${data.status === 'ativo' ? 'Inativar' : 'Ativar'}
                                     </button>

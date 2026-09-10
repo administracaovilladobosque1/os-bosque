@@ -12,7 +12,7 @@
         body { background: #e8f5e9; padding: 16px 12px; display: flex; justify-content: center; min-height: 100vh; }
         .container { background: #fff; max-width: 1400px; width: 100%; padding: 18px; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,80,0,0.12); border: 1px solid #a5d6a7; }
 
-        /* Cabeçalho "Logado como" — linha simples */
+        /* Cabeçalho "Logado como" */
         .user-header {
             margin-bottom: 14px;
             display: flex;
@@ -23,19 +23,19 @@
             color: #1b5e20;
         }
         .user-header .uh-label { font-weight: 500; color: #558b2f; }
-        .user-header .uh-nome { font-weight: 700; color: #1b5e20; }
-        .user-header .uh-funcao {
+        .uh-badge {
             display: inline-block;
-            padding: 2px 10px;
+            padding: 3px 12px;
             border-radius: 20px;
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 700;
-            text-transform: uppercase;
+            color: #000;
+            white-space: nowrap;
         }
-        .uh-funcao.master { background: #ffcc80; color: #4e342e; }
-        .uh-funcao.admin { background: #ffe082; color: #4e342e; }
-        .uh-funcao.diretor { background: #a5d6a7; color: #1b5e20; }
-        .uh-funcao.tecnico { background: #ced4da; color: #333; }
+        .uh-badge.master { background: #ffcc80; }
+        .uh-badge.admin { background: #ffe082; }
+        .uh-badge.diretor { background: #a5d6a7; }
+        .uh-badge.tecnico { background: #ced4da; }
 
         .page-title { font-size: 24px; color: #1b5e20; background: #c8e6c9; display: inline-block; padding: 4px 18px; border-radius: 30px; margin-bottom: 12px; }
         .header-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; align-items: center; }
@@ -145,8 +145,7 @@
 <div class="container">
     <div class="user-header" id="userHeader">
         <span class="uh-label">Logado como:</span>
-        <span class="uh-nome" id="userHeaderName">—</span>
-        <span class="uh-funcao tecnico" id="userHeaderRole">—</span>
+        <span class="uh-badge tecnico" id="userHeaderBadge">—</span>
     </div>
 
     <h1 class="page-title">📋 Ordens de Serviço</h1>
@@ -220,9 +219,6 @@
     const TIMEOUT_KEY = 'vb_lastActivity';
     const TIMEOUT_CHECK_INTERVAL = 30 * 1000;
 
-    const roleMap = { 'master':'Master', 'admin':'Administrador', 'diretor':'Diretor', 'tecnico':'Técnico' };
-    const funcaoLabelMap = { admin: 'Admin', diretor: 'Diretor', master: 'Master', tecnico: 'Técnico' };
-
     // ============================================================
     // TIMEOUT
     // ============================================================
@@ -266,8 +262,7 @@
     const filtrosToggle = document.getElementById('filtrosToggle');
     const filtrosPainel = document.getElementById('filtrosPainel');
     const filtrosContador = document.getElementById('filtrosContador');
-    const userHeaderName = document.getElementById('userHeaderName');
-    const userHeaderRole = document.getElementById('userHeaderRole');
+    const userHeaderBadge = document.getElementById('userHeaderBadge');
 
     let sortField = 'numero';
     let sortAsc = false;
@@ -289,12 +284,16 @@
         'concluida': 'Concluída', 'cancelada': 'Cancelada'
     };
 
+    // Textos padronizados dos grupos
+    const GRUPO_ADMIN_TEXTO = 'Administração';
+    const GRUPO_DIRETOR_TEXTO = 'Diretores';
+
     function isMobile() { return window.matchMedia('(max-width: 768px)').matches; }
 
     function atualizarHeader(nome, funcao) {
-        userHeaderName.textContent = nome || 'Usuário';
-        userHeaderRole.className = 'uh-funcao ' + (funcao || 'tecnico');
-        userHeaderRole.textContent = roleMap[funcao] || funcao || 'Técnico';
+        const f = funcao || 'tecnico';
+        userHeaderBadge.className = 'uh-badge ' + f;
+        userHeaderBadge.textContent = `${nome || 'Usuário'} (${f})`;
     }
 
     // ============================================================
@@ -349,20 +348,25 @@
     }
 
     // ============================================================
-    // NOME + FUNÇÃO
+    // HELPERS DE TEXTO
     // ============================================================
+    function detectarFuncao(nome, uid, funcaoDireta) {
+        if (funcaoDireta) return funcaoDireta;
+        if (uid && userMap[uid]) return userMap[uid].funcao;
+        const n = (nome || '').toLowerCase();
+        if (n.includes('admin')) return 'admin';
+        if (n.includes('diretor')) return 'diretor';
+        if (n.includes('master')) return 'master';
+        return null;
+    }
+
     function getNomeComFuncao(nome, uid, funcaoDireta) {
         const n = nome || '—';
-        let f = funcaoDireta;
-        if (!f && uid && userMap[uid]) f = userMap[uid].funcao;
-        if (!f) {
-            const nl = n.toLowerCase();
-            if (nl.includes('admin')) f = 'admin';
-            else if (nl.includes('diretor')) f = 'diretor';
-            else if (nl.includes('master')) f = 'master';
-        }
+        const f = detectarFuncao(n, uid, funcaoDireta);
         if (!f) return n;
-        return `${n} (${funcaoLabelMap[f] || f})`;
+        // Se já tem parênteses no nome, não adiciona de novo
+        if (n.includes('(')) return n;
+        return `${n} (${f})`;
     }
 
     // ============================================================
@@ -472,28 +476,25 @@
         let cor = '#ced4da';
         let icone = '👥';
         const alvo = data.direcionado_para;
-        let texto = data.direcionado_para_nome || '—';
+        let texto;
 
-        if (alvo && alvo.startsWith('group:')) {
+        if (alvo === 'group:admin') {
             icone = '👥';
-            if (alvo === 'group:admin') cor = '#ffe082';
-            else if (alvo === 'group:diretor') cor = '#a5d6a7';
+            cor = '#ffe082';
+            texto = GRUPO_ADMIN_TEXTO;
+        } else if (alvo === 'group:diretor') {
+            icone = '👥';
+            cor = '#a5d6a7';
+            texto = GRUPO_DIRETOR_TEXTO;
         } else {
             icone = '👤';
-            let f = data.direcionado_para_funcao;
-            if (!f && alvo && userMap[alvo]) f = userMap[alvo].funcao;
-            if (!f) {
-                const n = (texto || '').toLowerCase();
-                if (n.includes('admin')) f = 'admin';
-                else if (n.includes('diretor')) f = 'diretor';
-                else if (n.includes('master')) f = 'master';
-            }
+            const f = detectarFuncao(data.direcionado_para_nome, alvo, data.direcionado_para_funcao);
             if (f === 'admin') cor = '#ffe082';
             else if (f === 'diretor') cor = '#a5d6a7';
             else if (f === 'master') cor = '#ffcc80';
-            // Adiciona função ao texto (se identificada)
-            if (f) {
-                texto = `${texto} (${funcaoLabelMap[f] || f})`;
+            texto = data.direcionado_para_nome || '—';
+            if (f && !texto.includes('(')) {
+                texto = `${texto} (${f})`;
             }
         }
         return `<span class="badge" style="background-color:${cor}; color:#000;"><span class="icone">${icone}</span> ${texto}</span>`;
