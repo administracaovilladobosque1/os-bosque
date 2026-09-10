@@ -293,55 +293,83 @@
     }
 
     // ============================================================
-    // HELPERS DE DETECÇÃO
+    // HELPERS DE DETECÇÃO E CLASSIFICAÇÃO
     // ============================================================
-    function nomeEhGrupo(nome) {
-        if (!nome) return false;
-        const n = nome.trim().toLowerCase();
-        return n === 'admin' || n === 'administração' || n === 'administracao' || n === 'administradores' ||
-               n === 'diretor' || n === 'diretores' || n === 'diretoria' ||
-               n === 'master' || n === 'masters';
-    }
-
-    function ehGrupo(alvo, nome) {
-        if (alvo === 'group:admin' || alvo === 'group:diretor') return true;
-        if (alvo && !alvo.startsWith('group:')) return false;
-        if (!alvo) return nomeEhGrupo(nome);
-        return false;
+    function limparSufixoFuncao(nome) {
+        if (!nome) return '';
+        return String(nome).replace(/\s*\([^)]*\)\s*$/, '').trim();
     }
 
     function detectarFuncao(nome, uid, funcaoDireta) {
         if (funcaoDireta) return funcaoDireta;
         if (uid && userMap[uid]) return userMap[uid].funcao;
-        const n = (nome || '').toLowerCase();
+        const n = (limparSufixoFuncao(nome) || '').toLowerCase();
+        if (n === 'admin' || n === 'administrador' || n === 'administradores') return 'admin';
+        if (n === 'diretor' || n === 'diretores' || n === 'diretoria') return 'diretor';
+        if (n === 'master' || n === 'masters') return 'master';
         if (n.includes('admin')) return 'admin';
         if (n.includes('diretor')) return 'diretor';
         if (n.includes('master')) return 'master';
         return null;
     }
 
+    // Classifica um destino: grupo vs pessoa. Centraliza a lógica para
+    // os-list, os-detalhe e para o contador anti-jeitinho.
+    function classificarDestino(alvo, nome, funcao) {
+        const nomeLimpo = limparSufixoFuncao(nome);
+        const base = (nomeLimpo || '').toLowerCase();
+
+        if (alvo === 'group:admin') {
+            return { tipo: 'grupo', subtipo: 'admin', texto: GRUPO_ADMIN_TEXTO, cor: '#ffe082' };
+        }
+        if (alvo === 'group:diretor') {
+            return { tipo: 'grupo', subtipo: 'diretor', texto: GRUPO_DIRETOR_TEXTO, cor: '#a5d6a7' };
+        }
+
+        // UID real → pessoa
+        if (alvo && typeof alvo === 'string' && !alvo.startsWith('group:')) {
+            const f = (userMap[alvo] && userMap[alvo].funcao) || funcao || detectarFuncao(nomeLimpo, alvo, null);
+            let cor = '#ced4da';
+            if (f === 'admin') cor = '#ffe082';
+            else if (f === 'diretor') cor = '#a5d6a7';
+            else if (f === 'master') cor = '#ffcc80';
+            let texto = nomeLimpo || '—';
+            if (f && !texto.includes('(')) texto = `${texto} (${f})`;
+            return { tipo: 'pessoa', funcao: f, texto, cor };
+        }
+
+        // Alvo vazio → decide pelo nome
+        if (base === 'admin' || base === 'administrador' || base === 'administradores' ||
+            base === 'administração' || base === 'administracao') {
+            return { tipo: 'grupo', subtipo: 'admin', texto: GRUPO_ADMIN_TEXTO, cor: '#ffe082' };
+        }
+        if (base === 'diretor' || base === 'diretores' || base === 'diretoria') {
+            return { tipo: 'grupo', subtipo: 'diretor', texto: GRUPO_DIRETOR_TEXTO, cor: '#a5d6a7' };
+        }
+        if (base === 'master' || base === 'masters') {
+            return { tipo: 'grupo', subtipo: 'master', texto: 'Masters', cor: '#ffcc80' };
+        }
+
+        // Fallback — trata como pessoa
+        const f = funcao || detectarFuncao(nomeLimpo, alvo, null);
+        let cor = '#ced4da';
+        if (f === 'admin') cor = '#ffe082';
+        else if (f === 'diretor') cor = '#a5d6a7';
+        else if (f === 'master') cor = '#ffcc80';
+        let texto = nomeLimpo || '—';
+        if (f && !texto.includes('(')) texto = `${texto} (${f})`;
+        return { tipo: 'pessoa', funcao: f, texto, cor };
+    }
+
     function getCategoriaDestino(direcionadoPara, direcionadoFuncao, direcionadoNome) {
-        if (direcionadoPara === 'group:admin') return 'admin';
-        if (direcionadoPara === 'group:diretor') return 'diretor';
-        // Se alvo é UID real, prioriza função do userMap
-        if (direcionadoPara && !direcionadoPara.startsWith('group:') && userMap[direcionadoPara]) {
-            return userMap[direcionadoPara].funcao || 'outros';
+        const c = classificarDestino(direcionadoPara, direcionadoNome, direcionadoFuncao);
+        if (c.tipo === 'grupo') {
+            if (c.subtipo === 'diretor') return 'diretor';
+            if (c.subtipo === 'admin') return 'admin';
+            if (c.subtipo === 'master') return 'master';
+            return 'outros';
         }
-        // Se alvo está vazio mas nome é grupo, classifica
-        if (!direcionadoPara || direcionadoPara.startsWith('group:')) {
-            if (nomeEhGrupo(direcionadoNome)) {
-                const n = (direcionadoNome || '').toLowerCase();
-                if (n.includes('diretor')) return 'diretor';
-                if (n.includes('admin')) return 'admin';
-                if (n.includes('master')) return 'master';
-            }
-        }
-        if (direcionadoFuncao) return direcionadoFuncao;
-        const n = (direcionadoNome || '').toLowerCase();
-        if (n.includes('admin')) return 'admin';
-        if (n.includes('diretor')) return 'diretor';
-        if (n.includes('master')) return 'master';
-        return null;
+        return c.funcao || 'outros';
     }
 
     function recalcularEstado(historico, osAtual) {
@@ -383,58 +411,36 @@
         return { dirPara, dirNome, dirFuncao: dirFuncao || '', dirEm };
     }
 
-    // Badge de perfil (autor de resposta) — sempre pessoa, então mantém "Nome (função)"
+    // Badge de autor (sempre pessoa)
     function getBadgePerfil(uid, nome) {
-        const nomeBase = nome || '—';
-        const f = detectarFuncao(nomeBase, uid, null);
+        const nomeLimpo = limparSufixoFuncao(nome);
+        const f = detectarFuncao(nomeLimpo, uid, null);
         let classe = 'badge-grupo';
         if (f === 'admin') classe = 'badge-admin';
         else if (f === 'diretor') classe = 'badge-diretor';
         else if (f === 'master') classe = 'badge-master';
 
-        let texto = nomeBase;
-        if (f && !nomeBase.includes('(')) {
-            texto = `${nomeBase} (${f})`;
+        let texto = nomeLimpo || '—';
+        if (f && !texto.includes('(')) {
+            texto = `${texto} (${f})`;
         }
         return `<span class="badge ${classe}">${texto}</span>`;
     }
 
-    // Badge de direcionamento — grupo mostra só o nome, pessoa mostra "Nome (função)"
+    // Badge de direcionamento — grupo mostra só o texto fixo, pessoa mostra "Nome (função)"
     function getBadgeDirecionado(data) {
-        const alvo = data.direcionado_para;
-        const nome = data.direcionado_para_nome || '';
-        const funcao = data.direcionado_para_funcao;
-        const grupo = ehGrupo(alvo, nome);
-
+        const c = classificarDestino(data.direcionado_para, data.direcionado_para_nome, data.direcionado_para_funcao);
         let classe = 'badge-grupo';
-        let texto;
-
-        if (grupo) {
-            const nomeLower = nome.toLowerCase();
-            const ehDiretor = alvo === 'group:diretor'
-                          || nomeLower.includes('diretor')
-                          || nomeLower.includes('diretoria')
-                          || funcao === 'diretor';
-            if (ehDiretor) {
-                classe = 'badge-diretor';
-                texto = GRUPO_DIRETOR_TEXTO;
-            } else {
-                classe = 'badge-admin';
-                texto = GRUPO_ADMIN_TEXTO;
-            }
+        if (c.tipo === 'grupo') {
+            if (c.subtipo === 'diretor') classe = 'badge-diretor';
+            else if (c.subtipo === 'admin') classe = 'badge-admin';
+            else if (c.subtipo === 'master') classe = 'badge-master';
         } else {
-            const nomeBase = nome || '—';
-            const f = detectarFuncao(nomeBase, alvo, funcao);
-            if (f === 'admin') classe = 'badge-admin';
-            else if (f === 'diretor') classe = 'badge-diretor';
-            else if (f === 'master') classe = 'badge-master';
-
-            texto = nomeBase;
-            if (f && !nomeBase.includes('(')) {
-                texto = `${nomeBase} (${f})`;
-            }
+            if (c.funcao === 'admin') classe = 'badge-admin';
+            else if (c.funcao === 'diretor') classe = 'badge-diretor';
+            else if (c.funcao === 'master') classe = 'badge-master';
         }
-        return `<span class="badge ${classe}">${texto}</span>`;
+        return `<span class="badge ${classe}">${c.texto}</span>`;
     }
 
     function getHistoricoEdicoes(campo) {
