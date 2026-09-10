@@ -76,7 +76,6 @@
         .badge-urgente { background: #fff9c4; color: #f57f17; font-weight: bold; }
         .badge-normal { background: #c8e6c9; color: #1b5e20; font-weight: bold; }
 
-        /* Bloco de edições dentro do os-info */
         .edicoes-bloco {
             margin-top: 14px;
             padding-top: 12px;
@@ -173,8 +172,12 @@
         .message.error { display: block; background: #ffebee; color: #b71c1c; border: 1px solid #ef9a9a; }
         .message.success { display: block; background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
 
-        .edit-field { display: inline-flex; align-items: center; gap: 4px; }
-        .edit-field input, .edit-field select { padding: 2px 6px; border: 1px solid #a5d6a7; border-radius: 4px; font-size: 14px; }
+        .edit-field { display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+        .edit-field input, .edit-field select, .edit-field textarea {
+            padding: 2px 6px; border: 1px solid #a5d6a7; border-radius: 4px; font-size: 14px;
+            font-family: inherit;
+        }
+        .edit-field textarea { resize: vertical; min-height: 60px; width: 100%; min-width: 220px; }
 
         @media (max-width: 600px) {
             .container { padding: 14px; }
@@ -299,6 +302,9 @@
     const historicoContainer = document.getElementById('historicoContainer');
     const userHeaderBadge = document.getElementById('userHeaderBadge');
 
+    // ============================================================
+    // UTILITÁRIOS
+    // ============================================================
     function removerAcentos(str) { return str.normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
     function formatarDataHora(dataISO) {
         if (!dataISO) return '—';
@@ -335,6 +341,15 @@
         const f = funcao || 'tecnico';
         userHeaderBadge.className = 'uh-badge ' + f;
         userHeaderBadge.textContent = `${nome || 'Usuário'} (${f})`;
+    }
+
+    // ============================================================
+    // PRIORIDADE — mapa + função de exibição
+    // ============================================================
+    const prioridadeMap = { 'emergencial': '🔴 Emergencial', 'urgente': '🟡 Urgente', 'normal': '🟢 Normal' };
+    function getValorExibicao(campo, valor) {
+        if (campo === 'prioridade' && valor && prioridadeMap[valor]) return prioridadeMap[valor];
+        return valor;
     }
 
     // ============================================================
@@ -531,7 +546,7 @@
     }
 
     // ============================================================
-    // EDIT HISTORY — agrupa edições por data + usuário
+    // EDIT HISTORY
     // ============================================================
     function getEdicoesAgrupadas() {
         if (!osData.edicoes) return [];
@@ -550,7 +565,6 @@
             });
         });
 
-        // Agrupar por (data + usuario)
         const grupos = {};
         todas.forEach(e => {
             const chave = `${e.data}|${e.usuario_uid || e.usuario || ''}`;
@@ -565,7 +579,6 @@
             grupos[chave].campos.push(e);
         });
 
-        // Dentro de cada grupo, agrupar por label (junta quadra+lote numa linha)
         const lista = Object.values(grupos).map(g => {
             const porLabel = {};
             g.campos.forEach(c => {
@@ -624,7 +637,6 @@
             if (h.usuario_uid) uids.add(h.usuario_uid);
             if (h.direcionado_para && !h.direcionado_para.startsWith('group:')) uids.add(h.direcionado_para);
         });
-        // UIDs que apareceram em edições
         if (os.edicoes) {
             Object.keys(os.edicoes).forEach(campo => {
                 (os.edicoes[campo] || []).forEach(e => {
@@ -774,7 +786,6 @@
             `;
         });
 
-        // Bloco de edições dentro do card da abertura
         infoHTML += renderEdicoesHtml();
 
         osInfoContainer.innerHTML = infoHTML;
@@ -1111,7 +1122,7 @@
         if (!ed[campo2]) ed[campo2] = [];
         ed[campo2].push(montarRegistroEdicao(antigo2, novo2));
 
-        // Iguala o timestamp para o agrupamento no log
+        // Iguala o timestamp para agrupar no log
         const len1 = ed[campo1].length;
         const len2 = ed[campo2].length;
         ed[campo1][len1-1].data = agora;
