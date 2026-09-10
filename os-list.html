@@ -12,7 +12,6 @@
         body { background: #e8f5e9; padding: 16px 12px; display: flex; justify-content: center; min-height: 100vh; }
         .container { background: #fff; max-width: 1400px; width: 100%; padding: 18px; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,80,0,0.12); border: 1px solid #a5d6a7; }
 
-        /* Cabeçalho "Logado como" */
         .user-header {
             margin-bottom: 14px;
             display: flex;
@@ -219,9 +218,6 @@
     const TIMEOUT_KEY = 'vb_lastActivity';
     const TIMEOUT_CHECK_INTERVAL = 30 * 1000;
 
-    // ============================================================
-    // TIMEOUT
-    // ============================================================
     function registrarAtividade() { try { localStorage.setItem(TIMEOUT_KEY, Date.now().toString()); } catch(e) {} }
     function fazerLogoutTimeout() {
         if (window.__fazendoLogout) return;
@@ -284,7 +280,6 @@
         'concluida': 'Concluída', 'cancelada': 'Cancelada'
     };
 
-    // Textos padronizados dos grupos
     const GRUPO_ADMIN_TEXTO = 'Administração';
     const GRUPO_DIRETOR_TEXTO = 'Diretores';
 
@@ -364,7 +359,6 @@
         const n = nome || '—';
         const f = detectarFuncao(n, uid, funcaoDireta);
         if (!f) return n;
-        // Se já tem parênteses no nome, não adiciona de novo
         if (n.includes('(')) return n;
         return `${n} (${f})`;
     }
@@ -372,6 +366,14 @@
     // ============================================================
     // DIAS / SLA
     // ============================================================
+
+    // "Pendente desde" = momento em que a categoria do destino mudou por último.
+    // Cai para criado_em em OS antigas que não têm o campo.
+    // Isso evita que um simples comentário resete o contador de atraso.
+    function getDataPendente(data) {
+        return data.direcionado_em || data.criado_em;
+    }
+
     function calcularDias(dataISO) {
         if (!dataISO) return '—';
         const d = new Date(dataISO);
@@ -399,9 +401,10 @@
         if (!data) return false;
         const s = (data.status || '').toLowerCase();
         if (s === 'concluida' || s === 'cancelada') return false;
-        if (!data.criado_em) return false;
+        const dataBase = getDataPendente(data);
+        if (!dataBase) return false;
         const limite = SLA_HORAS[data.prioridade || 'normal'] || 168;
-        const horas = (Date.now() - new Date(data.criado_em).getTime()) / (1000*60*60);
+        const horas = (Date.now() - new Date(dataBase).getTime()) / (1000*60*60);
         return horas > limite;
     }
     function getAtrasoBadge(data) {
@@ -409,12 +412,6 @@
         const s = (data.status || '').toLowerCase();
         if (s === 'concluida' || s === 'cancelada') return `<span class="badge" style="background:#e0e0e0; color:#424242;">—</span>`;
         return `<span class="badge badge-no-prazo">✓ No prazo</span>`;
-    }
-    function getUltimaDataHistorico(data) {
-        if (data.historico && data.historico.length > 0) {
-            return data.historico[data.historico.length - 1].data || data.criado_em;
-        }
-        return data.criado_em;
     }
     function getPendenteCategoria(data) {
         if (data.direcionado_para === 'group:admin') return 'admin';
@@ -451,7 +448,7 @@
                 case 'criado_em': va = a.criado_em ? new Date(a.criado_em).getTime() : 0; vb = b.criado_em ? new Date(b.criado_em).getTime() : 0; break;
                 case 'pendente_em': va = (a.direcionado_para_nome || '').toLowerCase(); vb = (b.direcionado_para_nome || '').toLowerCase(); break;
                 case 'dias_pendente': {
-                    va = getUltimaDataHistorico(a); vb = getUltimaDataHistorico(b);
+                    va = getDataPendente(a); vb = getDataPendente(b);
                     va = va ? new Date(va).getTime() : 0; vb = vb ? new Date(vb).getTime() : 0;
                     break;
                 }
@@ -529,8 +526,8 @@
             const dataHora = data.criado_em ? new Date(data.criado_em).toLocaleString('pt-BR') : '—';
             const diasAberto = data.criado_em ? calcularDias(data.criado_em) : '—';
             let diasPendente = '—';
-            const ud = getUltimaDataHistorico(data);
-            if (ud) diasPendente = calcularDias(ud);
+            const basePend = getDataPendente(data);
+            if (basePend) diasPendente = calcularDias(basePend);
             const atrasoBadge = getAtrasoBadge(data);
             const atrasada = isAtrasada(data);
             const abertoPorTexto = getNomeComFuncao(data.aberto_por_nome, data.aberto_por);
@@ -568,8 +565,8 @@
                 : '—';
             const diasAberto = data.criado_em ? calcularDiasTexto(data.criado_em) : '—';
             let diasPendente = '—';
-            const ud = getUltimaDataHistorico(data);
-            if (ud) diasPendente = calcularDiasTexto(ud);
+            const basePend = getDataPendente(data);
+            if (basePend) diasPendente = calcularDiasTexto(basePend);
             const abertoPorTexto = getNomeComFuncao(data.aberto_por_nome, data.aberto_por);
 
             html += `
@@ -697,7 +694,6 @@
             });
     }
 
-    // EVENT LISTENERS
     btnFiltrar.addEventListener('click', aplicarFiltros);
     [filtroStatus, filtroPendente,
      filtroQuadraReclamante, filtroLoteReclamante,

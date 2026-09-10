@@ -335,6 +335,9 @@
                 direcionado_para_original: dirPara,
                 direcionado_para_nome_original: dirNome,
                 direcionado_para_funcao_original: dirFuncao,
+                // Marca o momento em que o destino foi definido pela primeira vez.
+                // Esse campo só é atualizado quando a categoria do destino muda.
+                direcionado_em: agora,
                 historico: [{
                     data: agora, acao: 'abertura',
                     usuario_uid: currentUser.uid, usuario: currentUserNome,
