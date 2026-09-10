@@ -160,10 +160,39 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
+    db.enablePersistence({ synchronizeTabs: true }).catch(err => {
+        if (err.code === 'failed-precondition') console.warn('Persistência: múltiplas abas abertas.');
+        else if (err.code === 'unimplemented') console.warn('Persistência: navegador não suporta.');
+    });
+
     const MASTER_EMAIL = 'administracaovilladobosque@gmail.com';
     const TIMEOUT_MS = 4 * 60 * 60 * 1000;
     const TIMEOUT_KEY = 'vb_lastActivity';
     const TIMEOUT_CHECK_INTERVAL = 30 * 1000;
+
+    const USER_CACHE_KEY = 'vb_userMapCache';
+    const USER_CACHE_TTL = 10 * 60 * 1000;
+
+    function salvarUserMapNoCache(map) {
+        try {
+            sessionStorage.setItem(USER_CACHE_KEY, JSON.stringify({
+                dados: map,
+                expiraEm: Date.now() + USER_CACHE_TTL
+            }));
+        } catch(e) {}
+    }
+    function lerUserMapDoCache() {
+        try {
+            const raw = sessionStorage.getItem(USER_CACHE_KEY);
+            if (!raw) return null;
+            const obj = JSON.parse(raw);
+            if (!obj || !obj.expiraEm || obj.expiraEm < Date.now()) {
+                sessionStorage.removeItem(USER_CACHE_KEY);
+                return null;
+            }
+            return obj.dados || null;
+        } catch(e) { return null; }
+    }
 
     const GRUPO_ADMIN_TEXTO = 'Administração';
     const GRUPO_DIRETOR_TEXTO = 'Diretores';
@@ -237,41 +266,61 @@
     loteReclamante.addEventListener('blur', aplicarFormatacaoLotes);
     loteReclamado.addEventListener('blur', aplicarFormatacaoLotes);
 
+    // ============================================================
+    // CARREGAR PERSONAGENS — usa cache quando disponível
+    // ============================================================
+    function montarSelectPersonagens(userMapCompleto) {
+        const admins = [], diretores = [];
+        Object.keys(userMapCompleto).forEach(uid => {
+            const u = userMapCompleto[uid];
+            if (u.funcao === 'admin') admins.push({ id: uid, nome: u.nome, funcao: u.funcao });
+            else if (u.funcao === 'diretor') diretores.push({ id: uid, nome: u.nome, funcao: u.funcao });
+        });
+        admins.sort((a,b) => a.nome.localeCompare(b.nome));
+        diretores.sort((a,b) => a.nome.localeCompare(b.nome));
+        personagensList = [...admins, ...diretores];
+
+        let html = '<option value="">Selecione um destino...</option>';
+        html += `<option value="group:admin" style="background-color:#ffe082;">GRUPO: ${GRUPO_ADMIN_TEXTO}</option>`;
+        html += `<option value="group:diretor" style="background-color:#a5d6a7;">GRUPO: ${GRUPO_DIRETOR_TEXTO}</option>`;
+
+        admins.forEach(item => {
+            const isMe = (item.id === currentUser.uid);
+            const label = isMe ? `${item.nome} (você) (admin)` : `${item.nome} (admin)`;
+            html += `<option value="${item.id}" style="background-color:#ffe082;">${label}</option>`;
+        });
+        diretores.forEach(item => {
+            const isMe = (item.id === currentUser.uid);
+            const label = isMe ? `${item.nome} (você) (diretor)` : `${item.nome} (diretor)`;
+            html += `<option value="${item.id}" style="background-color:#a5d6a7;">${label}</option>`;
+        });
+
+        if (admins.length === 0 && diretores.length === 0) {
+            html = '<option value="">Nenhum administrador ou diretor ativo</option>';
+        }
+        direcionadoSelect.innerHTML = html;
+    }
+
     function carregarPersonagens() {
         direcionadoSelect.innerHTML = '<option value="">Carregando...</option>';
+
+        // 1) Cache quente — usa direto
+        const cache = lerUserMapDoCache();
+        if (cache) {
+            montarSelectPersonagens(cache);
+            return;
+        }
+
+        // 2) Sem cache — baixa e salva
         db.collection('usuarios').where('status', '==', 'ativo').get()
             .then(snapshot => {
-                const admins = [], diretores = [];
+                const map = {};
                 snapshot.forEach(doc => {
                     const d = doc.data();
-                    if (d.funcao !== 'admin' && d.funcao !== 'diretor') return;
-                    const item = { id: doc.id, nome: d.nome, funcao: d.funcao };
-                    if (d.funcao === 'admin') admins.push(item);
-                    else diretores.push(item);
+                    map[doc.id] = { nome: d.nome, funcao: d.funcao };
                 });
-                admins.sort((a,b) => a.nome.localeCompare(b.nome));
-                diretores.sort((a,b) => a.nome.localeCompare(b.nome));
-                personagensList = [...admins, ...diretores];
-
-                let html = '<option value="">Selecione um destino...</option>';
-                html += `<option value="group:admin" style="background-color:#ffe082;">GRUPO: ${GRUPO_ADMIN_TEXTO}</option>`;
-                html += `<option value="group:diretor" style="background-color:#a5d6a7;">GRUPO: ${GRUPO_DIRETOR_TEXTO}</option>`;
-
-                admins.forEach(item => {
-                    const isMe = (item.id === currentUser.uid);
-                    const label = isMe ? `${item.nome} (você) (admin)` : `${item.nome} (admin)`;
-                    html += `<option value="${item.id}" style="background-color:#ffe082;">${label}</option>`;
-                });
-                diretores.forEach(item => {
-                    const isMe = (item.id === currentUser.uid);
-                    const label = isMe ? `${item.nome} (você) (diretor)` : `${item.nome} (diretor)`;
-                    html += `<option value="${item.id}" style="background-color:#a5d6a7;">${label}</option>`;
-                });
-
-                if (admins.length === 0 && diretores.length === 0) {
-                    html = '<option value="">Nenhum administrador ou diretor ativo</option>';
-                }
-                direcionadoSelect.innerHTML = html;
+                salvarUserMapNoCache(map);
+                montarSelectPersonagens(map);
             })
             .catch(err => {
                 console.error(err);
@@ -335,8 +384,6 @@
                 direcionado_para_original: dirPara,
                 direcionado_para_nome_original: dirNome,
                 direcionado_para_funcao_original: dirFuncao,
-                // Marca o momento em que o destino foi definido pela primeira vez.
-                // Esse campo só é atualizado quando a categoria do destino muda.
                 direcionado_em: agora,
                 historico: [{
                     data: agora, acao: 'abertura',

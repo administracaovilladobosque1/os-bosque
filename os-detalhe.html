@@ -186,13 +186,42 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
+    db.enablePersistence({ synchronizeTabs: true }).catch(err => {
+        if (err.code === 'failed-precondition') console.warn('Persistência: múltiplas abas abertas.');
+        else if (err.code === 'unimplemented') console.warn('Persistência: navegador não suporta.');
+    });
+
     const MASTER_EMAIL = 'administracaovilladobosque@gmail.com';
     const TIMEOUT_MS = 4 * 60 * 60 * 1000;
     const TIMEOUT_KEY = 'vb_lastActivity';
     const TIMEOUT_CHECK_INTERVAL = 30 * 1000;
 
+    const USER_CACHE_KEY = 'vb_userMapCache';
+    const USER_CACHE_TTL = 10 * 60 * 1000;
+
     const GRUPO_ADMIN_TEXTO = 'Administração';
     const GRUPO_DIRETOR_TEXTO = 'Diretores';
+
+    function salvarUserMapNoCache(map) {
+        try {
+            sessionStorage.setItem(USER_CACHE_KEY, JSON.stringify({
+                dados: map,
+                expiraEm: Date.now() + USER_CACHE_TTL
+            }));
+        } catch(e) {}
+    }
+    function lerUserMapDoCache() {
+        try {
+            const raw = sessionStorage.getItem(USER_CACHE_KEY);
+            if (!raw) return null;
+            const obj = JSON.parse(raw);
+            if (!obj || !obj.expiraEm || obj.expiraEm < Date.now()) {
+                sessionStorage.removeItem(USER_CACHE_KEY);
+                return null;
+            }
+            return obj.dados || null;
+        } catch(e) { return null; }
+    }
 
     function registrarAtividade() { try { localStorage.setItem(TIMEOUT_KEY, Date.now().toString()); } catch(e) {} }
     function fazerLogoutTimeout() {
@@ -276,9 +305,6 @@
         return null;
     }
 
-    // Categoria de destino: usada para decidir quando reiniciar o contador
-    // de atraso. admin (grupo ou pessoa) = "admin", diretor (grupo ou pessoa)
-    // = "diretor". Só reinicia se a categoria mudar.
     function getCategoriaDestino(direcionadoPara, direcionadoFuncao, direcionadoNome) {
         if (direcionadoPara === 'group:admin') return 'admin';
         if (direcionadoPara === 'group:diretor') return 'diretor';
@@ -291,18 +317,7 @@
         return null;
     }
 
-    // ============================================================
-    // RECALCULAR ESTADO (após apagar ação)
-    // ============================================================
-    // Percorre o histórico restante em ordem cronológica partindo da
-    // abertura e reconstrói:
-    //   - qual é o destino atual (dirPara/dirNome/dirFuncao)
-    //   - quando a categoria desse destino foi definida (dirEm)
-    // Regra idêntica ao adicionarAcao: dirEm só avança quando a
-    // categoria muda. Isso restaura corretamente o contador de atraso
-    // se a ação apagada era a única que havia mudado a categoria.
     function recalcularEstado(historico, osAtual) {
-        // Estado inicial = definido na abertura
         const abertura = historico.find(h => h.acao === 'abertura');
         let dirPara = (abertura && abertura.direcionado_para)
             || osAtual.direcionado_para_original
@@ -318,7 +333,6 @@
         let dirEm = osAtual.criado_em || null;
         let catAtual = getCategoriaDestino(dirPara, dirFuncao, dirNome);
 
-        // Ações (sem abertura, sem edição) em ordem cronológica
         const acoes = (historico || [])
             .filter(h => h.acao && h.acao !== 'abertura' && h.acao !== 'edicao')
             .sort((a, b) => (a.data || '').localeCompare(b.data || ''));
@@ -330,11 +344,9 @@
                 acao.direcionado_para_funcao,
                 acao.direcionado_para_nome
             );
-            // Atualiza o destino vigente
             dirPara = acao.direcionado_para;
             dirNome = acao.direcionado_para_nome || dirNome;
             dirFuncao = acao.direcionado_para_funcao || dirFuncao;
-            // Só reinicia o contador se a categoria mudou
             if (catNova !== catAtual) {
                 dirEm = acao.data;
                 catAtual = catNova;
@@ -424,28 +436,85 @@
         return f === 'diretor' || f === 'admin' || isMaster();
     }
 
-    function carregarUsuarios() {
-        return db.collection('usuarios').where('status', '==', 'ativo').get()
-            .then(snapshot => {
-                userMap = {};
-                snapshot.forEach(doc => {
-                    const d = doc.data();
-                    userMap[doc.id] = { nome: d.nome, funcao: d.funcao };
-                });
+    // ============================================================
+    // CARREGAR USUÁRIOS — só o necessário
+    // ============================================================
+    // Extrai UIDs relevantes de uma OS (aberto_por, histórico e direcionados)
+    function extrairUidsDaOS(os) {
+        const uids = new Set();
+        if (os.aberto_por) uids.add(os.aberto_por);
+        if (os.direcionado_para && !os.direcionado_para.startsWith('group:')) uids.add(os.direcionado_para);
+        if (os.direcionado_para_original && !os.direcionado_para_original.startsWith('group:')) uids.add(os.direcionado_para_original);
+        (os.historico || []).forEach(h => {
+            if (h.usuario_uid) uids.add(h.usuario_uid);
+            if (h.direcionado_para && !h.direcionado_para.startsWith('group:')) uids.add(h.direcionado_para);
+        });
+        return Array.from(uids).filter(Boolean);
+    }
+
+    // Busca usuários por UIDs (em lotes de 10, limite do 'in' do Firestore)
+    async function buscarUsuariosPorUids(uids) {
+        const resultado = {};
+        if (!uids || uids.length === 0) return resultado;
+        const lotes = [];
+        for (let i = 0; i < uids.length; i += 10) {
+            lotes.push(uids.slice(i, i + 10));
+        }
+        for (const lote of lotes) {
+            const snap = await db.collection('usuarios')
+                .where(firebase.firestore.FieldPath.documentId(), 'in', lote)
+                .get();
+            snap.forEach(doc => {
+                const d = doc.data();
+                resultado[doc.id] = { nome: d.nome, funcao: d.funcao };
             });
+        }
+        return resultado;
+    }
+
+    // Busca admins e diretores ativos (para o select de direcionamento)
+    async function buscarAdminsEDiretores() {
+        const resultado = {};
+        const snap = await db.collection('usuarios').where('status', '==', 'ativo').get();
+        snap.forEach(doc => {
+            const d = doc.data();
+            if (d.funcao === 'admin' || d.funcao === 'diretor') {
+                resultado[doc.id] = { nome: d.nome, funcao: d.funcao };
+            }
+        });
+        return resultado;
+    }
+
+    // Preenche userMap de forma otimizada:
+    //   1) Se tem cache de sessionStorage → usa (zero reads)
+    //   2) Senão, carrega só os UIDs da OS + admins/diretores (2 reads)
+    async function prepararUserMap(os) {
+        const cache = lerUserMapDoCache();
+        if (cache) {
+            userMap = cache;
+            return;
+        }
+        const uidsRelevantes = extrairUidsDaOS(os);
+        const [relevantes, adminsDiretores] = await Promise.all([
+            buscarUsuariosPorUids(uidsRelevantes),
+            buscarAdminsEDiretores()
+        ]);
+        userMap = { ...relevantes, ...adminsDiretores };
+        salvarUserMapNoCache(userMap);
     }
 
     function carregarOS() {
         if (!osId) return;
         historicoContainer.innerHTML = '<p>Carregando...</p>';
         db.collection('ordens_servico').doc(osId).get()
-            .then(doc => {
+            .then(async (doc) => {
                 if (!doc.exists) {
                     historicoContainer.innerHTML = '<p style="color:red;">OS não encontrada.</p>';
                     return;
                 }
                 osData = { id: doc.id, ...doc.data() };
                 if (!osData.edicoes) osData.edicoes = {};
+                await prepararUserMap(osData);
                 renderizarDetalhe();
             })
             .catch(err => {
@@ -677,9 +746,6 @@
         });
     }
 
-    // ============================================================
-    // APAGAR CARD (apenas master) — recalcula estado após apagar
-    // ============================================================
     async function apagarAcao(dataISO) {
         if (!isMaster()) {
             alert('Apenas o master pode apagar ações.');
@@ -698,10 +764,6 @@
                 if (idx === -1) throw new Error('Ação não encontrada.');
                 historico.splice(idx, 1);
 
-                // Recalcula destino atual e "pendente desde" com base no
-                // que sobrou do histórico. Se a ação apagada era a única
-                // que havia mudado a categoria de destino, o contador
-                // volta ao estado anterior (possivelmente atrasado).
                 const recalc = recalcularEstado(historico, osAtual);
 
                 const upd = {
@@ -1100,13 +1162,13 @@
                     if (user.email === MASTER_EMAIL) f = 'master';
                     atualizarHeader(currentUserData.nome || user.displayName || user.email, f);
 
-                    carregarUsuarios().then(() => carregarOS());
+                    carregarOS();
                 })
                 .catch(() => {
                     currentUserData = { nome: user.displayName || 'Usuário', funcao: 'tecnico' };
                     const f = user.email === MASTER_EMAIL ? 'master' : 'tecnico';
                     atualizarHeader(user.displayName || user.email, f);
-                    carregarUsuarios().then(() => carregarOS());
+                    carregarOS();
                 });
         });
     }

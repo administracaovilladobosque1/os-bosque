@@ -213,10 +213,44 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
+    // Cache offline do Firestore
+    db.enablePersistence({ synchronizeTabs: true }).catch(err => {
+        if (err.code === 'failed-precondition') console.warn('Persistência: múltiplas abas abertas.');
+        else if (err.code === 'unimplemented') console.warn('Persistência: navegador não suporta.');
+    });
+
     const MASTER_EMAIL = 'administracaovilladobosque@gmail.com';
     const TIMEOUT_MS = 4 * 60 * 60 * 1000;
     const TIMEOUT_KEY = 'vb_lastActivity';
     const TIMEOUT_CHECK_INTERVAL = 30 * 1000;
+
+    // Cache de usuários em sessionStorage (TTL: 10 min)
+    const USER_CACHE_KEY = 'vb_userMapCache';
+    const USER_CACHE_TTL = 10 * 60 * 1000;
+
+    function salvarUserMapNoCache(map) {
+        try {
+            sessionStorage.setItem(USER_CACHE_KEY, JSON.stringify({
+                dados: map,
+                expiraEm: Date.now() + USER_CACHE_TTL
+            }));
+        } catch(e) {}
+    }
+    function lerUserMapDoCache() {
+        try {
+            const raw = sessionStorage.getItem(USER_CACHE_KEY);
+            if (!raw) return null;
+            const obj = JSON.parse(raw);
+            if (!obj || !obj.expiraEm || obj.expiraEm < Date.now()) {
+                sessionStorage.removeItem(USER_CACHE_KEY);
+                return null;
+            }
+            return obj.dados || null;
+        } catch(e) { return null; }
+    }
+    function limparCacheUserMap() {
+        try { sessionStorage.removeItem(USER_CACHE_KEY); } catch(e) {}
+    }
 
     function registrarAtividade() { try { localStorage.setItem(TIMEOUT_KEY, Date.now().toString()); } catch(e) {} }
     function fazerLogoutTimeout() {
@@ -291,9 +325,6 @@
         userHeaderBadge.textContent = `${nome || 'Usuário'} (${f})`;
     }
 
-    // ============================================================
-    // FILTROS
-    // ============================================================
     filtrosToggle.addEventListener('click', () => {
         filtrosPainel.classList.toggle('aberto');
         filtrosToggle.classList.toggle('aberto');
@@ -342,9 +373,6 @@
         }
     }
 
-    // ============================================================
-    // HELPERS DE TEXTO
-    // ============================================================
     function detectarFuncao(nome, uid, funcaoDireta) {
         if (funcaoDireta) return funcaoDireta;
         if (uid && userMap[uid]) return userMap[uid].funcao;
@@ -354,7 +382,6 @@
         if (n.includes('master')) return 'master';
         return null;
     }
-
     function getNomeComFuncao(nome, uid, funcaoDireta) {
         const n = nome || '—';
         const f = detectarFuncao(n, uid, funcaoDireta);
@@ -363,17 +390,9 @@
         return `${n} (${f})`;
     }
 
-    // ============================================================
-    // DIAS / SLA
-    // ============================================================
-
-    // "Pendente desde" = momento em que a categoria do destino mudou por último.
-    // Cai para criado_em em OS antigas que não têm o campo.
-    // Isso evita que um simples comentário resete o contador de atraso.
     function getDataPendente(data) {
         return data.direcionado_em || data.criado_em;
     }
-
     function calcularDias(dataISO) {
         if (!dataISO) return '—';
         const d = new Date(dataISO);
@@ -428,9 +447,6 @@
         return 'outros';
     }
 
-    // ============================================================
-    // ORDENAÇÃO
-    // ============================================================
     function ordenarDados(docs) {
         docs.sort((a, b) => {
             let va, vb;
@@ -461,9 +477,6 @@
         return docs;
     }
 
-    // ============================================================
-    // APRESENTAÇÃO
-    // ============================================================
     function getPrioridadeHtml(data) {
         const p = data.prioridade || 'normal';
         const pData = priorityMap[p] || priorityMap['normal'];
@@ -502,9 +515,6 @@
         return `<span class="badge ${c}">${l.toUpperCase()}</span>`;
     }
 
-    // ============================================================
-    // TABELA (DESKTOP)
-    // ============================================================
     function renderizarTabelaDesktop(docs) {
         let html = `<div class="table-responsive"><table>
             <thead><tr>
@@ -552,9 +562,6 @@
         return html;
     }
 
-    // ============================================================
-    // CARDS (MOBILE)
-    // ============================================================
     function renderizarCardsMobile(docs) {
         let html = `<div class="lista-cards">`;
         docs.forEach(data => {
@@ -666,32 +673,60 @@
         renderizarLista(docs);
     }
 
+    // ============================================================
+    // CARREGAR — usa cache de usuários quando disponível
+    // ============================================================
+    function renderizarDocs(docs) {
+        if (!docs || docs.length === 0) {
+            window.allDocs = [];
+            listaDiv.innerHTML = '<p class="empty-message">Nenhuma ordem de serviço encontrada.</p>';
+            return;
+        }
+        window.allDocs = docs;
+        aplicarFiltros();
+    }
+
     function carregarOS() {
         listaDiv.innerHTML = '<p class="empty-message">Carregando ordens de serviço...</p>';
-        db.collection('usuarios').where('status', '==', 'ativo').get()
-            .then(snapshot => {
-                userMap = {};
-                snapshot.forEach(doc => {
-                    const d = doc.data();
-                    userMap[doc.id] = { nome: d.nome, funcao: d.funcao };
+
+        // 1) Tenta usar cache de usuários — pula a leitura de usuarios
+        const cache = lerUserMapDoCache();
+        if (cache) {
+            userMap = cache;
+            db.collection('ordens_servico').get()
+                .then(snapshot => {
+                    const docs = [];
+                    snapshot.forEach(doc => docs.push({ id: doc.id, ...doc.data() }));
+                    renderizarDocs(docs);
+                })
+                .catch(err => {
+                    console.error(err);
+                    listaDiv.innerHTML = `<p style="color:red;">Erro ao carregar: ${err.message}</p>`;
                 });
-                return db.collection('ordens_servico').get();
-            })
-            .then(snapshot => {
-                if (snapshot.empty) {
-                    window.allDocs = [];
-                    listaDiv.innerHTML = '<p class="empty-message">Nenhuma ordem de serviço encontrada.</p>';
-                    return;
-                }
-                const docs = [];
-                snapshot.forEach(doc => docs.push({ id: doc.id, ...doc.data() }));
-                window.allDocs = docs;
-                aplicarFiltros();
-            })
-            .catch(err => {
-                console.error(err);
-                listaDiv.innerHTML = `<p style="color:red;">Erro ao carregar: ${err.message}</p>`;
+            return;
+        }
+
+        // 2) Sem cache: busca usuários e ordens em paralelo
+        Promise.all([
+            db.collection('usuarios').where('status', '==', 'ativo').get(),
+            db.collection('ordens_servico').get()
+        ])
+        .then(([snapUsers, snapOS]) => {
+            userMap = {};
+            snapUsers.forEach(doc => {
+                const d = doc.data();
+                userMap[doc.id] = { nome: d.nome, funcao: d.funcao };
             });
+            salvarUserMapNoCache(userMap);
+
+            const docs = [];
+            snapOS.forEach(doc => docs.push({ id: doc.id, ...doc.data() }));
+            renderizarDocs(docs);
+        })
+        .catch(err => {
+            console.error(err);
+            listaDiv.innerHTML = `<p style="color:red;">Erro ao carregar: ${err.message}</p>`;
+        });
     }
 
     btnFiltrar.addEventListener('click', aplicarFiltros);

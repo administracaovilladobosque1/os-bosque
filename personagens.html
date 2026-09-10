@@ -196,10 +196,23 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
+    db.enablePersistence({ synchronizeTabs: true }).catch(err => {
+        if (err.code === 'failed-precondition') console.warn('Persistência: múltiplas abas abertas.');
+        else if (err.code === 'unimplemented') console.warn('Persistência: navegador não suporta.');
+    });
+
     const MASTER_EMAIL = 'administracaovilladobosque@gmail.com';
     const TIMEOUT_MS = 4 * 60 * 60 * 1000;
     const TIMEOUT_KEY = 'vb_lastActivity';
     const TIMEOUT_CHECK_INTERVAL = 30 * 1000;
+
+    const USER_CACHE_KEY = 'vb_userMapCache';
+
+    // Sempre que um usuário é criado/editado/inativado/excluído, o cache
+    // global de usuários precisa ser invalidado para forçar releitura.
+    function limparCacheUserMap() {
+        try { sessionStorage.removeItem(USER_CACHE_KEY); } catch(e) {}
+    }
 
     function registrarAtividade() { try { localStorage.setItem(TIMEOUT_KEY, Date.now().toString()); } catch(e) {} }
     function fazerLogoutTimeout() {
@@ -279,6 +292,7 @@
         if (!nome) { showMessage(editMsg, 'O nome não pode ficar vazio.', 'error'); return; }
         db.collection('usuarios').doc(editUid).update({ nome, funcao, status })
             .then(() => {
+                limparCacheUserMap(); // invalida cache global
                 showMessage(editMsg, '✅ Personagem atualizado com sucesso!', 'success');
                 fecharModal();
                 carregarLista();
@@ -328,13 +342,21 @@
         const novo = currentStatus === 'ativo' ? 'inativo' : 'ativo';
         if (!confirm(`Deseja ${novo === 'ativo' ? 'ativar' : 'inativar'} este usuário?`)) return;
         db.collection('usuarios').doc(uid).update({ status: novo })
-            .then(() => { alert(`Status alterado para ${novo}.`); carregarLista(); })
+            .then(() => {
+                limparCacheUserMap(); // invalida cache global
+                alert(`Status alterado para ${novo}.`);
+                carregarLista();
+            })
             .catch(err => alert('Erro: ' + err.message));
     };
     window.excluir = function(uid) {
         if (!confirm('Excluir este personagem do sistema? (A conta de autenticação continuará, mas o vínculo será removido)')) return;
         db.collection('usuarios').doc(uid).delete()
-            .then(() => { alert('Personagem removido do Firestore.'); carregarLista(); })
+            .then(() => {
+                limparCacheUserMap(); // invalida cache global
+                alert('Personagem removido do Firestore.');
+                carregarLista();
+            })
             .catch(err => alert('Erro: ' + err.message));
     };
 
@@ -372,6 +394,7 @@
                     .then(() => auth.signInWithEmailAndPassword(masterUser.email, masterPass));
             })
             .then(() => {
+                limparCacheUserMap(); // invalida cache global
                 showMessage(formMsg, 'Personagem cadastrado com sucesso!', 'success');
                 form.reset();
                 carregarLista();
