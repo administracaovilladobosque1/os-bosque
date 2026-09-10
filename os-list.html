@@ -65,7 +65,7 @@
             flex: 0 1 80px;
         }
         .table-responsive { overflow-x: auto; margin-top: 12px; }
-        table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 1000px; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 1180px; }
         th { background: #c8e6c9; padding: 10px 8px; text-align: left; color: #1b5e20; border-bottom: 2px solid #81c784; white-space: nowrap; cursor: pointer; user-select: none; position: relative; }
         th:hover { background: #b8d9b9; }
         th .sorter { display: inline-block; margin-left: 4px; font-size: 12px; }
@@ -89,6 +89,15 @@
         .badge-grupo { background: #ced4da; color: #000; }
         .badge-admin { background: #ffe082; color: #000; }
         .badge-diretor { background: #a5d6a7; color: #000; }
+        .badge-atrasada { background: #ffcdd2; color: #b71c1c; font-weight: bold; white-space: nowrap; }
+        .badge-no-prazo { background: #c8e6c9; color: #1b5e20; white-space: nowrap; }
+        .btn-ver {
+            padding: 4px 12px; background: #2e7d32; color: #fff;
+            border: none; border-radius: 6px; font-size: 12px;
+            font-weight: 600; cursor: pointer; transition: 0.2s;
+            white-space: nowrap;
+        }
+        .btn-ver:hover { background: #1b5e20; }
         .dias-numero { font-weight: 700; color: #1b5e20; }
         .dias-hoje { color: #558b2f; }
         .empty-message { text-align: center; color: #555; padding: 30px 0; }
@@ -99,7 +108,7 @@
             .filtros input[type="text"] { flex: 1 1 120px; min-width: 80px; }
             .filtros .grupo-filtro input { min-width: 60px; flex: 0 1 70px; }
             .filtros .btn-filtrar { padding: 5px 12px; font-size: 13px; flex-shrink: 0; }
-            table { font-size: 13px; min-width: 700px; }
+            table { font-size: 13px; min-width: 900px; }
             th, td { padding: 6px 6px; }
         }
     </style>
@@ -225,6 +234,38 @@
         return `${diffDias} dias`;
     }
 
+    // ================================================================
+    // SLA — prazo máximo (em horas) por prioridade
+    // ================================================================
+    const SLA_HORAS = {
+        'emergencial': 24,
+        'urgente': 72,
+        'normal': 168   // 7 dias
+    };
+
+    function isAtrasada(data) {
+        if (!data) return false;
+        const status = (data.status || '').toLowerCase();
+        if (status === 'concluida' || status === 'cancelada') return false;
+        if (!data.criado_em) return false;
+        const prioridade = data.prioridade || 'normal';
+        const limiteHoras = SLA_HORAS[prioridade] || 168;
+        const criado = new Date(data.criado_em).getTime();
+        const horas = (Date.now() - criado) / (1000 * 60 * 60);
+        return horas > limiteHoras;
+    }
+
+    function getAtrasoBadge(data) {
+        if (isAtrasada(data)) {
+            return `<span class="badge badge-atrasada">⚠️ Atrasada</span>`;
+        }
+        const status = (data.status || '').toLowerCase();
+        if (status === 'concluida' || status === 'cancelada') {
+            return `<span class="badge" style="background:#e0e0e0; color:#424242;">—</span>`;
+        }
+        return `<span class="badge badge-no-prazo">✓ No prazo</span>`;
+    }
+
     function getUltimaDataHistorico(data) {
         if (data.historico && data.historico.length > 0) {
             const ultimo = data.historico[data.historico.length - 1];
@@ -305,6 +346,8 @@
                 <th data-sort="pendente_em">Pendente em <span class="sorter">${sortField === 'pendente_em' ? (sortAsc ? '▲' : '▼') : '⇅'}</span></th>
                 <th data-sort="dias_pendente">Dias pendente <span class="sorter">${sortField === 'dias_pendente' ? (sortAsc ? '▲' : '▼') : '⇅'}</span></th>
                 <th data-sort="dias_aberto">Dias aberto <span class="sorter">${sortField === 'dias_aberto' ? (sortAsc ? '▲' : '▼') : '⇅'}</span></th>
+                <th>Atraso</th>
+                <th>Ações</th>
             </tr></thead><tbody>`;
 
         docs.forEach(data => {
@@ -316,7 +359,7 @@
             const pData = priorityMap[p] || priorityMap['normal'];
             const prioridadeHtml = `<span class="badge ${pData.class}"><span class="icone">${pData.icon}</span> ${pData.label}</span>`;
 
-            // ---- PENDENTE EM (COM BADGE E ÍCONE, SEM DUPLICAÇÃO) ----
+            // ---- PENDENTE EM ----
             let pendenteCor = '#ced4da';
             let icone = '👥';
             let texto = data.direcionado_para_nome || '—';
@@ -340,7 +383,6 @@
                 }
             }
 
-            // Badge único (sem duplicação de ícone)
             const pendenteHtml = `<span class="badge" style="background-color:${pendenteCor}; color:#000;"><span class="icone">${icone}</span> ${texto}</span>`;
 
             const dataHora = data.criado_em ? new Date(data.criado_em).toLocaleString('pt-BR') : '—';
@@ -349,8 +391,11 @@
             const ultData = getUltimaDataHistorico(data);
             if (ultData) diasPendente = calcularDias(ultData);
 
+            const atrasoBadge = getAtrasoBadge(data);
+            const atrasada = isAtrasada(data);
+
             html += `
-                <tr onclick="window.location.href='os-detalhe.html?id=${id}'" style="cursor:pointer;">
+                <tr onclick="window.location.href='os-detalhe.html?id=${id}'" style="cursor:pointer;${atrasada ? ' background:#fff5f5;' : ''}">
                     <td><strong>${data.numero || 'N/A'}</strong></td>
                     <td>${data.titulo || 'Sem título'}</td>
                     <td>${data.aberto_por_nome || '—'}</td>
@@ -360,6 +405,8 @@
                     <td>${pendenteHtml}</td>
                     <td><span class="dias-numero">${diasPendente}</span></td>
                     <td><span class="dias-numero">${diasAberto}</span></td>
+                    <td>${atrasoBadge}</td>
+                    <td><button class="btn-ver" onclick="event.stopPropagation(); window.location.href='os-detalhe.html?id=${id}'">Ver</button></td>
                 </tr>
             `;
         });
@@ -382,7 +429,6 @@
     function aplicarFiltros() {
         let docs = window.allDocs || [];
 
-        // Status
         const statusFiltro = filtroStatus.value;
         if (statusFiltro === 'aberto') {
             docs = docs.filter(d => d.status === 'aberta' || d.status === 'em_andamento');
@@ -390,7 +436,6 @@
             docs = docs.filter(d => d.status === 'concluida' || d.status === 'cancelada');
         }
 
-        // Pendente
         const pendenteFiltro = filtroPendente.value;
         if (pendenteFiltro === 'diretoria') {
             docs = docs.filter(d => getPendenteCategoria(d) === 'diretoria');
@@ -398,19 +443,16 @@
             docs = docs.filter(d => getPendenteCategoria(d) === 'admin');
         }
 
-        // Reclamante
         const qReclamante = filtroQuadraReclamante.value.trim().toLowerCase();
         const lReclamante = filtroLoteReclamante.value.trim().toLowerCase();
         if (qReclamante) docs = docs.filter(d => (d.quadra_reclamante || '').toLowerCase().includes(qReclamante));
         if (lReclamante) docs = docs.filter(d => (d.lote_reclamante || '').toLowerCase().includes(lReclamante));
 
-        // Reclamado
         const qReclamada = filtroQuadraReclamada.value.trim().toLowerCase();
         const lReclamada = filtroLoteReclamada.value.trim().toLowerCase();
         if (qReclamada) docs = docs.filter(d => (d.quadra_reclamada || '').toLowerCase().includes(qReclamada));
         if (lReclamada) docs = docs.filter(d => (d.lote_reclamada || '').toLowerCase().includes(lReclamada));
 
-        // Busca
         const busca = filtroBusca.value.trim().toLowerCase();
         if (busca) {
             docs = docs.filter(d => {

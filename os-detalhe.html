@@ -108,6 +108,8 @@
         .card-master { background: #fff8e1; border-left-color: #ffcc80; }
         .card-outros { background: #f8f9fa; border-left-color: #ced4da; }
         .card-ultimo { background: #ffebee; border-left-color: #c62828; border: 2px solid #ef9a9a; }
+        .card-concluida { background: #e8f5e9; border-left-color: #2e7d32; border: 2px solid #a5d6a7; }
+        .aviso-concluida { font-size: 14px; color: #1b5e20; margin: 4px 0; }
 
         .card .card-header {
             display: flex;
@@ -379,7 +381,6 @@
     // ================================================================
     function podeEditarOS() {
         if (!osData) return false;
-        // Remove acentos do status para comparação segura
         const statusNormalizado = osData.status ? removerAcentos(osData.status.toLowerCase()) : '';
         if (statusNormalizado === 'concluida') {
             return false;
@@ -630,25 +631,7 @@
             `;
         });
 
-        // ---- ÚLTIMO CARD ----
-        html += `<div class="card card-ultimo">`;
-        html += `<div class="card-header"><span class="usuario" style="font-size:15px;">➕ Adicionar Ação</span></div>`;
-        html += `<div class="card-body">`;
-        html += `
-            <form id="formNovaAcao" class="nova-acao">
-                <div class="form-group">
-                    <label for="acaoDescricao">Descrição da ação *</label>
-                    <textarea id="acaoDescricao" placeholder="Descreva a ação realizada..." required></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="acaoDirecionar">Direcionar para (opcional)</label>
-                    <select id="acaoDirecionar">
-                        <option value="">Manter destino atual</option>
-                    </select>
-                </div>
-                <div class="acoes-rodape">
-                    <button type="submit" class="btn btn-success">➕ Adicionar Ação</button>
-        `;
+        // ---- VARIÁVEIS DE PERMISSÃO ----
         const funcaoUsuario = currentUserData?.funcao || 'tecnico';
         const isDiretor = (funcaoUsuario === 'diretor');
         const isAdmin = (funcaoUsuario === 'admin');
@@ -657,33 +640,64 @@
         const podeReabrir = isDiretor || isAdmin || isMaster;
         const statusConcluida = (osData.status && removerAcentos(osData.status.toLowerCase()) === 'concluida');
 
-        if (!statusConcluida && podeConcluir) {
-            html += `<button type="button" class="btn btn-success" id="btnConcluir">✅ Concluir OS</button>`;
+        // ---- ÚLTIMO CARD (FORM ou AVISO DE CONCLUÍDA) ----
+        if (statusConcluida) {
+            html += `<div class="card card-ultimo card-concluida">`;
+            html += `<div class="card-header"><span class="usuario" style="font-size:15px;">✅ OS Concluída</span></div>`;
+            html += `<div class="card-body">`;
+            html += `<p class="aviso-concluida">Esta OS foi concluída e não aceita novas ações.${podeReabrir ? ' Se precisar, reabra abaixo.' : ''}</p>`;
+            if (podeReabrir) {
+                html += `<div class="acoes-rodape">`;
+                html += `<button type="button" class="btn btn-warning" id="btnReabrir">🔄 Reabrir OS</button>`;
+                html += `</div>`;
+            }
+            html += `</div></div>`;
+        } else {
+            html += `<div class="card card-ultimo">`;
+            html += `<div class="card-header"><span class="usuario" style="font-size:15px;">➕ Adicionar Ação</span></div>`;
+            html += `<div class="card-body">`;
+            html += `
+                <form id="formNovaAcao" class="nova-acao">
+                    <div class="form-group">
+                        <label for="acaoDescricao">Descrição da ação *</label>
+                        <textarea id="acaoDescricao" placeholder="Descreva a ação realizada..." required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="acaoDirecionar">Direcionar para (opcional)</label>
+                        <select id="acaoDirecionar">
+                            <option value="">Manter destino atual</option>
+                        </select>
+                    </div>
+                    <div class="acoes-rodape">
+                        <button type="submit" class="btn btn-success">➕ Adicionar Ação</button>
+            `;
+            if (podeConcluir) {
+                html += `<button type="button" class="btn btn-success" id="btnConcluir">✅ Concluir OS</button>`;
+            }
+            html += `</div>`;
+            html += `<div id="acaoMessage" class="message"></div>`;
+            html += `</form>`;
+            html += `</div></div>`;
         }
-        if (statusConcluida && podeReabrir) {
-            html += `<button type="button" class="btn btn-warning" id="btnReabrir">🔄 Reabrir OS</button>`;
-        }
-        html += `</div>`;
-        html += `<div id="acaoMessage" class="message"></div>`;
-        html += `</form>`;
-        html += `</div></div>`;
 
         historicoContainer.innerHTML = html;
 
         document.getElementById('btnConcluir')?.addEventListener('click', concluirOS);
         document.getElementById('btnReabrir')?.addEventListener('click', reabrirOS);
-        popularDirecionamento();
 
-        document.getElementById('formNovaAcao').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const descricao = document.getElementById('acaoDescricao').value.trim();
-            if (!descricao) {
-                mostrarMensagemAcao('A descrição é obrigatória.', 'error');
-                return;
-            }
-            const direcionarPara = document.getElementById('acaoDirecionar').value;
-            adicionarAcao(descricao, direcionarPara);
-        });
+        if (!statusConcluida) {
+            popularDirecionamento();
+            document.getElementById('formNovaAcao')?.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const descricao = document.getElementById('acaoDescricao').value.trim();
+                if (!descricao) {
+                    mostrarMensagemAcao('A descrição é obrigatória.', 'error');
+                    return;
+                }
+                const direcionarPara = document.getElementById('acaoDirecionar').value;
+                adicionarAcao(descricao, direcionarPara);
+            });
+        }
 
         document.querySelectorAll('.btn-edit').forEach(btn => {
             btn.addEventListener('click', (e) => {

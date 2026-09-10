@@ -367,13 +367,13 @@
             .catch((error) => {
                 let msg = error.message;
                 if (error.code === 'auth/email-already-in-use') msg = 'E-mail já em uso.';
-                else if (error.code === 'auth/wrong-password') msg = 'Senha do Master incorreta.';
-                else if (error.code === 'auth/too-many-requests') msg = 'Muitas tentativas. Aguarde um momento.';
+                else if (error.code === 'auth/wrong-password') msg = 'Senha do Master incorreta. Verifique e tente novamente.';
+                else if (error.code === 'auth/user-not-found') msg = 'Usuário Master não encontrado.';
+                else if (error.code === 'auth/too-many-requests') msg = 'Muitas tentativas. Aguarde um momento antes de tentar novamente.';
+                else if (error.code === 'auth/weak-password') msg = 'A senha do novo personagem é muito fraca (mínimo 6 caracteres).';
+                else if (error.code === 'auth/invalid-email') msg = 'E-mail inválido.';
                 showMessage(formMsg, msg, 'error');
-                if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
-                    alert('Sua senha de Master está incorreta. Faça login novamente.');
-                    window.location.href = 'index.html';
-                }
+                // Não faz signOut nem redirect — o Master permanece logado e pode tentar de novo.
             });
     });
 
