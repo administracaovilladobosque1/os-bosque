@@ -139,10 +139,6 @@
                 <option value="inativo">Inativo</option>
             </select>
         </div>
-        <div class="form-group">
-            <label>🔑 Sua senha de Master (para confirmar a criação)</label>
-            <input type="password" id="masterPassword" placeholder="Digite sua senha" required>
-        </div>
         <button type="submit" class="btn btn-success">Cadastrar Personagem</button>
         <div id="formMessage" class="message"></div>
     </form>
@@ -192,9 +188,15 @@
         messagingSenderId: "372474036025",
         appId: "1:372474036025:web:bbbee10723469d77cbb2e8"
     };
+    // App principal (sessão do master)
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
+
+    // App secundário — usado SOMENTE para criar novos usuários.
+    // Isso evita que o SDK do Firebase deslogue o master ao criar a conta.
+    const secondaryApp = firebase.initializeApp(firebaseConfig, 'secondary');
+    const authSecundario = secondaryApp.auth();
 
     db.enablePersistence({ synchronizeTabs: true }).catch(err => {
         if (err.code === 'failed-precondition') console.warn('Persistência: múltiplas abas abertas.');
@@ -222,8 +224,6 @@
             window.location.href = 'index.html';
         });
     }
-    // NOVO: bloqueio de usuário inativo (nesta página é código morto, pois só
-    // master entra — e master é isento. Fica definido para consistência.)
     function fazerLogoutInativo() {
         if (window.__fazendoLogout) return;
         window.__fazendoLogout = true;
@@ -257,7 +257,6 @@
     const funcaoSelect = document.getElementById('funcao');
     const senhaInput = document.getElementById('senha');
     const statusSelect = document.getElementById('status');
-    const masterPasswordInput = document.getElementById('masterPassword');
     const formMsg = document.getElementById('formMessage');
     const listaDiv = document.getElementById('listaContainer');
 
@@ -369,17 +368,23 @@
             .catch(err => alert('Erro: ' + err.message));
     };
 
+    // ============================================================
+    // CADASTRAR PERSONAGEM
+    // ============================================================
+    // Usa a instância SECUNDÁRIA do Firebase Auth para criar a conta.
+    // Assim o master permanece logado na sessão principal, sem precisar
+    // digitar a senha de master de novo.
     form.addEventListener('submit', (e) => {
         e.preventDefault();
+
         const nome = nomeInput.value.trim();
         const email = emailInput.value.trim();
         const funcao = funcaoSelect.value;
         const senha = senhaInput.value;
         const status = statusSelect.value;
-        const masterPass = masterPasswordInput.value;
 
-        if (!nome || !email || !senha || !masterPass) {
-            showMessage(formMsg, 'Preencha todos os campos, inclusive sua senha de Master.', 'error'); return;
+        if (!nome || !email || !senha) {
+            showMessage(formMsg, 'Preencha todos os campos.', 'error'); return;
         }
         if (senha.length < 6) {
             showMessage(formMsg, 'A senha do novo personagem deve ter pelo menos 6 caracteres.', 'error'); return;
@@ -390,17 +395,29 @@
             showMessage(formMsg, 'Apenas o Master pode cadastrar personagens.', 'error'); return;
         }
 
-        auth.signInWithEmailAndPassword(masterUser.email, masterPass)
-            .then(() => auth.createUserWithEmailAndPassword(email, senha))
+        // Desabilita o botão enquanto processa
+        const btnSubmit = form.querySelector('button[type="submit"]');
+        const textoOriginal = btnSubmit.textContent;
+        btnSubmit.disabled = true;
+        btnSubmit.textContent = 'Cadastrando...';
+
+        let novoUid = null;
+
+        // 1) Cria a conta de autenticação na instância secundária
+        authSecundario.createUserWithEmailAndPassword(email, senha)
             .then((cred) => {
                 const nu = cred.user;
+                novoUid = nu.uid;
                 return nu.updateProfile({ displayName: nome })
                     .then(() => db.collection('usuarios').doc(nu.uid).set({
                         nome, email, funcao, status,
-                        criado_por: auth.currentUser.uid,
+                        criado_por: masterUser.uid,
                         criado_em: firebase.firestore.FieldValue.serverTimestamp()
-                    }))
-                    .then(() => auth.signInWithEmailAndPassword(masterUser.email, masterPass));
+                    }));
+            })
+            .then(() => {
+                // Sucesso — desloga o usuário recém-criado da instância secundária
+                return authSecundario.signOut();
             })
             .then(() => {
                 limparCacheUserMap();
@@ -409,14 +426,20 @@
                 carregarLista();
             })
             .catch((error) => {
-                let msg = error.message;
+                console.error(error);
+                let msg = error.message || 'Erro desconhecido.';
                 if (error.code === 'auth/email-already-in-use') msg = 'E-mail já em uso.';
-                else if (error.code === 'auth/wrong-password') msg = 'Senha do Master incorreta. Verifique e tente novamente.';
-                else if (error.code === 'auth/user-not-found') msg = 'Usuário Master não encontrado.';
-                else if (error.code === 'auth/too-many-requests') msg = 'Muitas tentativas. Aguarde um momento.';
-                else if (error.code === 'auth/weak-password') msg = 'A senha do novo personagem é muito fraca.';
+                else if (error.code === 'auth/weak-password') msg = 'A senha do novo personagem é muito fraca (mínimo 6 caracteres).';
                 else if (error.code === 'auth/invalid-email') msg = 'E-mail inválido.';
+                else if (error.code === 'auth/too-many-requests') msg = 'Muitas tentativas. Aguarde um momento.';
                 showMessage(formMsg, msg, 'error');
+
+                // Garante que a sessão secundária seja descartada em caso de erro
+                authSecundario.signOut().catch(() => {});
+            })
+            .finally(() => {
+                btnSubmit.disabled = false;
+                btnSubmit.textContent = textoOriginal;
             });
     });
 
