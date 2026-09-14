@@ -249,7 +249,6 @@
             window.location.href = 'index.html';
         });
     }
-    // NOVO: bloqueio de usuário inativo
     function fazerLogoutInativo() {
         if (window.__fazendoLogout) return;
         window.__fazendoLogout = true;
@@ -321,6 +320,18 @@
         const num = parseInt(valor.trim(), 10);
         if (isNaN(num) || num < 1) return valor.trim();
         return String(Math.min(num, 99)).padStart(2, '0');
+    }
+
+    // ============================================================
+    // TEMPO DECORRIDO — horas até 24h, depois dias
+    // ============================================================
+    // Recebe um diff em horas (número). Retorna string no formato:
+    //   "menos de 1 hora" | "X horas" | "X dia(s)"
+    function formatarTempoDecorrido(diffHoras) {
+        if (diffHoras < 1) return 'menos de 1 hora';
+        if (diffHoras < 24) return `${diffHoras} hora${diffHoras === 1 ? '' : 's'}`;
+        const dias = Math.floor(diffHoras / 24);
+        return `${dias} dia${dias === 1 ? '' : 's'}`;
     }
 
     function atualizarHeader(nome, funcao) {
@@ -791,18 +802,17 @@
                 })}</div>`;
             }
 
+            // Tempo decorrido desde a ação/abertura anterior, com nova regra:
+            //   < 1h → "menos de 1 hora" | < 24h → "X horas" | ≥ 24h → "X dias"
             let tempoDecorrido = '';
             const dataItem = new Date(item.data).getTime();
             if (dataAnterior !== null) {
-                const diffH = Math.round((dataItem - dataAnterior) / (1000 * 60 * 60));
+                const diffH = Math.floor((dataItem - dataAnterior) / (1000 * 60 * 60));
+                const texto = formatarTempoDecorrido(diffH);
                 if (cardIndex === 0) {
-                    if (diffH === 0) tempoDecorrido = ' (menos de 1 hora após abertura)';
-                    else if (diffH === 1) tempoDecorrido = ' (1 hora após abertura)';
-                    else tempoDecorrido = ` (${diffH} horas após abertura)`;
+                    tempoDecorrido = ` (${texto} após abertura)`;
                 } else {
-                    if (diffH === 0) tempoDecorrido = ' (menos de 1 hora após resposta anterior)';
-                    else if (diffH === 1) tempoDecorrido = ' (1 hora após resposta anterior)';
-                    else tempoDecorrido = ` (${diffH} horas após resposta anterior)`;
+                    tempoDecorrido = ` (${texto} após resposta anterior)`;
                 }
             }
             dataAnterior = dataItem;
@@ -1295,7 +1305,6 @@
                 .then(doc => {
                     if (doc.exists) {
                         const data = doc.data();
-                        // NOVO: bloqueio de inativos (master é isento)
                         if (user.email !== MASTER_EMAIL && data.status && data.status !== 'ativo') {
                             fazerLogoutInativo();
                             return;
@@ -1312,7 +1321,6 @@
                     carregarOS();
                 })
                 .catch(() => {
-                    // Fallback em caso de erro de leitura
                     currentUserData = { nome: user.displayName || 'Usuário', funcao: 'tecnico' };
                     const f = user.email === MASTER_EMAIL ? 'master' : 'tecnico';
                     atualizarHeader(user.displayName || user.email, f);
