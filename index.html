@@ -32,7 +32,6 @@
         .message.success { display: block; background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
         .hidden { display: none !important; }
 
-        /* Tela de carregamento inicial (evita flash de login) */
         .loading-screen {
             display: flex;
             flex-direction: column;
@@ -52,11 +51,7 @@
             margin-bottom: 16px;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .loading-screen p {
-            color: #558b2f;
-            font-size: 15px;
-            font-weight: 600;
-        }
+        .loading-screen p { color: #558b2f; font-size: 15px; font-weight: 600; }
 
         #dashboard { display: none; }
         .dashboard-logo { text-align: center; margin-bottom: 10px; }
@@ -106,13 +101,11 @@
 </head>
 <body>
 <div class="container" id="app">
-    <!-- TELA DE CARREGAMENTO (fica visível até o Firebase Auth responder) -->
     <div id="loadingScreen" class="loading-screen">
         <div class="spinner"></div>
         <p>Carregando...</p>
     </div>
 
-    <!-- TELA DE LOGIN (inicialmente escondida) -->
     <div id="loginScreen" class="hidden">
         <div class="logo-area">
             <img src="logo.png" alt="Logo Villa do Bosque">
@@ -132,7 +125,6 @@
         <div id="loginMessage" class="message"></div>
     </div>
 
-    <!-- DASHBOARD (inicialmente escondido) -->
     <div id="dashboard">
         <div class="user-header" id="userHeader">
             <span class="uh-label">Logado como:</span>
@@ -174,7 +166,6 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // Habilita cache offline do Firestore (ganho de performance em acessos repetidos)
     db.enablePersistence({ synchronizeTabs: true }).catch(err => {
         if (err.code === 'failed-precondition') console.warn('Persistência: múltiplas abas abertas.');
         else if (err.code === 'unimplemented') console.warn('Persistência: navegador não suporta.');
@@ -221,6 +212,21 @@
             window.location.href = 'index.html';
         });
     }
+    // NOVO: bloqueio de usuário inativo
+    function fazerLogoutInativo() {
+        if (window.__fazendoLogout) return;
+        window.__fazendoLogout = true;
+        try {
+            localStorage.removeItem(TIMEOUT_KEY);
+            localStorage.removeItem('vb_userLoggedIn');
+            sessionStorage.clear();
+        } catch(e) {}
+        if (timerInterval) clearInterval(timerInterval);
+        auth.signOut().finally(() => {
+            alert('Sua conta está inativa. Entre em contato com o administrador.');
+            window.location.href = 'index.html';
+        });
+    }
     function verificarTimeoutAgora() {
         const last = parseInt(localStorage.getItem(TIMEOUT_KEY) || '0', 10);
         if (!last) return false;
@@ -249,7 +255,7 @@
     }
 
     // ============================================================
-    // TELAS — sempre esconde as outras ao trocar
+    // TELAS
     // ============================================================
     function hideAllScreens() {
         if (loadingScreen) loadingScreen.style.display = 'none';
@@ -365,7 +371,13 @@
             db.collection('usuarios').doc(user.uid).get()
                 .then(doc => {
                     if (doc.exists) {
-                        showDashboard(user, doc.data());
+                        const data = doc.data();
+                        // NOVO: bloqueio de inativos (master é isento)
+                        if (user.email !== MASTER_EMAIL && data.status && data.status !== 'ativo') {
+                            fazerLogoutInativo();
+                            return;
+                        }
+                        showDashboard(user, data);
                     } else {
                         const defaultData = { nome: user.displayName || 'Usuário', funcao: 'tecnico', status: 'ativo' };
                         db.collection('usuarios').doc(user.uid).set(defaultData)
@@ -374,6 +386,7 @@
                     }
                 })
                 .catch(() => {
+                    // Fallback em caso de erro de leitura — mantém o comportamento anterior
                     const defaultData = { nome: user.displayName || 'Usuário', funcao: 'tecnico' };
                     showDashboard(user, defaultData);
                 });
@@ -386,8 +399,6 @@
         }
     });
 
-    // Fallback: se o Firebase Auth não responder em 5s (rede ruim, etc.),
-    // libera a tela de login para o usuário tentar entrar.
     setTimeout(() => {
         if (!authResolvido) {
             authResolvido = true;
@@ -396,13 +407,23 @@
         }
     }, 5000);
 
-    // Re-verifica ao voltar para a aba ou restaurar do cache do navegador
     window.addEventListener('pageshow', (event) => {
         if (event.persisted) {
             const user = auth.currentUser;
             if (user) {
                 db.collection('usuarios').doc(user.uid).get()
-                    .then(doc => showDashboard(user, doc.exists ? doc.data() : { nome: user.displayName || 'Usuário', funcao: 'tecnico' }))
+                    .then(doc => {
+                        if (doc.exists) {
+                            const data = doc.data();
+                            if (user.email !== MASTER_EMAIL && data.status && data.status !== 'ativo') {
+                                fazerLogoutInativo();
+                                return;
+                            }
+                            showDashboard(user, data);
+                        } else {
+                            showDashboard(user, { nome: user.displayName || 'Usuário', funcao: 'tecnico' });
+                        }
+                    })
                     .catch(() => showDashboard(user, { nome: user.displayName || 'Usuário', funcao: 'tecnico' }));
             } else {
                 showLoginScreen();

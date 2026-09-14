@@ -208,8 +208,6 @@
 
     const USER_CACHE_KEY = 'vb_userMapCache';
 
-    // Sempre que um usuário é criado/editado/inativado/excluído, o cache
-    // global de usuários precisa ser invalidado para forçar releitura.
     function limparCacheUserMap() {
         try { sessionStorage.removeItem(USER_CACHE_KEY); } catch(e) {}
     }
@@ -221,6 +219,17 @@
         try { localStorage.removeItem(TIMEOUT_KEY); localStorage.removeItem('vb_userLoggedIn'); sessionStorage.clear(); } catch(e) {}
         auth.signOut().finally(() => {
             alert('Sessão expirada por inatividade. Faça login novamente.');
+            window.location.href = 'index.html';
+        });
+    }
+    // NOVO: bloqueio de usuário inativo (nesta página é código morto, pois só
+    // master entra — e master é isento. Fica definido para consistência.)
+    function fazerLogoutInativo() {
+        if (window.__fazendoLogout) return;
+        window.__fazendoLogout = true;
+        try { localStorage.removeItem(TIMEOUT_KEY); localStorage.removeItem('vb_userLoggedIn'); sessionStorage.clear(); } catch(e) {}
+        auth.signOut().finally(() => {
+            alert('Sua conta está inativa. Entre em contato com o administrador.');
             window.location.href = 'index.html';
         });
     }
@@ -292,7 +301,7 @@
         if (!nome) { showMessage(editMsg, 'O nome não pode ficar vazio.', 'error'); return; }
         db.collection('usuarios').doc(editUid).update({ nome, funcao, status })
             .then(() => {
-                limparCacheUserMap(); // invalida cache global
+                limparCacheUserMap();
                 showMessage(editMsg, '✅ Personagem atualizado com sucesso!', 'success');
                 fecharModal();
                 carregarLista();
@@ -343,7 +352,7 @@
         if (!confirm(`Deseja ${novo === 'ativo' ? 'ativar' : 'inativar'} este usuário?`)) return;
         db.collection('usuarios').doc(uid).update({ status: novo })
             .then(() => {
-                limparCacheUserMap(); // invalida cache global
+                limparCacheUserMap();
                 alert(`Status alterado para ${novo}.`);
                 carregarLista();
             })
@@ -353,7 +362,7 @@
         if (!confirm('Excluir este personagem do sistema? (A conta de autenticação continuará, mas o vínculo será removido)')) return;
         db.collection('usuarios').doc(uid).delete()
             .then(() => {
-                limparCacheUserMap(); // invalida cache global
+                limparCacheUserMap();
                 alert('Personagem removido do Firestore.');
                 carregarLista();
             })
@@ -394,7 +403,7 @@
                     .then(() => auth.signInWithEmailAndPassword(masterUser.email, masterPass));
             })
             .then(() => {
-                limparCacheUserMap(); // invalida cache global
+                limparCacheUserMap();
                 showMessage(formMsg, 'Personagem cadastrado com sucesso!', 'success');
                 form.reset();
                 carregarLista();

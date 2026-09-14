@@ -173,6 +173,9 @@
     const USER_CACHE_KEY = 'vb_userMapCache';
     const USER_CACHE_TTL = 10 * 60 * 1000;
 
+    const GRUPO_ADMIN_TEXTO = 'Administração';
+    const GRUPO_DIRETOR_TEXTO = 'Diretores';
+
     function salvarUserMapNoCache(map) {
         try {
             sessionStorage.setItem(USER_CACHE_KEY, JSON.stringify({
@@ -194,9 +197,6 @@
         } catch(e) { return null; }
     }
 
-    const GRUPO_ADMIN_TEXTO = 'Administração';
-    const GRUPO_DIRETOR_TEXTO = 'Diretores';
-
     function registrarAtividade() { try { localStorage.setItem(TIMEOUT_KEY, Date.now().toString()); } catch(e) {} }
     function fazerLogoutTimeout() {
         if (window.__fazendoLogout) return;
@@ -204,6 +204,16 @@
         try { localStorage.removeItem(TIMEOUT_KEY); localStorage.removeItem('vb_userLoggedIn'); sessionStorage.clear(); } catch(e) {}
         auth.signOut().finally(() => {
             alert('Sessão expirada por inatividade. Faça login novamente.');
+            window.location.href = 'index.html';
+        });
+    }
+    // NOVO: bloqueio de usuário inativo
+    function fazerLogoutInativo() {
+        if (window.__fazendoLogout) return;
+        window.__fazendoLogout = true;
+        try { localStorage.removeItem(TIMEOUT_KEY); localStorage.removeItem('vb_userLoggedIn'); sessionStorage.clear(); } catch(e) {}
+        auth.signOut().finally(() => {
+            alert('Sua conta está inativa. Entre em contato com o administrador.');
             window.location.href = 'index.html';
         });
     }
@@ -266,9 +276,6 @@
     loteReclamante.addEventListener('blur', aplicarFormatacaoLotes);
     loteReclamado.addEventListener('blur', aplicarFormatacaoLotes);
 
-    // ============================================================
-    // CARREGAR PERSONAGENS — usa cache quando disponível
-    // ============================================================
     function montarSelectPersonagens(userMapCompleto) {
         const admins = [], diretores = [];
         Object.keys(userMapCompleto).forEach(uid => {
@@ -304,14 +311,12 @@
     function carregarPersonagens() {
         direcionadoSelect.innerHTML = '<option value="">Carregando...</option>';
 
-        // 1) Cache quente — usa direto
         const cache = lerUserMapDoCache();
         if (cache) {
             montarSelectPersonagens(cache);
             return;
         }
 
-        // 2) Sem cache — baixa e salva
         db.collection('usuarios').where('status', '==', 'ativo').get()
             .then(snapshot => {
                 const map = {};
@@ -423,6 +428,11 @@
                 let funcao = 'tecnico';
                 if (doc.exists) {
                     const d = doc.data();
+                    // NOVO: bloqueio de inativos (master é isento)
+                    if (user.email !== MASTER_EMAIL && d.status && d.status !== 'ativo') {
+                        fazerLogoutInativo();
+                        return;
+                    }
                     nome = d.nome || nome;
                     funcao = d.funcao || 'tecnico';
                 }
@@ -432,6 +442,7 @@
                 carregarPersonagens();
             })
             .catch(() => {
+                // Fallback em caso de erro de leitura
                 currentUserNome = user.displayName || user.email;
                 const f = user.email === MASTER_EMAIL ? 'master' : 'tecnico';
                 atualizarHeader(currentUserNome, f);

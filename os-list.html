@@ -260,6 +260,16 @@
             window.location.href = 'index.html';
         });
     }
+    // NOVO: bloqueio de usuário inativo
+    function fazerLogoutInativo() {
+        if (window.__fazendoLogout) return;
+        window.__fazendoLogout = true;
+        try { localStorage.removeItem(TIMEOUT_KEY); localStorage.removeItem('vb_userLoggedIn'); sessionStorage.clear(); } catch(e) {}
+        auth.signOut().finally(() => {
+            alert('Sua conta está inativa. Entre em contato com o administrador.');
+            window.location.href = 'index.html';
+        });
+    }
     function verificarTimeoutAgora() {
         const last = parseInt(localStorage.getItem(TIMEOUT_KEY) || '0', 10);
         if (!last) return false;
@@ -368,18 +378,11 @@
         }
     }
 
-    // ============================================================
-    // HELPERS DE DETECÇÃO E CLASSIFICAÇÃO
-    // ============================================================
-
-    // Remove sufixo "(função)" do final de um nome, se houver.
-    // Ex: "Diretores (diretor)" → "Diretores"
     function limparSufixoFuncao(nome) {
         if (!nome) return '';
         return String(nome).replace(/\s*\([^)]*\)\s*$/, '').trim();
     }
 
-    // Detecta função de uma pessoa a partir do nome/uid
     function detectarFuncao(nome, uid, funcaoDireta) {
         if (funcaoDireta) return funcaoDireta;
         if (uid && userMap[uid]) return userMap[uid].funcao;
@@ -393,16 +396,10 @@
         return null;
     }
 
-    // Classifica um destino de OS em { tipo, subtipo | funcao, texto }.
-    // Regras:
-    //   1) prefixo 'group:...' → grupo
-    //   2) UID preenchido (não prefixado) → pessoa
-    //   3) alvo vazio → decide pelo nome (mesmo com sufixo "(função)")
     function classificarDestino(alvo, nome, funcao) {
         const nomeLimpo = limparSufixoFuncao(nome);
         const base = (nomeLimpo || '').toLowerCase();
 
-        // 1) prefixo explícito
         if (alvo === 'group:admin') {
             return { tipo: 'grupo', subtipo: 'admin', texto: GRUPO_ADMIN_TEXTO, cor: '#ffe082' };
         }
@@ -410,7 +407,6 @@
             return { tipo: 'grupo', subtipo: 'diretor', texto: GRUPO_DIRETOR_TEXTO, cor: '#a5d6a7' };
         }
 
-        // 2) UID real → pessoa
         if (alvo && typeof alvo === 'string' && !alvo.startsWith('group:')) {
             const f = (userMap[alvo] && userMap[alvo].funcao) || funcao || detectarFuncao(nomeLimpo, alvo, null);
             let cor = '#ced4da';
@@ -422,7 +418,6 @@
             return { tipo: 'pessoa', funcao: f, texto, cor };
         }
 
-        // 3) alvo vazio/prefixo genérico → decide pelo nome
         if (base === 'admin' || base === 'administrador' || base === 'administradores' ||
             base === 'administração' || base === 'administracao') {
             return { tipo: 'grupo', subtipo: 'admin', texto: GRUPO_ADMIN_TEXTO, cor: '#ffe082' };
@@ -434,7 +429,6 @@
             return { tipo: 'grupo', subtipo: 'master', texto: 'Masters', cor: '#ffcc80' };
         }
 
-        // 4) fallback — trata como pessoa pelo que der pra detectar
         const f = funcao || detectarFuncao(nomeLimpo, alvo, null);
         let cor = '#ced4da';
         if (f === 'admin') cor = '#ffe082';
@@ -448,16 +442,11 @@
     function getNomeComFuncao(nome, uid, funcaoDireta) {
         const nomeLimpo = limparSufixoFuncao(nome);
         if (!nomeLimpo) return '—';
-
-        // Se é grupo, devolve só o texto normalizado
         const classe = classificarDestino(uid, nomeLimpo, funcaoDireta);
-        if (classe.tipo === 'grupo') return classe.texto;
         return classe.texto;
     }
 
-    function getDataPendente(data) {
-        return data.direcionado_em || data.criado_em;
-    }
+    function getDataPendente(data) { return data.direcionado_em || data.criado_em; }
     function calcularDias(dataISO) {
         if (!dataISO) return '—';
         const d = new Date(dataISO);
@@ -548,7 +537,6 @@
         const pData = priorityMap[p] || priorityMap['normal'];
         return `<span class="badge ${pData.class}"><span class="icone">${pData.icon}</span> ${pData.label}</span>`;
     }
-
     function getPendenteHtml(data) {
         const classe = classificarDestino(
             data.direcionado_para,
@@ -811,6 +799,11 @@
                 let funcao = 'tecnico';
                 if (doc.exists) {
                     const d = doc.data();
+                    // NOVO: bloqueio de inativos (master é isento)
+                    if (user.email !== MASTER_EMAIL && d.status && d.status !== 'ativo') {
+                        fazerLogoutInativo();
+                        return;
+                    }
                     nome = d.nome || nome;
                     funcao = d.funcao || 'tecnico';
                 }
@@ -819,6 +812,7 @@
                 carregarOS();
             })
             .catch(() => {
+                // Fallback em caso de erro de leitura
                 const funcao = user.email === MASTER_EMAIL ? 'master' : 'tecnico';
                 atualizarHeader(user.displayName || user.email, funcao);
                 carregarOS();

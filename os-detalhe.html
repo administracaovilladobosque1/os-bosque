@@ -76,31 +76,13 @@
         .badge-urgente { background: #fff9c4; color: #f57f17; font-weight: bold; }
         .badge-normal { background: #c8e6c9; color: #1b5e20; font-weight: bold; }
 
-        .edicoes-bloco {
-            margin-top: 14px;
-            padding-top: 12px;
-            border-top: 2px dashed #c8e6c9;
-        }
-        .edicoes-titulo {
-            font-size: 13px;
-            font-weight: 700;
-            color: #1b5e20;
-            margin-bottom: 6px;
-        }
-        .edicoes-lista {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
+        .edicoes-bloco { margin-top: 14px; padding-top: 12px; border-top: 2px dashed #c8e6c9; }
+        .edicoes-titulo { font-size: 13px; font-weight: 700; color: #1b5e20; margin-bottom: 6px; }
+        .edicoes-lista { display: flex; flex-direction: column; gap: 4px; }
         .edicoes-item {
-            font-size: 12.5px;
-            color: #444;
-            background: #fff;
-            border: 1px solid #e0ecd0;
-            border-left: 3px solid #a5d6a7;
-            border-radius: 6px;
-            padding: 6px 10px;
-            line-height: 1.45;
+            font-size: 12.5px; color: #444; background: #fff;
+            border: 1px solid #e0ecd0; border-left: 3px solid #a5d6a7;
+            border-radius: 6px; padding: 6px 10px; line-height: 1.45;
             word-break: break-word;
         }
         .edicoes-item .ed-data { color: #558b2f; font-weight: 600; }
@@ -154,10 +136,7 @@
             flex-shrink: 0;
             font-weight: 700;
         }
-        .btn-delete-card:hover {
-            background: #c62828;
-            color: #fff;
-        }
+        .btn-delete-card:hover { background: #c62828; color: #fff; }
 
         .nova-acao .form-group { margin-bottom: 10px; }
         .nova-acao label { font-weight: 600; font-size: 13px; color: #1b5e20; display: block; margin-bottom: 2px; }
@@ -270,6 +249,16 @@
             window.location.href = 'index.html';
         });
     }
+    // NOVO: bloqueio de usuário inativo
+    function fazerLogoutInativo() {
+        if (window.__fazendoLogout) return;
+        window.__fazendoLogout = true;
+        try { localStorage.removeItem(TIMEOUT_KEY); localStorage.removeItem('vb_userLoggedIn'); sessionStorage.clear(); } catch(e) {}
+        auth.signOut().finally(() => {
+            alert('Sua conta está inativa. Entre em contato com o administrador.');
+            window.location.href = 'index.html';
+        });
+    }
     function verificarTimeoutAgora() {
         const last = parseInt(localStorage.getItem(TIMEOUT_KEY) || '0', 10);
         if (!last) return false;
@@ -302,9 +291,6 @@
     const historicoContainer = document.getElementById('historicoContainer');
     const userHeaderBadge = document.getElementById('userHeaderBadge');
 
-    // ============================================================
-    // UTILITÁRIOS
-    // ============================================================
     function removerAcentos(str) { return str.normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
     function formatarDataHora(dataISO) {
         if (!dataISO) return '—';
@@ -343,18 +329,12 @@
         userHeaderBadge.textContent = `${nome || 'Usuário'} (${f})`;
     }
 
-    // ============================================================
-    // PRIORIDADE — mapa + função de exibição
-    // ============================================================
     const prioridadeMap = { 'emergencial': '🔴 Emergencial', 'urgente': '🟡 Urgente', 'normal': '🟢 Normal' };
     function getValorExibicao(campo, valor) {
         if (campo === 'prioridade' && valor && prioridadeMap[valor]) return prioridadeMap[valor];
         return valor;
     }
 
-    // ============================================================
-    // HELPERS DE DETECÇÃO E CLASSIFICAÇÃO
-    // ============================================================
     function limparSufixoFuncao(nome) {
         if (!nome) return '';
         return String(nome).replace(/\s*\([^)]*\)\s*$/, '').trim();
@@ -496,9 +476,6 @@
         return `<span class="badge ${classe}">${c.texto}</span>`;
     }
 
-    // ============================================================
-    // PERMISSÕES
-    // ============================================================
     function podeEditarOS() {
         if (!osData) return false;
         const s = osData.status ? removerAcentos(osData.status.toLowerCase()) : '';
@@ -528,9 +505,6 @@
         return f === 'diretor' || f === 'admin' || isMaster();
     }
 
-    // ============================================================
-    // LABELS DE CAMPOS (para o log de edições)
-    // ============================================================
     function getLabelCampo(campo) {
         const map = {
             'titulo': 'título',
@@ -545,9 +519,6 @@
         return map[campo] || campo;
     }
 
-    // ============================================================
-    // EDIT HISTORY
-    // ============================================================
     function getEdicoesAgrupadas() {
         if (!osData.edicoes) return [];
 
@@ -625,9 +596,6 @@
         return html;
     }
 
-    // ============================================================
-    // CARREGAR USUÁRIOS / OS
-    // ============================================================
     function extrairUidsDaOS(os) {
         const uids = new Set();
         if (os.aberto_por) uids.add(os.aberto_por);
@@ -713,9 +681,6 @@
             });
     }
 
-    // ============================================================
-    // RENDER
-    // ============================================================
     function renderizarDetalhe() {
         if (!osData) return;
         osNumero.textContent = osData.numero || '---';
@@ -796,9 +761,6 @@
         osInfoContainer.style.borderLeft = `6px solid ${cor}`;
         osInfoContainer.style.backgroundColor = cor + '22';
 
-        // ============================================================
-        // HISTÓRICO
-        // ============================================================
         const historico = osData.historico || [];
         const statusConcluida = osData.status && removerAcentos(osData.status.toLowerCase()) === 'concluida';
         const masterLogado = isMaster();
@@ -936,9 +898,6 @@
         });
     }
 
-    // ============================================================
-    // APAGAR CARD (apenas master)
-    // ============================================================
     async function apagarAcao(dataISO) {
         if (!isMaster()) {
             alert('Apenas o master pode apagar ações.');
@@ -976,9 +935,6 @@
         }
     }
 
-    // ============================================================
-    // EDIÇÃO INLINE
-    // ============================================================
     function iniciarEdicao(campo, campo2, valorAtual, btn) {
         if (editando.campo) cancelarEdicao();
         editando.campo = campo;
@@ -1122,7 +1078,6 @@
         if (!ed[campo2]) ed[campo2] = [];
         ed[campo2].push(montarRegistroEdicao(antigo2, novo2));
 
-        // Iguala o timestamp para agrupar no log
         const len1 = ed[campo1].length;
         const len2 = ed[campo2].length;
         ed[campo1][len1-1].data = agora;
@@ -1143,9 +1098,6 @@
             .catch(err => alert('Erro ao salvar: ' + err.message));
     }
 
-    // ============================================================
-    // POPULAR DIRECIONAMENTO
-    // ============================================================
     function popularDirecionamento() {
         const select = document.getElementById('acaoDirecionar');
         if (!select) return;
@@ -1182,9 +1134,6 @@
         });
     }
 
-    // ============================================================
-    // ADICIONAR AÇÃO
-    // ============================================================
     async function adicionarAcao(descricao, direcionarPara) {
         const agora = new Date().toISOString();
         const docRef = db.collection('ordens_servico').doc(osId);
@@ -1279,9 +1228,6 @@
         if (el) el.style.display = 'none';
     }
 
-    // ============================================================
-    // CONCLUIR / REABRIR
-    // ============================================================
     async function concluirOS() {
         if (!confirm('Deseja concluir esta OS?')) return;
         const agora = new Date().toISOString();
@@ -1332,9 +1278,6 @@
         } catch (err) { alert('Erro: ' + err.message); }
     }
 
-    // ============================================================
-    // INIT
-    // ============================================================
     function init() {
         const params = new URLSearchParams(window.location.search);
         osId = params.get('id');
@@ -1350,8 +1293,17 @@
 
             db.collection('usuarios').doc(user.uid).get()
                 .then(doc => {
-                    if (doc.exists) currentUserData = doc.data();
-                    else currentUserData = { nome: user.displayName || 'Usuário', funcao: 'tecnico' };
+                    if (doc.exists) {
+                        const data = doc.data();
+                        // NOVO: bloqueio de inativos (master é isento)
+                        if (user.email !== MASTER_EMAIL && data.status && data.status !== 'ativo') {
+                            fazerLogoutInativo();
+                            return;
+                        }
+                        currentUserData = data;
+                    } else {
+                        currentUserData = { nome: user.displayName || 'Usuário', funcao: 'tecnico' };
+                    }
 
                     let f = currentUserData.funcao || 'tecnico';
                     if (user.email === MASTER_EMAIL) f = 'master';
@@ -1360,6 +1312,7 @@
                     carregarOS();
                 })
                 .catch(() => {
+                    // Fallback em caso de erro de leitura
                     currentUserData = { nome: user.displayName || 'Usuário', funcao: 'tecnico' };
                     const f = user.email === MASTER_EMAIL ? 'master' : 'tecnico';
                     atualizarHeader(user.displayName || user.email, f);
