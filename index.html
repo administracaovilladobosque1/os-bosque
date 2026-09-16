@@ -212,7 +212,6 @@
             window.location.href = 'index.html';
         });
     }
-    // NOVO: bloqueio de usuário inativo
     function fazerLogoutInativo() {
         if (window.__fazendoLogout) return;
         window.__fazendoLogout = true;
@@ -334,10 +333,19 @@
         auth.signInWithEmailAndPassword(email, password)
             .then(() => showMessage(loginMessage, 'Login realizado!', 'success'))
             .catch((error) => {
+                console.error('Erro no login:', error.code, error.message);
                 let msg = 'Erro ao fazer login.';
-                if (error.code === 'auth/user-not-found') msg = 'Usuário não encontrado.';
-                else if (error.code === 'auth/wrong-password') msg = 'Senha incorreta.';
-                else if (error.code === 'auth/invalid-email') msg = 'E-mail inválido.';
+                const code = (error.code || '').toString();
+
+                if (code === 'auth/user-not-found') msg = 'Usuário não encontrado.';
+                else if (code === 'auth/wrong-password') msg = 'Senha incorreta.';
+                else if (code === 'auth/invalid-credential') msg = 'E-mail ou senha incorretos.';
+                else if (code === 'auth/invalid-email') msg = 'E-mail inválido.';
+                else if (code === 'auth/user-disabled') msg = 'Esta conta foi desabilitada.';
+                else if (code === 'auth/too-many-requests') msg = 'Muitas tentativas. Aguarde alguns minutos.';
+                else if (code === 'auth/network-request-failed') msg = 'Falha de conexão. Verifique a internet.';
+                else if (error.message) msg = error.message;
+
                 showMessage(loginMessage, msg, 'error');
             });
     });
@@ -372,7 +380,6 @@
                 .then(doc => {
                     if (doc.exists) {
                         const data = doc.data();
-                        // NOVO: bloqueio de inativos (master é isento)
                         if (user.email !== MASTER_EMAIL && data.status && data.status !== 'ativo') {
                             fazerLogoutInativo();
                             return;
@@ -386,7 +393,6 @@
                     }
                 })
                 .catch(() => {
-                    // Fallback em caso de erro de leitura — mantém o comportamento anterior
                     const defaultData = { nome: user.displayName || 'Usuário', funcao: 'tecnico' };
                     showDashboard(user, defaultData);
                 });

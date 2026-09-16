@@ -188,15 +188,9 @@
         messagingSenderId: "372474036025",
         appId: "1:372474036025:web:bbbee10723469d77cbb2e8"
     };
-    // App principal (sessão do master)
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
-
-    // App secundário — usado SOMENTE para criar novos usuários.
-    // Isso evita que o SDK do Firebase deslogue o master ao criar a conta.
-    const secondaryApp = firebase.initializeApp(firebaseConfig, 'secondary');
-    const authSecundario = secondaryApp.auth();
 
     db.enablePersistence({ synchronizeTabs: true }).catch(err => {
         if (err.code === 'failed-precondition') console.warn('Persistência: múltiplas abas abertas.');
@@ -369,12 +363,29 @@
     };
 
     // ============================================================
-    // CADASTRAR PERSONAGEM
+    // CADASTRAR PERSONAGEM — via REST API do Firebase Auth
     // ============================================================
-    // Usa a instância SECUNDÁRIA do Firebase Auth para criar a conta.
-    // Assim o master permanece logado na sessão principal, sem precisar
-    // digitar a senha de master de novo.
-    form.addEventListener('submit', (e) => {
+    // A API REST cria a conta SEM tocar na sessão atual. O SDK do
+    // Firebase (mesmo em instância secundária) compartilha o
+    // localStorage com a instância principal e acaba bagunçando a
+    // sessão do master. Com fetch direto, isso não acontece.
+    async function criarContaAuth(email, senha) {
+        const url = `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${firebaseConfig.apiKey}`;
+        const resp = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password: senha, returnSecureToken: true })
+        });
+        const data = await resp.json();
+        if (data.error) {
+            const erro = new Error(data.error.message || 'Erro ao criar conta');
+            erro.code = data.error.message || 'unknown';
+            throw erro;
+        }
+        return data.localId; // UID do novo usuário
+    }
+
+    form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
         const nome = nomeInput.value.trim();
@@ -395,52 +406,44 @@
             showMessage(formMsg, 'Apenas o Master pode cadastrar personagens.', 'error'); return;
         }
 
-        // Desabilita o botão enquanto processa
         const btnSubmit = form.querySelector('button[type="submit"]');
         const textoOriginal = btnSubmit.textContent;
         btnSubmit.disabled = true;
         btnSubmit.textContent = 'Cadastrando...';
 
-        let novoUid = null;
+        try {
+            // 1) Cria a conta de autenticação via REST (sem afetar sessão atual)
+            const novoUid = await criarContaAuth(email, senha);
 
-        // 1) Cria a conta de autenticação na instância secundária
-        authSecundario.createUserWithEmailAndPassword(email, senha)
-            .then((cred) => {
-                const nu = cred.user;
-                novoUid = nu.uid;
-                return nu.updateProfile({ displayName: nome })
-                    .then(() => db.collection('usuarios').doc(nu.uid).set({
-                        nome, email, funcao, status,
-                        criado_por: masterUser.uid,
-                        criado_em: firebase.firestore.FieldValue.serverTimestamp()
-                    }));
-            })
-            .then(() => {
-                // Sucesso — desloga o usuário recém-criado da instância secundária
-                return authSecundario.signOut();
-            })
-            .then(() => {
-                limparCacheUserMap();
-                showMessage(formMsg, 'Personagem cadastrado com sucesso!', 'success');
-                form.reset();
-                carregarLista();
-            })
-            .catch((error) => {
-                console.error(error);
-                let msg = error.message || 'Erro desconhecido.';
-                if (error.code === 'auth/email-already-in-use') msg = 'E-mail já em uso.';
-                else if (error.code === 'auth/weak-password') msg = 'A senha do novo personagem é muito fraca (mínimo 6 caracteres).';
-                else if (error.code === 'auth/invalid-email') msg = 'E-mail inválido.';
-                else if (error.code === 'auth/too-many-requests') msg = 'Muitas tentativas. Aguarde um momento.';
-                showMessage(formMsg, msg, 'error');
-
-                // Garante que a sessão secundária seja descartada em caso de erro
-                authSecundario.signOut().catch(() => {});
-            })
-            .finally(() => {
-                btnSubmit.disabled = false;
-                btnSubmit.textContent = textoOriginal;
+            // 2) Salva o vínculo no Firestore (com o db autenticado do master)
+            await db.collection('usuarios').doc(novoUid).set({
+                nome, email, funcao, status,
+                criado_por: masterUser.uid,
+                criado_em: firebase.firestore.FieldValue.serverTimestamp()
             });
+
+            limparCacheUserMap();
+            showMessage(formMsg, 'Personagem cadastrado com sucesso!', 'success');
+            form.reset();
+            carregarLista();
+        } catch (error) {
+            console.error('Erro ao cadastrar personagem:', error);
+
+            let msg = 'Erro ao cadastrar personagem.';
+            const code = (error.code || error.message || '').toString().toUpperCase();
+
+            if (code.includes('EMAIL_EXISTS')) msg = 'E-mail já em uso.';
+            else if (code.includes('WEAK_PASSWORD')) msg = 'A senha do novo personagem é muito fraca (mínimo 6 caracteres).';
+            else if (code.includes('INVALID_EMAIL')) msg = 'E-mail inválido.';
+            else if (code.includes('TOO_MANY_ATTEMPTS')) msg = 'Muitas tentativas. Aguarde um momento.';
+            else if (code.includes('OPERATION_NOT_ALLOWED')) msg = 'O cadastro por e-mail/senha está desabilitado no Firebase.';
+            else if (error.message) msg = 'Erro: ' + error.message;
+
+            showMessage(formMsg, msg, 'error');
+        } finally {
+            btnSubmit.disabled = false;
+            btnSubmit.textContent = textoOriginal;
+        }
     });
 
     function showMessage(el, text, type) { el.textContent = text; el.className = 'message ' + type; }
