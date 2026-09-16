@@ -452,6 +452,41 @@
         return { dirPara, dirNome, dirFuncao: dirFuncao || '', dirEm };
     }
 
+    // ============================================================
+    // DIRECIONAMENTO ORIGINAL — preserva o destino da abertura
+    // ============================================================
+    // Ordem de busca:
+    //   1) Campos _original (gravados desde a introdução)
+    //   2) Histórico da ação "abertura" (fonte confiável em qualquer OS)
+    //   3) Fallback pro valor atual (último recurso)
+    function getDirecionamentoOriginal() {
+        // 1) Campos dedicados
+        if (osData.direcionado_para_original) {
+            return {
+                direcionado_para: osData.direcionado_para_original,
+                direcionado_para_nome: osData.direcionado_para_nome_original || osData.direcionado_para_original,
+                direcionado_para_funcao: osData.direcionado_para_funcao_original || ''
+            };
+        }
+
+        // 2) Ação de abertura no histórico
+        const abertura = (osData.historico || []).find(h => h.acao === 'abertura');
+        if (abertura && abertura.direcionado_para) {
+            return {
+                direcionado_para: abertura.direcionado_para,
+                direcionado_para_nome: abertura.direcionado_para_nome || abertura.direcionado_para,
+                direcionado_para_funcao: abertura.direcionado_para_funcao || ''
+            };
+        }
+
+        // 3) Fallback
+        return {
+            direcionado_para: osData.direcionado_para || '—',
+            direcionado_para_nome: osData.direcionado_para_nome || '—',
+            direcionado_para_funcao: osData.direcionado_para_funcao || ''
+        };
+    }
+
     function getBadgePerfil(uid, nome) {
         const nomeLimpo = limparSufixoFuncao(nome);
         const f = detectarFuncao(nomeLimpo, uid, null);
@@ -482,10 +517,6 @@
         return `<span class="badge ${classe}">${c.texto}</span>`;
     }
 
-    // ============================================================
-    // PERMISSÕES
-    // ============================================================
-    // isMaster: aceita o master hardcoded OU qualquer usuário com funcao === 'master'
     function isMaster() {
         if (!currentUser) return false;
         if (currentUser.email === MASTER_EMAIL) return true;
@@ -715,13 +746,9 @@
 
         const prioLabel = getValorExibicao('prioridade', osData.prioridade) || osData.prioridade;
 
-        const dirOriginal = osData.direcionado_para_original || osData.direcionado_para || '—';
-        const dirNomeOriginal = osData.direcionado_para_nome_original || osData.direcionado_para_nome || '—';
-        const dirBadgeOriginal = getBadgeDirecionado({
-            direcionado_para: dirOriginal,
-            direcionado_para_nome: dirNomeOriginal,
-            direcionado_para_funcao: osData.direcionado_para_funcao_original || osData.direcionado_para_funcao
-        });
+        // Direcionamento ORIGINAL — preservado mesmo após ações mudarem o atual
+        const dirOriginalData = getDirecionamentoOriginal();
+        const dirBadgeOriginal = getBadgeDirecionado(dirOriginalData);
 
         const campos = [
             { label: 'Abertura', value: formatarDataHora(osData.criado_em), campo: 'criado_em', edit: false },
