@@ -322,11 +322,6 @@
         return String(Math.min(num, 99)).padStart(2, '0');
     }
 
-    // ============================================================
-    // TEMPO DECORRIDO — horas até 24h, depois dias
-    // ============================================================
-    // Recebe um diff em horas (número). Retorna string no formato:
-    //   "menos de 1 hora" | "X horas" | "X dia(s)"
     function formatarTempoDecorrido(diffHoras) {
         if (diffHoras < 1) return 'menos de 1 hora';
         if (diffHoras < 24) return `${diffHoras} hora${diffHoras === 1 ? '' : 's'}`;
@@ -487,12 +482,23 @@
         return `<span class="badge ${classe}">${c.texto}</span>`;
     }
 
+    // ============================================================
+    // PERMISSÕES
+    // ============================================================
+    // isMaster: aceita o master hardcoded OU qualquer usuário com funcao === 'master'
+    function isMaster() {
+        if (!currentUser) return false;
+        if (currentUser.email === MASTER_EMAIL) return true;
+        if (currentUserData && currentUserData.funcao === 'master') return true;
+        return false;
+    }
+
     function podeEditarOS() {
         if (!osData) return false;
         const s = osData.status ? removerAcentos(osData.status.toLowerCase()) : '';
         if (s === 'concluida') return false;
         if (!currentUser) return false;
-        if (currentUser.email === MASTER_EMAIL) return true;
+        if (isMaster()) return true;
 
         const funcaoUsuario = currentUserData?.funcao;
         if (!funcaoUsuario) return false;
@@ -504,7 +510,7 @@
 
         return false;
     }
-    function isMaster() { return currentUser && currentUser.email === MASTER_EMAIL; }
+
     function podeConcluir() {
         if (!currentUserData) return false;
         const f = currentUserData.funcao;
@@ -802,8 +808,6 @@
                 })}</div>`;
             }
 
-            // Tempo decorrido desde a ação/abertura anterior, com nova regra:
-            //   < 1h → "menos de 1 hora" | < 24h → "X horas" | ≥ 24h → "X dias"
             let tempoDecorrido = '';
             const dataItem = new Date(item.data).getTime();
             if (dataAnterior !== null) {

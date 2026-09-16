@@ -204,6 +204,9 @@
 
     const USER_CACHE_KEY = 'vb_userMapCache';
 
+    let currentUser = null;
+    let currentUserData = null;
+
     function limparCacheUserMap() {
         try { sessionStorage.removeItem(USER_CACHE_KEY); } catch(e) {}
     }
@@ -270,6 +273,13 @@
         userHeaderBadge.textContent = `${nome || 'Usuário'} (${f})`;
     }
 
+    function ehMaster(user, userData) {
+        if (!user) return false;
+        if (user.email === MASTER_EMAIL) return true;
+        if (userData && userData.funcao === 'master') return true;
+        return false;
+    }
+
     function abrirModal(uid, nome, funcao, status) {
         editUid = uid;
         editNome.value = nome || '';
@@ -302,17 +312,54 @@
             .catch(err => showMessage(editMsg, 'Erro: ' + err.message, 'error'));
     });
 
+    // ============================================================
+    // ORDENAÇÃO DA LISTA
+    // ============================================================
+    // 1º critério: status (ativo antes de inativo)
+    // 2º critério: função (alfabética)
+    // 3º critério: nome (alfabético)
+    function ordenarLista(lista) {
+        return lista.sort((a, b) => {
+            // 1) Status — ativo antes de inativo
+            const statusA = (a.status || 'ativo').toLowerCase();
+            const statusB = (b.status || 'ativo').toLowerCase();
+            if (statusA !== statusB) {
+                if (statusA === 'ativo') return -1;
+                if (statusB === 'ativo') return 1;
+                return statusA.localeCompare(statusB);
+            }
+
+            // 2) Função — alfabética
+            const funcaoA = (a.funcao || 'tecnico').toLowerCase();
+            const funcaoB = (b.funcao || 'tecnico').toLowerCase();
+            if (funcaoA !== funcaoB) return funcaoA.localeCompare(funcaoB);
+
+            // 3) Nome — alfabético
+            const nomeA = (a.nome || '').toLowerCase();
+            const nomeB = (b.nome || '').toLowerCase();
+            return nomeA.localeCompare(nomeB);
+        });
+    }
+
     function carregarLista() {
         listaDiv.innerHTML = '<p>Carregando...</p>';
-        db.collection('usuarios').orderBy('criado_em', 'desc').get()
+        db.collection('usuarios').get()
             .then(snapshot => {
                 if (snapshot.empty) { listaDiv.innerHTML = '<p>Nenhum personagem cadastrado.</p>'; return; }
+
+                const lista = [];
+                snapshot.forEach(doc => {
+                    lista.push({ id: doc.id, ...doc.data() });
+                });
+
+                ordenarLista(lista);
+
                 let html = `<div class="table-responsive"><table>
                     <thead><tr><th>Nome</th><th>E-mail</th><th>Função</th><th>Status</th><th>Ações</th></tr></thead><tbody>`;
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    const uid = doc.id;
-                    const isMaster = (data.email === MASTER_EMAIL);
+
+                lista.forEach(data => {
+                    const uid = data.id;
+                    const isMasterHardcoded = (data.email === MASTER_EMAIL);
                     const funcao = data.funcao || 'tecnico';
                     const rc = funcao === 'master' ? 'badge-master' : (funcao === 'admin' ? 'badge-admin' : 'badge-diretor');
                     const sc = data.status === 'ativo' ? 'badge-ativo' : 'badge-inativo';
@@ -323,7 +370,7 @@
                             <td><span class="badge ${rc}">${funcao}</span></td>
                             <td><span class="badge ${sc}">${data.status || 'ativo'}</span></td>
                             <td>
-                                ${!isMaster ? `
+                                ${!isMasterHardcoded ? `
                                     <button class="btn btn-sm btn-warning" onclick="abrirModal('${uid}','${data.nome || ''}','${funcao}','${data.status || 'ativo'}')">✏️ Editar</button>
                                     <button class="btn btn-sm btn-secondary" onclick="toggleStatus('${uid}','${data.status}')">
                                         ${data.status === 'ativo' ? 'Inativar' : 'Ativar'}
@@ -334,6 +381,7 @@
                         </tr>
                     `;
                 });
+
                 html += `</tbody></table></div>`;
                 listaDiv.innerHTML = html;
             })
@@ -365,10 +413,6 @@
     // ============================================================
     // CADASTRAR PERSONAGEM — via REST API do Firebase Auth
     // ============================================================
-    // A API REST cria a conta SEM tocar na sessão atual. O SDK do
-    // Firebase (mesmo em instância secundária) compartilha o
-    // localStorage com a instância principal e acaba bagunçando a
-    // sessão do master. Com fetch direto, isso não acontece.
     async function criarContaAuth(email, senha) {
         const url = `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${firebaseConfig.apiKey}`;
         const resp = await fetch(url, {
@@ -382,7 +426,7 @@
             erro.code = data.error.message || 'unknown';
             throw erro;
         }
-        return data.localId; // UID do novo usuário
+        return data.localId;
     }
 
     form.addEventListener('submit', async (e) => {
@@ -401,8 +445,7 @@
             showMessage(formMsg, 'A senha do novo personagem deve ter pelo menos 6 caracteres.', 'error'); return;
         }
 
-        const masterUser = auth.currentUser;
-        if (!masterUser || masterUser.email !== MASTER_EMAIL) {
+        if (!ehMaster(currentUser, currentUserData)) {
             showMessage(formMsg, 'Apenas o Master pode cadastrar personagens.', 'error'); return;
         }
 
@@ -412,13 +455,10 @@
         btnSubmit.textContent = 'Cadastrando...';
 
         try {
-            // 1) Cria a conta de autenticação via REST (sem afetar sessão atual)
             const novoUid = await criarContaAuth(email, senha);
-
-            // 2) Salva o vínculo no Firestore (com o db autenticado do master)
             await db.collection('usuarios').doc(novoUid).set({
                 nome, email, funcao, status,
-                criado_por: masterUser.uid,
+                criado_por: currentUser.uid,
                 criado_em: firebase.firestore.FieldValue.serverTimestamp()
             });
 
@@ -448,18 +488,45 @@
 
     function showMessage(el, text, type) { el.textContent = text; el.className = 'message ' + type; }
 
+    // ============================================================
+    // AUTENTICAÇÃO E GATE DE ACESSO
+    // ============================================================
     auth.onAuthStateChanged((user) => {
-        if (user && user.email === MASTER_EMAIL) {
-            registrarAtividade();
-            iniciarMonitorTimeout();
-            atualizarHeader('Master', 'master');
-            carregarLista();
-        } else if (user) {
-            alert('Apenas o Master pode acessar esta página.');
-            window.location.href = 'index.html';
-        } else {
-            window.location.href = 'index.html';
-        }
+        if (!user) { window.location.href = 'index.html'; return; }
+
+        currentUser = user;
+        registrarAtividade();
+        iniciarMonitorTimeout();
+
+        db.collection('usuarios').doc(user.uid).get()
+            .then(doc => {
+                const data = doc.exists ? doc.data() : {};
+
+                if (user.email !== MASTER_EMAIL && data.status && data.status !== 'ativo') {
+                    fazerLogoutInativo();
+                    return;
+                }
+
+                if (!ehMaster(user, data)) {
+                    alert('Apenas o Master pode acessar esta página.');
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                currentUserData = data;
+                const nomeExib = data.nome || user.displayName || 'Master';
+                atualizarHeader(nomeExib, 'master');
+                carregarLista();
+            })
+            .catch(() => {
+                if (user.email !== MASTER_EMAIL) {
+                    alert('Apenas o Master pode acessar esta página.');
+                    window.location.href = 'index.html';
+                    return;
+                }
+                atualizarHeader('Master', 'master');
+                carregarLista();
+            });
     });
 </script>
 </body>
