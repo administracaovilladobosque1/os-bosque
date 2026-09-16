@@ -226,6 +226,21 @@
             window.location.href = 'index.html';
         });
     }
+    // NOVO: logout para cadastro não encontrado
+    function fazerLogoutSemCadastro() {
+        if (window.__fazendoLogout) return;
+        window.__fazendoLogout = true;
+        try {
+            localStorage.removeItem(TIMEOUT_KEY);
+            localStorage.removeItem('vb_userLoggedIn');
+            sessionStorage.clear();
+        } catch(e) {}
+        if (timerInterval) clearInterval(timerInterval);
+        auth.signOut().finally(() => {
+            alert('Seu cadastro não foi encontrado no sistema. Entre em contato com o administrador.');
+            window.location.href = 'index.html';
+        });
+    }
     function verificarTimeoutAgora() {
         const last = parseInt(localStorage.getItem(TIMEOUT_KEY) || '0', 10);
         if (!last) return false;
@@ -380,21 +395,38 @@
                 .then(doc => {
                     if (doc.exists) {
                         const data = doc.data();
+                        // Bloqueio de inativo (master hardcoded é isento)
                         if (user.email !== MASTER_EMAIL && data.status && data.status !== 'ativo') {
                             fazerLogoutInativo();
                             return;
                         }
                         showDashboard(user, data);
                     } else {
-                        const defaultData = { nome: user.displayName || 'Usuário', funcao: 'tecnico', status: 'ativo' };
-                        db.collection('usuarios').doc(user.uid).set(defaultData)
-                            .then(() => showDashboard(user, defaultData))
-                            .catch(() => showDashboard(user, defaultData));
+                        // Sem doc no Firestore
+                        if (user.email === MASTER_EMAIL) {
+                            // Master hardcoded — cria doc correto (nunca 'tecnico')
+                            const masterData = {
+                                nome: user.displayName || 'Master',
+                                email: user.email,
+                                funcao: 'master',
+                                status: 'ativo'
+                            };
+                            db.collection('usuarios').doc(user.uid).set(masterData)
+                                .then(() => showDashboard(user, masterData))
+                                .catch(() => showDashboard(user, masterData));
+                        } else {
+                            // Não-master sem cadastro → bloqueia (evita criar fantasma)
+                            fazerLogoutSemCadastro();
+                        }
                     }
                 })
                 .catch(() => {
-                    const defaultData = { nome: user.displayName || 'Usuário', funcao: 'tecnico' };
-                    showDashboard(user, defaultData);
+                    // Fallback em caso de erro de leitura — não bloqueia por falha de rede
+                    const fallback = {
+                        nome: user.displayName || 'Usuário',
+                        funcao: user.email === MASTER_EMAIL ? 'master' : 'tecnico'
+                    };
+                    showDashboard(user, fallback);
                 });
         } else {
             showLoginScreen();
@@ -427,10 +459,24 @@
                             }
                             showDashboard(user, data);
                         } else {
-                            showDashboard(user, { nome: user.displayName || 'Usuário', funcao: 'tecnico' });
+                            if (user.email === MASTER_EMAIL) {
+                                const masterData = {
+                                    nome: user.displayName || 'Master',
+                                    email: user.email,
+                                    funcao: 'master',
+                                    status: 'ativo'
+                                };
+                                db.collection('usuarios').doc(user.uid).set(masterData)
+                                    .then(() => showDashboard(user, masterData))
+                                    .catch(() => showDashboard(user, masterData));
+                            } else {
+                                fazerLogoutSemCadastro();
+                            }
                         }
                     })
-                    .catch(() => showDashboard(user, { nome: user.displayName || 'Usuário', funcao: 'tecnico' }));
+                    .catch(() => {
+                        showDashboard(user, { nome: user.displayName || 'Usuário', funcao: 'tecnico' });
+                    });
             } else {
                 showLoginScreen();
             }
