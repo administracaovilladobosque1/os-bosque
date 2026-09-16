@@ -197,6 +197,7 @@
         else if (err.code === 'unimplemented') console.warn('Persistência: navegador não suporta.');
     });
 
+    // Único email que pode EXCLUIR personagens
     const MASTER_EMAIL = 'administracaovilladobosque@gmail.com';
     const TIMEOUT_MS = 4 * 60 * 60 * 1000;
     const TIMEOUT_KEY = 'vb_lastActivity';
@@ -273,11 +274,17 @@
         userHeaderBadge.textContent = `${nome || 'Usuário'} (${f})`;
     }
 
+    // Pode acessar a página: master hardcoded OU funcao === 'master'
     function ehMaster(user, userData) {
         if (!user) return false;
         if (user.email === MASTER_EMAIL) return true;
         if (userData && userData.funcao === 'master') return true;
         return false;
+    }
+
+    // Pode EXCLUIR: SOMENTE o master hardcoded
+    function podeExcluir() {
+        return currentUser && currentUser.email === MASTER_EMAIL;
     }
 
     function abrirModal(uid, nome, funcao, status) {
@@ -312,15 +319,9 @@
             .catch(err => showMessage(editMsg, 'Erro: ' + err.message, 'error'));
     });
 
-    // ============================================================
-    // ORDENAÇÃO DA LISTA
-    // ============================================================
-    // 1º critério: status (ativo antes de inativo)
-    // 2º critério: função (alfabética)
-    // 3º critério: nome (alfabético)
+    // Ordenação: ativos antes; função alfabética; nome alfabético
     function ordenarLista(lista) {
         return lista.sort((a, b) => {
-            // 1) Status — ativo antes de inativo
             const statusA = (a.status || 'ativo').toLowerCase();
             const statusB = (b.status || 'ativo').toLowerCase();
             if (statusA !== statusB) {
@@ -328,13 +329,9 @@
                 if (statusB === 'ativo') return 1;
                 return statusA.localeCompare(statusB);
             }
-
-            // 2) Função — alfabética
             const funcaoA = (a.funcao || 'tecnico').toLowerCase();
             const funcaoB = (b.funcao || 'tecnico').toLowerCase();
             if (funcaoA !== funcaoB) return funcaoA.localeCompare(funcaoB);
-
-            // 3) Nome — alfabético
             const nomeA = (a.nome || '').toLowerCase();
             const nomeB = (b.nome || '').toLowerCase();
             return nomeA.localeCompare(nomeB);
@@ -354,6 +351,8 @@
 
                 ordenarLista(lista);
 
+                const masterHardcodedLogado = podeExcluir();
+
                 let html = `<div class="table-responsive"><table>
                     <thead><tr><th>Nome</th><th>E-mail</th><th>Função</th><th>Status</th><th>Ações</th></tr></thead><tbody>`;
 
@@ -363,21 +362,31 @@
                     const funcao = data.funcao || 'tecnico';
                     const rc = funcao === 'master' ? 'badge-master' : (funcao === 'admin' ? 'badge-admin' : 'badge-diretor');
                     const sc = data.status === 'ativo' ? 'badge-ativo' : 'badge-inativo';
+
+                    // Botões de ação
+                    let acoesHtml = '';
+                    if (isMasterHardcoded) {
+                        // Conta do master hardcoded é sempre protegida
+                        acoesHtml = '<span style="color:#6c757d;">Protegido</span>';
+                    } else {
+                        // Editar e Inativar/Ativar: qualquer master pode
+                        acoesHtml += `<button class="btn btn-sm btn-warning" onclick="abrirModal('${uid}','${data.nome || ''}','${funcao}','${data.status || 'ativo'}')">✏️ Editar</button>`;
+                        acoesHtml += ` <button class="btn btn-sm btn-secondary" onclick="toggleStatus('${uid}','${data.status}')">
+                            ${data.status === 'ativo' ? 'Inativar' : 'Ativar'}
+                        </button>`;
+                        // Excluir: só o master hardcoded vê
+                        if (masterHardcodedLogado) {
+                            acoesHtml += ` <button class="btn btn-sm btn-danger" onclick="excluir('${uid}')">Excluir</button>`;
+                        }
+                    }
+
                     html += `
                         <tr>
                             <td><strong>${data.nome || 'Sem nome'}</strong></td>
                             <td>${data.email}</td>
                             <td><span class="badge ${rc}">${funcao}</span></td>
                             <td><span class="badge ${sc}">${data.status || 'ativo'}</span></td>
-                            <td>
-                                ${!isMasterHardcoded ? `
-                                    <button class="btn btn-sm btn-warning" onclick="abrirModal('${uid}','${data.nome || ''}','${funcao}','${data.status || 'ativo'}')">✏️ Editar</button>
-                                    <button class="btn btn-sm btn-secondary" onclick="toggleStatus('${uid}','${data.status}')">
-                                        ${data.status === 'ativo' ? 'Inativar' : 'Ativar'}
-                                    </button>
-                                    <button class="btn btn-sm btn-danger" onclick="excluir('${uid}')">Excluir</button>
-                                ` : '<span style="color:#6c757d;">Protegido</span>'}
-                            </td>
+                            <td>${acoesHtml}</td>
                         </tr>
                     `;
                 });
@@ -400,6 +409,10 @@
             .catch(err => alert('Erro: ' + err.message));
     };
     window.excluir = function(uid) {
+        if (!podeExcluir()) {
+            alert('Apenas o master principal pode excluir personagens.');
+            return;
+        }
         if (!confirm('Excluir este personagem do sistema? (A conta de autenticação continuará, mas o vínculo será removido)')) return;
         db.collection('usuarios').doc(uid).delete()
             .then(() => {
