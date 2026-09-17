@@ -44,10 +44,11 @@
         .btn-success:hover { background: #2e7d32; }
         .btn-voltar { background: #558b2f; }
         .btn-voltar:hover { background: #33691e; }
+        .btn-refresh { background: #546e7a; padding: 8px 12px; font-size: 13px; }
+        .btn-refresh:hover { background: #37474f; }
+        .btn-refresh.girando { animation: spinIcon 0.8s linear infinite; }
+        @keyframes spinIcon { to { transform: rotate(360deg); } }
 
-        /* ============================================================
-           FILTROS — labels sempre visíveis, layout mais claro
-           ============================================================ */
         .filtros {
             display: flex; flex-wrap: wrap; gap: 10px;
             margin: 12px 0 16px;
@@ -125,9 +126,6 @@
         th .sorter { display: inline-block; margin-left: 4px; font-size: 12px; }
         td { padding: 10px 8px; border-bottom: 1px solid #c8e6c9; vertical-align: middle; }
 
-        /* ============================================================
-           EMOJI DE ANEXO — indicador no número da OS
-           ============================================================ */
         .anexo-flag {
             display: inline-block;
             margin-left: 4px;
@@ -230,6 +228,7 @@
     <div class="header-actions">
         <a href="index.html" class="btn btn-voltar">← Voltar</a>
         <a href="os-abrir.html" class="btn btn-success">📝 Nova OS</a>
+        <button class="btn btn-refresh" id="btnRefresh" type="button" title="Recarregar do servidor (ignora cache)">🔄</button>
     </div>
 
     <button class="filtros-toggle" id="filtrosToggle" type="button">
@@ -308,6 +307,38 @@
     const USER_CACHE_KEY = 'vb_userMapCache';
     const USER_CACHE_TTL = 10 * 60 * 1000;
 
+    // ============================================================
+    // CACHE DE OS — stale-while-revalidate (TTL 2 min)
+    // ============================================================
+    const OS_CACHE_KEY = 'vb_osCache';
+    const OS_CACHE_TTL = 2 * 60 * 1000;
+    const OS_CACHE_MAX = 400; // evita estourar sessionStorage
+
+    function salvarOSCache(docs) {
+        try {
+            const cortados = docs.slice(0, OS_CACHE_MAX);
+            sessionStorage.setItem(OS_CACHE_KEY, JSON.stringify({
+                dados: cortados,
+                expiraEm: Date.now() + OS_CACHE_TTL
+            }));
+        } catch(e) { /* quota — ignora silenciosamente */ }
+    }
+    function lerOSCache() {
+        try {
+            const raw = sessionStorage.getItem(OS_CACHE_KEY);
+            if (!raw) return null;
+            const obj = JSON.parse(raw);
+            if (!obj || !obj.expiraEm || obj.expiraEm < Date.now()) {
+                sessionStorage.removeItem(OS_CACHE_KEY);
+                return null;
+            }
+            return obj.dados || null;
+        } catch(e) { return null; }
+    }
+    function limparOSCache() {
+        try { sessionStorage.removeItem(OS_CACHE_KEY); } catch(e) {}
+    }
+
     const GRUPO_ADMIN_TEXTO = 'Administração';
     const GRUPO_DIRETOR_TEXTO = 'Diretores';
 
@@ -375,6 +406,7 @@
     const filtroBusca = document.getElementById('filtroBusca');
     const btnFiltrar = document.getElementById('btnFiltrar');
     const btnLimpar = document.getElementById('btnLimpar');
+    const btnRefresh = document.getElementById('btnRefresh');
     const filtroQuadraReclamante = document.getElementById('filtroQuadraReclamante');
     const filtroLoteReclamante = document.getElementById('filtroLoteReclamante');
     const filtroQuadraReclamada = document.getElementById('filtroQuadraReclamada');
@@ -530,9 +562,6 @@
 
     function getDataPendente(data) { return data.direcionado_em || data.criado_em; }
 
-    // ============================================================
-    // ANEXOS — verifica se a OS tem qualquer ação com link de anexos
-    // ============================================================
     function temAnexos(os) {
         if (!os || !Array.isArray(os.historico)) return false;
         return os.historico.some(h => h && h.link_anexos);
@@ -542,9 +571,6 @@
         return `<span class="anexo-flag" title="Esta OS tem anexos (link para pasta do Drive)">📎</span>`;
     }
 
-    // ============================================================
-    // TEMPO DECORRIDO — horas até 24h, depois dias
-    // ============================================================
     function formatarTempoDecorrido(diffHoras) {
         if (diffHoras < 1) return 'menos de 1 hora';
         if (diffHoras < 24) return `${diffHoras} hora${diffHoras === 1 ? '' : 's'}`;
@@ -604,7 +630,7 @@
     }
 
     // ============================================================
-    // BUSCA AVANÇADA — normaliza acentos + tolera erros de digitação
+    // BUSCA AVANÇADA — normalização + fuzzy
     // ============================================================
     function normalizarTexto(s) {
         if (s == null) return '';
@@ -661,6 +687,10 @@
         return false;
     }
 
+    // ============================================================
+    // PRÉ-COMPUTAÇÃO DO TEXTO DE BUSCA
+    // Roda uma única vez por OS, no carregamento.
+    // ============================================================
     function construirTextBusca(d) {
         const partes = [
             d.numero,
@@ -691,6 +721,14 @@
             });
         }
         return partes.filter(v => v !== null && v !== undefined && v !== '').join(' ');
+    }
+
+    function precomputarTextosBusca(docs) {
+        docs.forEach(d => {
+            if (typeof d._textoBuscaNorm !== 'string') {
+                d._textoBuscaNorm = normalizarTexto(construirTextBusca(d));
+            }
+        });
     }
 
     function ordenarDados(docs) {
@@ -885,14 +923,12 @@
         if (qa) docs = docs.filter(d => (d.quadra_reclamada || '').toLowerCase().includes(qa));
         if (la) docs = docs.filter(d => (d.lote_reclamada || '').toLowerCase().includes(la));
 
-        // ============================================================
-        // BUSCA AVANÇADA — fuzzy em todos os campos
-        // ============================================================
+        // Busca avançada — usa texto PRÉ-COMPUTADO (rápido)
         const buscaBruta = filtroBusca.value.trim();
         if (buscaBruta) {
             const termos = normalizarTexto(buscaBruta).split(/\s+/).filter(Boolean);
             docs = docs.filter(d => {
-                const texto = normalizarTexto(construirTextBusca(d));
+                const texto = d._textoBuscaNorm || '';
                 return termos.every(t => fuzzyMatch(t, texto));
             });
         }
@@ -905,6 +941,17 @@
             filtrosToggle.classList.remove('aberto');
         }
         renderizarLista(docs);
+    }
+
+    // ============================================================
+    // DEBOUNCE — evita recalcular a cada keystroke
+    // ============================================================
+    let debounceTimer = null;
+    function aplicarFiltrosDebounced() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            aplicarFiltros();
+        }, 300);
     }
 
     function limparFiltros() {
@@ -924,53 +971,80 @@
             listaDiv.innerHTML = '<p class="empty-message">Nenhuma ordem de serviço encontrada.</p>';
             return;
         }
+        // Pré-computa texto de busca (uma vez por OS)
+        precomputarTextosBusca(docs);
         window.allDocs = docs;
         aplicarFiltros();
     }
 
-    function carregarOS() {
-        listaDiv.innerHTML = '<p class="empty-message">Carregando ordens de serviço...</p>';
+    // ============================================================
+    // CARREGAMENTO — stale-while-revalidate
+    // ============================================================
+    function fetchFromFirestore() {
+        return db.collection('ordens_servico').get().then(snapshot => {
+            const docs = [];
+            snapshot.forEach(doc => docs.push({ id: doc.id, ...doc.data() }));
+            return docs;
+        });
+    }
 
+    function carregarUserMapSeNecessario() {
         const cache = lerUserMapDoCache();
         if (cache) {
             userMap = cache;
-            db.collection('ordens_servico').get()
-                .then(snapshot => {
-                    const docs = [];
-                    snapshot.forEach(doc => docs.push({ id: doc.id, ...doc.data() }));
-                    renderizarDocs(docs);
-                })
-                .catch(err => {
-                    console.error(err);
-                    listaDiv.innerHTML = `<p style="color:red;">Erro ao carregar: ${err.message}</p>`;
-                });
-            return;
+            return Promise.resolve();
         }
-
-        Promise.all([
-            db.collection('usuarios').where('status', '==', 'ativo').get(),
-            db.collection('ordens_servico').get()
-        ])
-        .then(([snapUsers, snapOS]) => {
-            userMap = {};
-            snapUsers.forEach(doc => {
-                const d = doc.data();
-                userMap[doc.id] = { nome: d.nome, funcao: d.funcao };
+        return db.collection('usuarios').where('status', '==', 'ativo').get()
+            .then(snap => {
+                userMap = {};
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    userMap[doc.id] = { nome: d.nome, funcao: d.funcao };
+                });
+                salvarUserMapNoCache(userMap);
             });
-            salvarUserMapNoCache(userMap);
+    }
 
-            const docs = [];
-            snapOS.forEach(doc => docs.push({ id: doc.id, ...doc.data() }));
-            renderizarDocs(docs);
-        })
-        .catch(err => {
-            console.error(err);
-            listaDiv.innerHTML = `<p style="color:red;">Erro ao carregar: ${err.message}</p>`;
-        });
+    function carregarOSComCache() {
+        const cacheDocs = lerOSCache();
+        if (cacheDocs && cacheDocs.length > 0) {
+            // Mostra cache imediatamente
+            renderizarDocs(cacheDocs);
+            return carregarUserMapSeNecessario();
+        }
+        // Sem cache — carrega tudo
+        listaDiv.innerHTML = '<p class="empty-message">Carregando ordens de serviço...</p>';
+        return Promise.all([carregarUserMapSeNecessario(), fetchFromFirestore()])
+            .then(([, docs]) => {
+                salvarOSCache(docs);
+                renderizarDocs(docs);
+            });
+    }
+
+    function carregarOSForcado() {
+        limparOSCache();
+        btnRefresh.classList.add('girando');
+        btnRefresh.disabled = true;
+        listaDiv.innerHTML = '<p class="empty-message">Recarregando do servidor...</p>';
+        return Promise.all([carregarUserMapSeNecessario(), fetchFromFirestore()])
+            .then(([, docs]) => {
+                salvarOSCache(docs);
+                renderizarDocs(docs);
+            })
+            .catch(err => {
+                console.error(err);
+                listaDiv.innerHTML = `<p style="color:red;">Erro ao carregar: ${err.message}</p>`;
+            })
+            .finally(() => {
+                btnRefresh.classList.remove('girando');
+                btnRefresh.disabled = false;
+            });
     }
 
     btnFiltrar.addEventListener('click', aplicarFiltros);
     btnLimpar.addEventListener('click', limparFiltros);
+    btnRefresh.addEventListener('click', carregarOSForcado);
+
     [filtroStatus, filtroPendente,
      filtroQuadraReclamante, filtroLoteReclamante,
      filtroQuadraReclamada, filtroLoteReclamada,
@@ -979,10 +1053,24 @@
             if (e.key === 'Enter') { e.preventDefault(); aplicarFiltros(); }
         });
     });
-    [filtroStatus, filtroPendente].forEach(el => el.addEventListener('change', atualizarEstadoVisual));
+
+    // Selects: aplica imediatamente + atualiza visual
+    [filtroStatus, filtroPendente].forEach(el => {
+        el.addEventListener('change', () => {
+            atualizarEstadoVisual();
+            aplicarFiltros();
+        });
+    });
+
+    // Inputs de texto: atualiza visual imediato + filtro com debounce
     [filtroQuadraReclamante, filtroLoteReclamante,
      filtroQuadraReclamada, filtroLoteReclamada,
-     filtroBusca].forEach(el => el.addEventListener('input', atualizarEstadoVisual));
+     filtroBusca].forEach(el => {
+        el.addEventListener('input', () => {
+            atualizarEstadoVisual();
+            aplicarFiltrosDebounced();
+        });
+    });
 
     let lastIsMobile = isMobile();
     window.addEventListener('resize', () => {
@@ -1017,12 +1105,12 @@
                 }
                 if (user.email === MASTER_EMAIL) funcao = 'master';
                 atualizarHeader(nome, funcao);
-                carregarOS();
+                carregarOSComCache();
             })
             .catch(() => {
                 const funcao = user.email === MASTER_EMAIL ? 'master' : 'tecnico';
                 atualizarHeader(user.displayName || user.email, funcao);
-                carregarOS();
+                carregarOSComCache();
             });
     });
 </script>

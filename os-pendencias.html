@@ -57,9 +57,6 @@
         }
         select:focus { outline: none; border-color: #2e7d32; box-shadow: 0 0 0 2px rgba(46,125,50,0.15); }
 
-        /* ============================================================
-           FILTRO DE PERSONAGENS — chips/checkboxes
-           ============================================================ */
         .personagens-filtro { margin-bottom: 14px; }
         .personagens-bloco {
             border: 1px solid #c8e6c9;
@@ -321,17 +318,9 @@
     let userMap = {};
     let allDocs = [];
 
-    // ============================================================
-    // ESTADO DE SELEÇÃO POR FUNÇÃO
-    // modo 'todos' → tudo marcado (inclusive novos que apareçam)
-    // modo 'custom' → respeita a seleção do usuário
-    // ============================================================
     const modoSelecao = { admin: 'todos', diretor: 'todos' };
     const sel = { admin: new Set(), diretor: new Set() };
 
-    // ============================================================
-    // URL BASE — para montar link absoluto da OS
-    // ============================================================
     function getBaseUrl() {
         return window.location.origin + window.location.pathname.replace(/[^\/]*$/, '');
     }
@@ -339,9 +328,6 @@
         return `${getBaseUrl()}os-detalhe.html?id=${encodeURIComponent(osId)}`;
     }
 
-    // ============================================================
-    // HELPERS — mesma lógica dos outros arquivos
-    // ============================================================
     function limparSufixoFuncao(nome) {
         if (!nome) return '';
         return String(nome).replace(/\s*\([^)]*\)\s*$/, '').trim();
@@ -451,12 +437,6 @@
         return c.texto;
     }
 
-    // ============================================================
-    // PERSONAGENS POR FUNÇÃO
-    // Fonte 1: userMap (usuários ativos carregados do Firestore)
-    // Fonte 2: OS pendentes que apontam para UIDs desconhecidos
-    //          (garante que ninguém "suma" do filtro mesmo inativo)
-    // ============================================================
     function getPersonagensPorFuncao(role) {
         const catEsperada = role === 'admin' ? 'admin' : 'diretoria';
         const mapa = {};
@@ -492,22 +472,17 @@
         return [grupoKey, ...pessoas.map(p => p.uid)];
     }
 
-    // Sincroniza sel[role] com a lista atual
     function sincronizarSel(role) {
         const allKeys = getAllKeys(role);
         if (modoSelecao[role] === 'todos') {
             sel[role] = new Set(allKeys);
         } else {
-            // Remove chaves que não existem mais, mantém o resto
             const novo = new Set();
             sel[role].forEach(k => { if (allKeys.includes(k)) novo.add(k); });
             sel[role] = novo;
         }
     }
 
-    // ============================================================
-    // RENDERIZAÇÃO DOS CHIPS DE PERSONAGEM
-    // ============================================================
     function renderPersonagensFiltro() {
         const tipo = tipoLogSelect.value;
         personagensFiltroEl.innerHTML = '';
@@ -583,9 +558,6 @@
         }
     }
 
-    // ============================================================
-    // EVENTOS DOS CHECKBOXES
-    // ============================================================
     personagensFiltroEl.addEventListener('change', (e) => {
         const input = e.target;
         if (!input.matches('input[type="checkbox"]')) return;
@@ -595,7 +567,6 @@
         const key = input.dataset.key;
 
         if (roleTodos) {
-            // Master "Todos"
             sincronizarSel(roleTodos);
             if (input.checked) {
                 modoSelecao[roleTodos] = 'todos';
@@ -607,7 +578,6 @@
             atualizarCheckboxesDoBloco(roleTodos);
             atualizarTodosOsContadores();
         } else if (role && key) {
-            // Chip individual
             sincronizarSel(role);
             if (input.checked) sel[role].add(key);
             else sel[role].delete(key);
@@ -643,9 +613,6 @@
         });
     }
 
-    // ============================================================
-    // MATCH: a OS pertence à seleção?
-    // ============================================================
     function matchSelecao(os, role) {
         const alvo = os.direcionado_para;
         if (!alvo) return false;
@@ -653,9 +620,6 @@
         return sel[role].has(alvo);
     }
 
-    // ============================================================
-    // MONTAGEM DOS BLOCOS DE TEXTO
-    // ============================================================
     function gerarBlocoOS(os) {
         const linhas = [];
         linhas.push(`*#OS ${os.numero || '—'} - ${os.titulo || 'Sem título'}*`);
@@ -677,9 +641,6 @@
         });
     }
 
-    // ============================================================
-    // GERAÇÃO DO TEXTO PRINCIPAL
-    // ============================================================
     function gerarTextoLog() {
         const tipo = tipoLogSelect.value;
 
@@ -690,9 +651,6 @@
 
         const linhas = [];
 
-        // --------------------------------------------------------
-        // MODO "TODAS" — duas seções (ADMINISTRAÇÃO + DIRETORIA)
-        // --------------------------------------------------------
         if (tipo === 'todas') {
             const admin = ordenarPendentes(pendentesBase.filter(d =>
                 getPendenteCategoria(d) === 'admin' && matchSelecao(d, 'admin')));
@@ -735,9 +693,6 @@
             return { texto: linhas.join('\n'), total, titulo: 'TODAS' };
         }
 
-        // --------------------------------------------------------
-        // MODO NORMAL — apenas uma categoria
-        // --------------------------------------------------------
         const role = tipo;
         const cat = tipo === 'admin' ? 'admin' : 'diretoria';
         const titulo = tipo === 'admin' ? 'ADMINISTRAÇÃO' : 'DIRETORIA';
@@ -824,7 +779,6 @@
     btnCopiar.addEventListener('click', copiarTexto);
     btnAtualizar.addEventListener('click', () => {
         mostrarMsg('🔄 Recarregando...', 'info');
-        // Força recarregar: zera estado de seleção para re-sincronizar com dados novos
         carregarTudo();
     });
 
@@ -834,27 +788,62 @@
         userHeaderBadge.textContent = `${nome || 'Usuário'} (${f})`;
     }
 
+    // ============================================================
+    // CARREGAMENTO OTIMIZADO
+    // Só baixa OS abertas/em andamento (o log não usa as fechadas).
+    // Fallback para query completa se faltar índice.
+    // ============================================================
     async function carregarTudo() {
         try {
             const cache = lerUserMapDoCache();
-            const [snapUsers, snapOS] = await Promise.all([
-                cache ? Promise.resolve(null) : db.collection('usuarios').where('status', '==', 'ativo').get(),
-                db.collection('ordens_servico').get()
-            ]);
+            const promises = [];
 
+            // Usuários
             if (cache) {
                 userMap = cache;
+                promises.push(Promise.resolve());
             } else {
-                userMap = {};
-                snapUsers.forEach(doc => {
-                    const d = doc.data();
-                    userMap[doc.id] = { nome: d.nome, funcao: d.funcao };
-                });
-                salvarUserMapNoCache(userMap);
+                promises.push(
+                    db.collection('usuarios').where('status', '==', 'ativo').get()
+                        .then(snap => {
+                            userMap = {};
+                            snap.forEach(doc => {
+                                const d = doc.data();
+                                userMap[doc.id] = { nome: d.nome, funcao: d.funcao };
+                            });
+                            salvarUserMapNoCache(userMap);
+                        })
+                );
             }
 
-            allDocs = [];
-            snapOS.forEach(doc => allDocs.push({ id: doc.id, ...doc.data() }));
+            // OS — tenta query filtrada, com fallback
+            promises.push(
+                db.collection('ordens_servico')
+                    .where('status', 'in', ['aberta', 'em_andamento'])
+                    .get()
+                    .then(snap => {
+                        const docs = [];
+                        snap.forEach(doc => docs.push({ id: doc.id, ...doc.data() }));
+                        return docs;
+                    })
+                    .catch(err => {
+                        console.warn('Query filtrada falhou (falta índice?). Caindo para query completa.', err.message);
+                        return db.collection('ordens_servico').get().then(snap => {
+                            const docs = [];
+                            snap.forEach(doc => {
+                                const data = doc.data();
+                                const s = (data.status || '').toLowerCase();
+                                if (s === 'aberta' || s === 'em_andamento') {
+                                    docs.push({ id: doc.id, ...data });
+                                }
+                            });
+                            return docs;
+                        });
+                    })
+            );
+
+            const [, docs] = await Promise.all(promises);
+            allDocs = docs;
 
             renderPersonagensFiltro();
         } catch (err) {
