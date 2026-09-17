@@ -235,6 +235,17 @@
     let allDocs = [];
 
     // ============================================================
+    // URL BASE — para montar link absoluto da OS
+    // Ex: https://dominio.com/os-pendencias.html → https://dominio.com/
+    // ============================================================
+    function getBaseUrl() {
+        return window.location.origin + window.location.pathname.replace(/[^\/]*$/, '');
+    }
+    function getUrlOS(osId) {
+        return `${getBaseUrl()}os-detalhe.html?id=${encodeURIComponent(osId)}`;
+    }
+
+    // ============================================================
     // HELPERS — mesma lógica dos outros arquivos
     // ============================================================
     function limparSufixoFuncao(nome) {
@@ -313,7 +324,6 @@
         return `${dia}/${mes}/${ano} às ${hora}:${min}`;
     }
 
-    // Retorna string tipo "3 dias", "5 horas", "menos de 1 hora"
     function tempoDecorrido(dataISO) {
         if (!dataISO) return '—';
         const d = new Date(dataISO);
@@ -325,20 +335,17 @@
         return `${dias} dia${dias === 1 ? '' : 's'}`;
     }
 
-    // Último card relevante = última ação (ignora abertura e edição)
     function getUltimoCardMensagem(os) {
         const acoes = (os.historico || [])
             .filter(h => h.acao && h.acao !== 'abertura' && h.acao !== 'edicao')
             .sort((a, b) => (a.data || '').localeCompare(b.data || ''));
         if (acoes.length === 0) {
-            // Fallback: sem ação ainda, usa a descrição da OS
             return (os.descricao || '').trim();
         }
         const ultima = acoes[acoes.length - 1];
         return (ultima.mensagem || '').trim();
     }
 
-    // Responsável = destino atual
     function getResponsavelTexto(os) {
         const c = classificarDestino(os.direcionado_para, os.direcionado_para_nome, os.direcionado_para_funcao);
         if (c.tipo === 'grupo') {
@@ -347,7 +354,6 @@
             if (c.subtipo === 'master') return 'Master';
             return c.texto;
         }
-        // pessoa → "Nome (função)"
         return c.texto;
     }
 
@@ -359,14 +365,12 @@
         const titulo = tipo === 'admin' ? 'ADMINISTRAÇÃO' : 'DIRETORIA';
         const cat = tipo === 'admin' ? 'admin' : 'diretoria';
 
-        // Filtra: OS abertas/em andamento cuja categoria pendente bate
         const pendentes = allDocs.filter(d => {
             const s = (d.status || '').toLowerCase();
             if (s !== 'aberta' && s !== 'em_andamento') return false;
             return getPendenteCategoria(d) === cat;
         });
 
-        // Ordena: mais antiga pendente primeiro (mais urgente)
         pendentes.sort((a, b) => {
             const da = a.direcionado_em || a.criado_em || '';
             const dbb = b.direcionado_em || b.criado_em || '';
@@ -392,6 +396,8 @@
             const abertaHa = tempoDecorrido(os.criado_em);
             const pendenteHa = tempoDecorrido(os.direcionado_em || os.criado_em);
             linhas.push(`OS aberta a ${abertaHa}, pendente há ${pendenteHa}`);
+            // Link clicável para a OS no sistema
+            linhas.push(`🔗 Ver OS: ${getUrlOS(os.id)}`);
             if (i < pendentes.length - 1) linhas.push('');
         });
 
@@ -433,7 +439,6 @@
             mostrarMsg('✅ Texto copiado! Cole no WhatsApp.', 'success');
         } catch (e) {
             console.error(e);
-            // Fallback manual
             try {
                 textoGerado.removeAttribute('readonly');
                 textoGerado.select();
