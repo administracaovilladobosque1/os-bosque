@@ -95,25 +95,56 @@
         select option.admin { background-color: #ffe082; }
         select option.diretor { background-color: #a5d6a7; }
 
-        .historico-container { margin: 20px 0; display: flex; flex-direction: column; gap: 12px; }
+        /* ============================================================
+           CARDS DO HISTÓRICO — fundos mais evidentes + contorno por função
+           ============================================================ */
+        .historico-container { margin: 20px 0; display: flex; flex-direction: column; gap: 14px; }
         .historico-container .card {
-            border-radius: 8px; padding: 12px 14px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
-            border: 1px solid #e8f5e9;
-            border-left-width: 4px; border-left-style: solid;
+            border-radius: 10px; padding: 14px 16px;
+            box-shadow: 0 3px 10px rgba(0,80,0,0.10);
+            border: 2px solid #ced4da;
+            border-left-width: 6px; border-left-style: solid;
+            transition: box-shadow 0.2s, transform 0.15s;
         }
-        .card-admin { background: #fffde7; border-left-color: #ffe082; }
-        .card-diretor { background: #f1f8e9; border-left-color: #a5d6a7; }
-        .card-master { background: #fff8e1; border-left-color: #ffcc80; }
-        .card-outros { background: #f8f9fa; border-left-color: #ced4da; }
-        .card-ultimo { background: #ffebee; border-left-color: #c62828; border: 2px solid #ef9a9a; }
-        .card-concluida { background: #e8f5e9; border-left-color: #2e7d32; border: 2px solid #a5d6a7; }
+        .historico-container .card:hover {
+            box-shadow: 0 6px 18px rgba(0,80,0,0.16);
+        }
+        .card-admin {
+            background: #fff9c4;
+            border-color: #ffe082;
+            border-left-color: #ffb300;
+        }
+        .card-diretor {
+            background: #dcedc8;
+            border-color: #a5d6a7;
+            border-left-color: #66bb6a;
+        }
+        .card-master {
+            background: #ffe0b2;
+            border-color: #ffcc80;
+            border-left-color: #fb8c00;
+        }
+        .card-outros {
+            background: #eceff1;
+            border-color: #ced4da;
+            border-left-color: #90a4ae;
+        }
+        .card-ultimo {
+            background: #ffebee;
+            border-color: #ef9a9a;
+            border-left-color: #c62828;
+        }
+        .card-concluida {
+            background: #c8e6c9;
+            border-color: #81c784;
+            border-left-color: #2e7d32;
+        }
         .aviso-concluida { font-size: 14px; color: #1b5e20; margin: 4px 0; }
 
         .card .card-header { display: flex; justify-content: space-between; font-size: 13px; color: #555; margin-bottom: 4px; flex-wrap: wrap; align-items: center; gap: 6px; }
         .card .card-header .usuario { font-weight: 600; color: #1b5e20; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
         .card .card-header .header-right { display: flex; align-items: center; gap: 8px; }
-        .card .card-header .tempo { font-size: 12px; color: #888; }
+        .card .card-header .tempo { font-size: 12px; color: #666; }
         .card .card-body { font-size: 14px; }
         .card .card-body .direcionado { font-size: 13px; color: #555; margin-top: 4px; }
         .card .card-body .mensagem { margin-top: 4px; }
@@ -167,6 +198,7 @@
             .acoes-rodape .btn { width: 100%; text-align: center; }
             .card .card-header { flex-direction: column; align-items: flex-start; gap: 4px; }
             .edicoes-item { font-size: 12px; }
+            .historico-container .card { padding: 12px 14px; border-left-width: 5px; }
         }
     </style>
 </head>
