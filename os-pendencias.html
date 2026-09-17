@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Log de Pendências - Villa do Bosque</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family: 'Calibri', 'Segoe UI', Tahoma, sans-serif; }
+        body { background: #e8f5e9; padding: 16px 12px; display: flex; justify-content: center; min-height: 100vh; }
+        .container { background: #fff; max-width: 780px; width: 100%; padding: 20px; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,80,0,0.12); border: 1px solid #a5d6a7; }
+
+        .user-header {
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            font-size: 13px;
+            color: #1b5e20;
+        }
+        .user-header .uh-label { font-weight: 500; color: #558b2f; }
+        .uh-badge {
+            display: inline-block;
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #000;
+            white-space: nowrap;
+        }
+        .uh-badge.master { background: #ffcc80; }
+        .uh-badge.admin { background: #ffe082; }
+        .uh-badge.diretor { background: #a5d6a7; }
+        .uh-badge.tecnico { background: #ced4da; }
+
+        .page-title { font-size: 24px; color: #1b5e20; background: #c8e6c9; display: inline-block; padding: 4px 18px; border-radius: 30px; margin-bottom: 12px; }
+        .btn { padding: 10px 16px; background: #2e7d32; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s; text-decoration: none; display: inline-block; }
+        .btn:hover { background: #1b5e20; }
+        .btn-success { background: #388e3c; }
+        .btn-success:hover { background: #2e7d32; }
+        .btn-secondary { background: #6c757d; }
+        .btn-secondary:hover { background: #5a6268; }
+        .btn-voltar { background: #558b2f; padding: 6px 14px; font-size: 13px; margin-bottom: 12px; }
+        .btn-voltar:hover { background: #33691e; }
+        .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+        .form-group { margin-bottom: 14px; }
+        label { display: block; font-weight: 600; font-size: 13px; color: #1b5e20; margin-bottom: 4px; }
+        select {
+            width: 100%; padding: 10px 12px;
+            border: 1px solid #a5d6a7; border-radius: 8px;
+            font-size: 15px; background: #fafffe;
+            font-family: inherit;
+        }
+        select:focus { outline: none; border-color: #2e7d32; box-shadow: 0 0 0 2px rgba(46,125,50,0.15); }
+
+        .info-resumo {
+            background: #f1f8e9;
+            border: 1px solid #c8e6c9;
+            border-left: 4px solid #2e7d32;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 14px;
+            color: #1b5e20;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .info-resumo .contador { font-weight: 700; font-size: 16px; }
+
+        textarea#textoGerado {
+            width: 100%;
+            min-height: 420px;
+            padding: 16px;
+            border: 1px solid #a5d6a7;
+            border-radius: 10px;
+            font-family: 'Consolas', 'Menlo', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.55;
+            background: #f8fdf8;
+            color: #1b3a1e;
+            resize: vertical;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        textarea#textoGerado:focus { outline: none; border-color: #2e7d32; box-shadow: 0 0 0 3px rgba(46,125,50,0.15); }
+
+        .acoes { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+        .acoes .btn { flex: 1 1 auto; text-align: center; }
+
+        .message { margin-top: 12px; padding: 10px 14px; border-radius: 8px; display: none; font-size: 14px; font-weight: 600; }
+        .message.error { display: block; background: #ffebee; color: #b71c1c; border: 1px solid #ef9a9a; }
+        .message.success { display: block; background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
+        .message.info { display: block; background: #e3f2fd; color: #0d47a1; border: 1px solid #90caf9; }
+
+        @media (max-width: 600px) {
+            body { padding: 10px 8px; }
+            .container { padding: 14px; border-radius: 12px; }
+            .page-title { font-size: 20px; }
+            textarea#textoGerado { min-height: 360px; font-size: 13px; padding: 12px; }
+            .acoes .btn { flex: 1 1 100%; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="user-header" id="userHeader">
+        <span class="uh-label">Logado como:</span>
+        <span class="uh-badge tecnico" id="userHeaderBadge">—</span>
+    </div>
+
+    <h1 class="page-title">📢 Log de Pendências</h1>
+    <div><a href="index.html" class="btn btn-voltar">← Voltar</a></div>
+
+    <div class="form-group">
+        <label for="tipoLog">Destino das pendências</label>
+        <select id="tipoLog">
+            <option value="admin">Administração</option>
+            <option value="diretor">Diretoria</option>
+        </select>
+    </div>
+
+    <div class="info-resumo" id="infoResumo">
+        <span class="contador" id="contador">—</span>
+        <span id="contadorLabel">pendência(s) encontrada(s)</span>
+    </div>
+
+    <textarea id="textoGerado" readonly placeholder="O texto aparecerá aqui..."></textarea>
+
+    <div class="acoes">
+        <button class="btn btn-success" id="btnCopiar" type="button">📋 Copiar texto</button>
+        <button class="btn btn-secondary" id="btnAtualizar" type="button">🔄 Atualizar</button>
+    </div>
+
+    <div id="msg" class="message"></div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyDx_6oWO30Drh8GkuQA9jk2Oym7H8J3ABg",
+        authDomain: "villa-bosque1.firebaseapp.com",
+        projectId: "villa-bosque1",
+        storageBucket: "villa-bosque1.firebasestorage.app",
+        messagingSenderId: "372474036025",
+        appId: "1:372474036025:web:bbbee10723469d77cbb2e8"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    db.enablePersistence({ synchronizeTabs: true }).catch(err => {
+        if (err.code === 'failed-precondition') console.warn('Persistência: múltiplas abas abertas.');
+        else if (err.code === 'unimplemented') console.warn('Persistência: navegador não suporta.');
+    });
+
+    const MASTER_EMAIL = 'administracaovilladobosque@gmail.com';
+    const TIMEOUT_MS = 4 * 60 * 60 * 1000;
+    const TIMEOUT_KEY = 'vb_lastActivity';
+    const TIMEOUT_CHECK_INTERVAL = 30 * 1000;
+
+    const USER_CACHE_KEY = 'vb_userMapCache';
+    const USER_CACHE_TTL = 10 * 60 * 1000;
+
+    function salvarUserMapNoCache(map) {
+        try {
+            sessionStorage.setItem(USER_CACHE_KEY, JSON.stringify({
+                dados: map, expiraEm: Date.now() + USER_CACHE_TTL
+            }));
+        } catch(e) {}
+    }
+    function lerUserMapDoCache() {
+        try {
+            const raw = sessionStorage.getItem(USER_CACHE_KEY);
+            if (!raw) return null;
+            const obj = JSON.parse(raw);
+            if (!obj || !obj.expiraEm || obj.expiraEm < Date.now()) {
+                sessionStorage.removeItem(USER_CACHE_KEY); return null;
+            }
+            return obj.dados || null;
+        } catch(e) { return null; }
+    }
+
+    function registrarAtividade() { try { localStorage.setItem(TIMEOUT_KEY, Date.now().toString()); } catch(e) {} }
+    function fazerLogoutTimeout() {
+        if (window.__fazendoLogout) return;
+        window.__fazendoLogout = true;
+        try { localStorage.removeItem(TIMEOUT_KEY); localStorage.removeItem('vb_userLoggedIn'); sessionStorage.clear(); } catch(e) {}
+        auth.signOut().finally(() => {
+            alert('Sessão expirada por inatividade. Faça login novamente.');
+            window.location.href = 'index.html';
+        });
+    }
+    function fazerLogoutInativo() {
+        if (window.__fazendoLogout) return;
+        window.__fazendoLogout = true;
+        try { localStorage.removeItem(TIMEOUT_KEY); localStorage.removeItem('vb_userLoggedIn'); sessionStorage.clear(); } catch(e) {}
+        auth.signOut().finally(() => {
+            alert('Sua conta está inativa. Entre em contato com o administrador.');
+            window.location.href = 'index.html';
+        });
+    }
+    function verificarTimeoutAgora() {
+        const last = parseInt(localStorage.getItem(TIMEOUT_KEY) || '0', 10);
+        if (!last) return false;
+        if ((Date.now() - last) > TIMEOUT_MS) { fazerLogoutTimeout(); return true; }
+        return false;
+    }
+    function iniciarMonitorTimeout() {
+        if (verificarTimeoutAgora()) return;
+        if (!localStorage.getItem(TIMEOUT_KEY)) registrarAtividade();
+        ['click','mousemove','keydown','scroll','touchstart'].forEach(ev => {
+            document.addEventListener(ev, registrarAtividade, { passive: true });
+        });
+        setInterval(verificarTimeoutAgora, TIMEOUT_CHECK_INTERVAL);
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') verificarTimeoutAgora();
+        });
+    }
+
+    const tipoLogSelect = document.getElementById('tipoLog');
+    const textoGerado = document.getElementById('textoGerado');
+    const btnCopiar = document.getElementById('btnCopiar');
+    const btnAtualizar = document.getElementById('btnAtualizar');
+    const msgEl = document.getElementById('msg');
+    const contadorEl = document.getElementById('contador');
+    const contadorLabelEl = document.getElementById('contadorLabel');
+    const userHeaderBadge = document.getElementById('userHeaderBadge');
+
+    let userMap = {};
+    let allDocs = [];
+
+    // ============================================================
+    // HELPERS — mesma lógica dos outros arquivos
+    // ============================================================
+    function limparSufixoFuncao(nome) {
+        if (!nome) return '';
+        return String(nome).replace(/\s*\([^)]*\)\s*$/, '').trim();
+    }
+    function detectarFuncao(nome, uid, funcaoDireta) {
+        if (funcaoDireta) return funcaoDireta;
+        if (uid && userMap[uid]) return userMap[uid].funcao;
+        const n = (limparSufixoFuncao(nome) || '').toLowerCase();
+        if (n === 'admin' || n === 'administrador' || n === 'administradores') return 'admin';
+        if (n === 'diretor' || n === 'diretores' || n === 'diretoria') return 'diretor';
+        if (n === 'master' || n === 'masters') return 'master';
+        if (n.includes('admin')) return 'admin';
+        if (n.includes('diretor')) return 'diretor';
+        if (n.includes('master')) return 'master';
+        return null;
+    }
+    function classificarDestino(alvo, nome, funcao) {
+        const nomeLimpo = limparSufixoFuncao(nome);
+        const base = (nomeLimpo || '').toLowerCase();
+
+        if (alvo === 'group:admin') return { tipo:'grupo', subtipo:'admin', texto:'Administração', cor:'#ffe082' };
+        if (alvo === 'group:diretor') return { tipo:'grupo', subtipo:'diretor', texto:'Diretores', cor:'#a5d6a7' };
+
+        if (alvo && typeof alvo === 'string' && !alvo.startsWith('group:')) {
+            const f = (userMap[alvo] && userMap[alvo].funcao) || funcao || detectarFuncao(nomeLimpo, alvo, null);
+            let cor = '#ced4da';
+            if (f === 'admin') cor = '#ffe082';
+            else if (f === 'diretor') cor = '#a5d6a7';
+            else if (f === 'master') cor = '#ffcc80';
+            let texto = nomeLimpo || '—';
+            if (f && !texto.includes('(')) texto = `${texto} (${f})`;
+            return { tipo:'pessoa', funcao:f, texto, cor };
+        }
+
+        if (base === 'admin' || base === 'administrador' || base === 'administradores' ||
+            base === 'administração' || base === 'administracao') {
+            return { tipo:'grupo', subtipo:'admin', texto:'Administração', cor:'#ffe082' };
+        }
+        if (base === 'diretor' || base === 'diretores' || base === 'diretoria') {
+            return { tipo:'grupo', subtipo:'diretor', texto:'Diretores', cor:'#a5d6a7' };
+        }
+        if (base === 'master' || base === 'masters') {
+            return { tipo:'grupo', subtipo:'master', texto:'Masters', cor:'#ffcc80' };
+        }
+
+        const f = funcao || detectarFuncao(nomeLimpo, alvo, null);
+        let cor = '#ced4da';
+        if (f === 'admin') cor = '#ffe082';
+        else if (f === 'diretor') cor = '#a5d6a7';
+        else if (f === 'master') cor = '#ffcc80';
+        let texto = nomeLimpo || '—';
+        if (f && !texto.includes('(')) texto = `${texto} (${f})`;
+        return { tipo:'pessoa', funcao:f, texto, cor };
+    }
+    function getPendenteCategoria(data) {
+        const c = classificarDestino(data.direcionado_para, data.direcionado_para_nome, data.direcionado_para_funcao);
+        if (c.tipo === 'grupo') {
+            if (c.subtipo === 'diretor') return 'diretoria';
+            if (c.subtipo === 'admin') return 'admin';
+            return 'outros';
+        }
+        if (c.funcao === 'diretor') return 'diretoria';
+        if (c.funcao === 'admin') return 'admin';
+        return 'outros';
+    }
+
+    function formatarDataHoraAgora() {
+        const d = new Date();
+        const dia = String(d.getDate()).padStart(2, '0');
+        const mes = String(d.getMonth()+1).padStart(2, '0');
+        const ano = d.getFullYear();
+        const hora = String(d.getHours()).padStart(2, '0');
+        const min = String(d.getMinutes()).padStart(2, '0');
+        return `${dia}/${mes}/${ano} às ${hora}:${min}`;
+    }
+
+    // Retorna string tipo "3 dias", "5 horas", "menos de 1 hora"
+    function tempoDecorrido(dataISO) {
+        if (!dataISO) return '—';
+        const d = new Date(dataISO);
+        if (isNaN(d)) return '—';
+        const diffHoras = Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60));
+        if (diffHoras < 1) return 'menos de 1 hora';
+        if (diffHoras < 24) return `${diffHoras} hora${diffHoras === 1 ? '' : 's'}`;
+        const dias = Math.floor(diffHoras / 24);
+        return `${dias} dia${dias === 1 ? '' : 's'}`;
+    }
+
+    // Último card relevante = última ação (ignora abertura e edição)
+    function getUltimoCardMensagem(os) {
+        const acoes = (os.historico || [])
+            .filter(h => h.acao && h.acao !== 'abertura' && h.acao !== 'edicao')
+            .sort((a, b) => (a.data || '').localeCompare(b.data || ''));
+        if (acoes.length === 0) {
+            // Fallback: sem ação ainda, usa a descrição da OS
+            return (os.descricao || '').trim();
+        }
+        const ultima = acoes[acoes.length - 1];
+        return (ultima.mensagem || '').trim();
+    }
+
+    // Responsável = destino atual
+    function getResponsavelTexto(os) {
+        const c = classificarDestino(os.direcionado_para, os.direcionado_para_nome, os.direcionado_para_funcao);
+        if (c.tipo === 'grupo') {
+            if (c.subtipo === 'admin') return 'Administração';
+            if (c.subtipo === 'diretor') return 'Diretoria';
+            if (c.subtipo === 'master') return 'Master';
+            return c.texto;
+        }
+        // pessoa → "Nome (função)"
+        return c.texto;
+    }
+
+    // ============================================================
+    // GERAÇÃO DO TEXTO
+    // ============================================================
+    function gerarTextoLog() {
+        const tipo = tipoLogSelect.value;
+        const titulo = tipo === 'admin' ? 'ADMINISTRAÇÃO' : 'DIRETORIA';
+        const cat = tipo === 'admin' ? 'admin' : 'diretoria';
+
+        // Filtra: OS abertas/em andamento cuja categoria pendente bate
+        const pendentes = allDocs.filter(d => {
+            const s = (d.status || '').toLowerCase();
+            if (s !== 'aberta' && s !== 'em_andamento') return false;
+            return getPendenteCategoria(d) === cat;
+        });
+
+        // Ordena: mais antiga pendente primeiro (mais urgente)
+        pendentes.sort((a, b) => {
+            const da = a.direcionado_em || a.criado_em || '';
+            const dbb = b.direcionado_em || b.criado_em || '';
+            return da.localeCompare(dbb);
+        });
+
+        const linhas = [];
+        linhas.push(`📋 *LISTA DE PENDÊNCIAS - ${titulo}*`);
+        linhas.push(`_Atualizado em ${formatarDataHoraAgora()}_`);
+        linhas.push('');
+
+        if (pendentes.length === 0) {
+            linhas.push('✅ Nenhuma pendência no momento.');
+            return { texto: linhas.join('\n'), total: 0, titulo };
+        }
+
+        pendentes.forEach((os, i) => {
+            linhas.push('━━━━━━━━━━━━━━━━━━━━');
+            linhas.push(`*#OS ${os.numero || '—'} - ${os.titulo || 'Sem título'}*`);
+            const pend = getUltimoCardMensagem(os);
+            linhas.push(`Pendência: ${pend || '(sem descrição)'}`);
+            linhas.push(`Responsável: ${getResponsavelTexto(os)}`);
+            const abertaHa = tempoDecorrido(os.criado_em);
+            const pendenteHa = tempoDecorrido(os.direcionado_em || os.criado_em);
+            linhas.push(`OS aberta a ${abertaHa}, pendente há ${pendenteHa}`);
+            if (i < pendentes.length - 1) linhas.push('');
+        });
+
+        linhas.push('━━━━━━━━━━━━━━━━━━━━');
+        linhas.push(`_Total: ${pendentes.length} pendência(s)_`);
+
+        return { texto: linhas.join('\n'), total: pendentes.length, titulo };
+    }
+
+    function atualizarTela() {
+        const r = gerarTextoLog();
+        textoGerado.value = r.texto;
+        contadorEl.textContent = r.total;
+        contadorLabelEl.textContent = r.total === 1
+            ? `pendência para ${r.titulo}`
+            : `pendências para ${r.titulo}`;
+    }
+
+    function mostrarMsg(texto, tipo) {
+        msgEl.textContent = texto;
+        msgEl.className = 'message ' + tipo;
+        setTimeout(() => { msgEl.className = 'message'; }, 3000);
+    }
+
+    async function copiarTexto() {
+        const txt = textoGerado.value;
+        if (!txt) { mostrarMsg('Nada para copiar.', 'error'); return; }
+        try {
+            if (navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(txt);
+            } else {
+                textoGerado.removeAttribute('readonly');
+                textoGerado.select();
+                textoGerado.setSelectionRange(0, 99999);
+                document.execCommand('copy');
+                textoGerado.setAttribute('readonly', 'readonly');
+                window.getSelection().removeAllRanges();
+            }
+            mostrarMsg('✅ Texto copiado! Cole no WhatsApp.', 'success');
+        } catch (e) {
+            console.error(e);
+            // Fallback manual
+            try {
+                textoGerado.removeAttribute('readonly');
+                textoGerado.select();
+                textoGerado.setSelectionRange(0, 99999);
+                document.execCommand('copy');
+                textoGerado.setAttribute('readonly', 'readonly');
+                window.getSelection().removeAllRanges();
+                mostrarMsg('✅ Texto copiado!', 'success');
+            } catch (e2) {
+                mostrarMsg('Não foi possível copiar automaticamente. Selecione o texto e use Ctrl+C.', 'error');
+            }
+        }
+    }
+
+    tipoLogSelect.addEventListener('change', atualizarTela);
+    btnCopiar.addEventListener('click', copiarTexto);
+    btnAtualizar.addEventListener('click', () => {
+        mostrarMsg('🔄 Recarregando...', 'info');
+        carregarTudo();
+    });
+
+    function atualizarHeader(nome, funcao) {
+        const f = funcao || 'tecnico';
+        userHeaderBadge.className = 'uh-badge ' + f;
+        userHeaderBadge.textContent = `${nome || 'Usuário'} (${f})`;
+    }
+
+    async function carregarTudo() {
+        try {
+            const cache = lerUserMapDoCache();
+            const [snapUsers, snapOS] = await Promise.all([
+                cache ? Promise.resolve(null) : db.collection('usuarios').where('status', '==', 'ativo').get(),
+                db.collection('ordens_servico').get()
+            ]);
+
+            if (cache) {
+                userMap = cache;
+            } else {
+                userMap = {};
+                snapUsers.forEach(doc => {
+                    const d = doc.data();
+                    userMap[doc.id] = { nome: d.nome, funcao: d.funcao };
+                });
+                salvarUserMapNoCache(userMap);
+            }
+
+            allDocs = [];
+            snapOS.forEach(doc => allDocs.push({ id: doc.id, ...doc.data() }));
+
+            atualizarTela();
+        } catch (err) {
+            console.error(err);
+            mostrarMsg('Erro ao carregar: ' + err.message, 'error');
+            textoGerado.value = 'Erro ao carregar ordens de serviço.';
+            contadorEl.textContent = '0';
+        }
+    }
+
+    auth.onAuthStateChanged((user) => {
+        if (!user) { window.location.href = 'index.html'; return; }
+        registrarAtividade();
+        iniciarMonitorTimeout();
+
+        db.collection('usuarios').doc(user.uid).get()
+            .then(doc => {
+                let nome = user.displayName || user.email;
+                let funcao = 'tecnico';
+                if (doc.exists) {
+                    const d = doc.data();
+                    if (user.email !== MASTER_EMAIL && d.status && d.status !== 'ativo') {
+                        fazerLogoutInativo();
+                        return;
+                    }
+                    nome = d.nome || nome;
+                    funcao = d.funcao || 'tecnico';
+                }
+                if (user.email === MASTER_EMAIL) funcao = 'master';
+                atualizarHeader(nome, funcao);
+                carregarTudo();
+            })
+            .catch(() => {
+                const funcao = user.email === MASTER_EMAIL ? 'master' : 'tecnico';
+                atualizarHeader(user.displayName || user.email, funcao);
+                carregarTudo();
+            });
+    });
+</script>
+</body>
+</html>
