@@ -149,6 +149,29 @@
         .card .card-body .direcionado { font-size: 13px; color: #555; margin-top: 4px; }
         .card .card-body .mensagem { margin-top: 4px; }
 
+        /* ============================================================
+           BOTÃO DE ANEXOS (Google Drive, etc.)
+           ============================================================ */
+        .anexo-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 10px;
+            padding: 7px 14px;
+            background: #1565c0;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: 0.2s;
+            box-shadow: 0 2px 4px rgba(21,101,192,0.25);
+        }
+        .anexo-btn:hover { background: #0d47a1; color: #fff; }
+        .anexo-btn .icone { font-size: 15px; }
+
         .btn-delete-card {
             background: #fff;
             border: 1px solid #c62828;
@@ -171,11 +194,21 @@
 
         .nova-acao .form-group { margin-bottom: 10px; }
         .nova-acao label { font-weight: 600; font-size: 13px; color: #1b5e20; display: block; margin-bottom: 2px; }
-        .nova-acao textarea, .nova-acao select {
+        .nova-acao textarea, .nova-acao select, .nova-acao input[type="url"], .nova-acao input[type="text"] {
             width: 100%; padding: 6px 10px; border: 1px solid #a5d6a7;
             border-radius: 6px; font-size: 14px; background: #fafffe;
+            font-family: inherit;
         }
         .nova-acao textarea { resize: vertical; min-height: 50px; }
+        .nova-acao input[type="url"]:focus, .nova-acao input[type="text"]:focus {
+            outline: none; border-color: #2e7d32; box-shadow: 0 0 0 2px rgba(46,125,50,0.15);
+        }
+        .nova-acao .campo-help {
+            font-size: 11.5px;
+            color: #666;
+            margin-top: 3px;
+            font-style: italic;
+        }
         .acoes-rodape { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; align-items: center; }
         .acoes-rodape .btn { margin-right: 0; }
         .message { margin-top: 8px; padding: 6px 10px; border-radius: 6px; display: none; font-size: 13px; }
@@ -346,11 +379,7 @@
         return `${dia}/${mes}/${ano} ${hora}:${min}`;
     }
 
-    // ============================================================
     // CORRIGIDO: getNome NÃO retorna mais o UID como fallback.
-    // Retorna null quando não encontra, para permitir que a cadeia
-    // de fallbacks (|| g.usuario || item.usuario) funcione.
-    // ============================================================
     function getFuncao(uid) { return (uid && userMap[uid]) ? userMap[uid].funcao : null; }
     function getNome(uid) { return (uid && userMap[uid]) ? userMap[uid].nome : null; }
 
@@ -663,7 +692,6 @@
             <div class="edicoes-titulo">📝 Edições realizadas</div>
             <div class="edicoes-lista">`;
         lista.forEach(g => {
-            // CORRIGIDO: getNome pode retornar null; cadeia de fallback agora funciona
             const nome = getNome(g.usuario_uid) || g.usuario || 'Anônimo';
             const funcao = getFuncao(g.usuario_uid) || g.usuario_funcao || null;
             const nomeComFuncao = (funcao && !nome.includes('(')) ? `${nome} (${funcao})` : nome;
@@ -717,10 +745,6 @@
         return resultado;
     }
 
-    // ============================================================
-    // CORRIGIDO: agora também inclui masters, para que qualquer
-    // usuário com função master sempre apareça no userMap.
-    // ============================================================
     async function buscarAdminsEDiretores() {
         const resultado = {};
         const snap = await db.collection('usuarios').where('status', '==', 'ativo').get();
@@ -733,12 +757,7 @@
         return resultado;
     }
 
-    // ============================================================
-    // CORRIGIDO: prepararUserMap agora MESCLA o cache com UIDs que
-    // faltam. Antes, se o cache existisse (mesmo desatualizado),
-    // retornava cedo e o usuário autor da edição ficava de fora,
-    // exibindo o UID cru na tela.
-    // ============================================================
+    // CORRIGIDO: mescla cache com UIDs que faltam
     async function prepararUserMap(os) {
         const cache = lerUserMapDoCache();
         const uidsDaOS = extrairUidsDaOS(os);
@@ -783,6 +802,28 @@
             });
     }
 
+    // ============================================================
+    // SANITIZAÇÃO DE URL — usada no link de anexos
+    // ============================================================
+    // Aceita apenas http(s). Se o usuário colar sem protocolo,
+    // assume https://. Retorna '' se a string for vazia/inválida.
+    function sanitizarUrl(raw) {
+        if (!raw) return '';
+        let s = String(raw).trim();
+        if (!s) return '';
+        // Remove caracteres de controle e espaços internos
+        s = s.replace(/[\u0000-\u001F\u007F\s]/g, '');
+        if (!/^https?:\/\//i.test(s)) {
+            // Se tem cara de domínio (contém ponto), assume https
+            if (/^[\w.-]+\.[a-z]{2,}/i.test(s)) {
+                s = 'https://' + s;
+            } else {
+                return '';
+            }
+        }
+        return s;
+    }
+
     function renderizarDetalhe() {
         if (!osData) return;
         osNumero.textContent = osData.numero || '---';
@@ -792,7 +833,6 @@
         osStatusBadge.textContent = statusMap[osData.status] || osData.status;
         osStatusBadge.className = `badge badge-${osData.status || 'aberta'}`;
 
-        // CORRIGIDO: fallback explícito pro UID caso o userMap não tenha o autor
         const nomeAbertura = getNome(osData.aberto_por) || osData.aberto_por;
         const abertoPorBadge = getBadgePerfil(osData.aberto_por, nomeAbertura);
 
@@ -874,7 +914,6 @@
             if (item.acao === 'edicao') return;
 
             const uid = item.usuario_uid;
-            // CORRIGIDO: fallback explícito para item.usuario e item.usuario_funcao
             const nome = getNome(uid) || item.usuario || 'Anônimo';
             const funcao = getFuncao(uid) || item.usuario_funcao || 'outros';
             const dataFormat = formatarDataHora(item.data);
@@ -888,6 +927,17 @@
                     direcionado_para_nome: item.direcionado_para_nome || item.direcionado_para,
                     direcionado_para_funcao: item.direcionado_para_funcao
                 })}</div>`;
+            }
+
+            // ============================================================
+            // BOTÃO DE ANEXOS — aparece somente se a ação tiver link
+            // ============================================================
+            let anexoHtml = '';
+            const linkSanitizado = sanitizarUrl(item.link_anexos);
+            if (linkSanitizado) {
+                anexoHtml = `<a class="anexo-btn" href="${linkSanitizado}" target="_blank" rel="noopener noreferrer">
+                    <span class="icone">📎</span> Ver anexos da OS
+                </a>`;
             }
 
             let tempoDecorrido = '';
@@ -927,6 +977,7 @@
                         <strong>${acao.toUpperCase()}</strong>
                         ${direcionadoHtml}
                         <div class="mensagem">${mensagem}</div>
+                        ${anexoHtml}
                     </div>
                 </div>
             `;
@@ -950,6 +1001,11 @@
                     <div class="form-group">
                         <label for="acaoDescricao">Descrição da ação *</label>
                         <textarea id="acaoDescricao" placeholder="Descreva a ação realizada..." required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="acaoLink">Link de anexos (opcional)</label>
+                        <input type="url" id="acaoLink" placeholder="https://drive.google.com/drive/folders/..." autocomplete="off">
+                        <div class="campo-help">Cole aqui o link da pasta do Google Drive. O link não aparecerá por extenso — vira um botão "Ver anexos da OS" neste card.</div>
                     </div>
                     <div class="form-group">
                         <label for="acaoDirecionar">Direcionar para (opcional)</label>
@@ -983,7 +1039,17 @@
                 const desc = document.getElementById('acaoDescricao').value.trim();
                 if (!desc) { mostrarMensagemAcao('A descrição é obrigatória.', 'error'); return; }
                 const dir = document.getElementById('acaoDirecionar').value;
-                adicionarAcao(desc, dir);
+                const linkRaw = document.getElementById('acaoLink').value.trim();
+                // Se preencheu, valida e sanitiza
+                let link = '';
+                if (linkRaw) {
+                    link = sanitizarUrl(linkRaw);
+                    if (!link) {
+                        mostrarMensagemAcao('O link informado não é válido. Cole uma URL completa (ex: https://drive.google.com/...).', 'error');
+                        return;
+                    }
+                }
+                adicionarAcao(desc, dir, link);
             });
         }
 
@@ -1129,11 +1195,6 @@
         editando = { campo: null, original: null };
     }
 
-    // ============================================================
-    // CORRIGIDO: agora grava usuario_funcao junto do registro.
-    // Assim, mesmo que o userMap não tenha o autor, o log mostra
-    // "Nome (função)" em vez de UID.
-    // ============================================================
     function montarRegistroEdicao(valorAntigo, valorNovo) {
         return {
             data: new Date().toISOString(),
@@ -1236,7 +1297,10 @@
         });
     }
 
-    async function adicionarAcao(descricao, direcionarPara) {
+    // ============================================================
+    // ADICIONAR AÇÃO — agora aceita link de anexos opcional
+    // ============================================================
+    async function adicionarAcao(descricao, direcionarPara, linkAnexos) {
         const agora = new Date().toISOString();
         const docRef = db.collection('ordens_servico').doc(osId);
 
@@ -1254,6 +1318,11 @@
                     usuario_funcao: currentUserData?.funcao || (isMaster() ? 'master' : null),
                     mensagem: descricao
                 };
+
+                // Link de anexos (opcional)
+                if (linkAnexos) {
+                    novaAcao.link_anexos = linkAnexos;
+                }
 
                 let mudouCategoria = false;
                 if (direcionarPara) {
@@ -1309,6 +1378,7 @@
             osData.atualizado_em = agora;
 
             document.getElementById('acaoDescricao').value = '';
+            document.getElementById('acaoLink').value = '';
             document.getElementById('acaoDirecionar').value = '';
             mostrarMensagemAcao('✅ Ação adicionada com sucesso!', 'success');
             renderizarDetalhe();
