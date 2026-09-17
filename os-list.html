@@ -125,6 +125,17 @@
         th .sorter { display: inline-block; margin-left: 4px; font-size: 12px; }
         td { padding: 10px 8px; border-bottom: 1px solid #c8e6c9; vertical-align: middle; }
 
+        /* ============================================================
+           EMOJI DE ANEXO — indicador no número da OS
+           ============================================================ */
+        .anexo-flag {
+            display: inline-block;
+            margin-left: 4px;
+            font-size: 14px;
+            cursor: help;
+            filter: drop-shadow(0 1px 1px rgba(0,0,0,0.15));
+        }
+
         .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; }
         .badge .icone { margin-right: 4px; }
         .badge-aberta { background: #e3f2fd; color: #0d47a1; }
@@ -520,6 +531,18 @@
     function getDataPendente(data) { return data.direcionado_em || data.criado_em; }
 
     // ============================================================
+    // ANEXOS — verifica se a OS tem qualquer ação com link de anexos
+    // ============================================================
+    function temAnexos(os) {
+        if (!os || !Array.isArray(os.historico)) return false;
+        return os.historico.some(h => h && h.link_anexos);
+    }
+    function getAnexoFlagHtml(os) {
+        if (!temAnexos(os)) return '';
+        return `<span class="anexo-flag" title="Esta OS tem anexos (link para pasta do Drive)">📎</span>`;
+    }
+
+    // ============================================================
     // TEMPO DECORRIDO — horas até 24h, depois dias
     // ============================================================
     function formatarTempoDecorrido(diffHoras) {
@@ -583,7 +606,6 @@
     // ============================================================
     // BUSCA AVANÇADA — normaliza acentos + tolera erros de digitação
     // ============================================================
-    // Normaliza: minúsculas + sem acentos + sem espaços nas pontas
     function normalizarTexto(s) {
         if (s == null) return '';
         return String(s)
@@ -593,7 +615,6 @@
             .trim();
     }
 
-    // Distância de Levenshtein (quantas edições para transformar a em b)
     function levenshtein(a, b) {
         if (a === b) return 0;
         const la = a.length, lb = b.length;
@@ -608,9 +629,9 @@
             for (let j = 1; j <= lb; j++) {
                 const custo = (ca === b.charCodeAt(j - 1)) ? 0 : 1;
                 linhaAtual[j] = Math.min(
-                    linhaAnterior[j] + 1,      // remoção
-                    linhaAtual[j - 1] + 1,     // inserção
-                    linhaAnterior[j - 1] + custo // substituição
+                    linhaAnterior[j] + 1,
+                    linhaAtual[j - 1] + 1,
+                    linhaAnterior[j - 1] + custo
                 );
             }
             [linhaAnterior, linhaAtual] = [linhaAtual, linhaAnterior];
@@ -618,25 +639,18 @@
         return linhaAnterior[lb];
     }
 
-    // Tolerância conforme o tamanho do termo:
-    //   <=3 chars  → exato (evita casar "rua" com "rua" e "rua" e "rua")
-    //   4-6 chars  → 1 erro
-    //   7+ chars   → 2 erros
     function distanciaMaxima(len) {
         if (len <= 3) return 0;
         if (len <= 6) return 1;
         return 2;
     }
 
-    // Retorna true se o termo aparece no texto (exato) ou se alguma palavra
-    // do texto está a uma distância aceitável do termo (fuzzy).
     function fuzzyMatch(termo, texto) {
         if (!termo) return true;
         if (!texto) return false;
         if (texto.includes(termo)) return true;
         if (termo.length <= 3) return false;
         const maxDist = distanciaMaxima(termo.length);
-        // Varre palavra por palavra do texto
         const palavras = texto.split(/[\s,;:\-\/\\|()[\]{}"']+/);
         for (let i = 0; i < palavras.length; i++) {
             const p = palavras[i];
@@ -647,7 +661,6 @@
         return false;
     }
 
-    // Concatena todos os campos textuais relevantes da OS em uma string
     function construirTextBusca(d) {
         const partes = [
             d.numero,
@@ -756,10 +769,11 @@
             const atrasoBadge = getAtrasoBadge(data);
             const atrasada = isAtrasada(data);
             const abertoPorTexto = getNomeComFuncao(data.aberto_por_nome, data.aberto_por);
+            const anexoFlag = getAnexoFlagHtml(data);
 
             html += `
                 <tr onclick="window.location.href='os-detalhe.html?id=${id}'" style="cursor:pointer;${atrasada ? ' background:#fff5f5;' : ''}">
-                    <td><strong>${data.numero || 'N/A'}</strong></td>
+                    <td><strong>${data.numero || 'N/A'}</strong>${anexoFlag}</td>
                     <td>${data.titulo || 'Sem título'}</td>
                     <td>${abertoPorTexto}</td>
                     <td>${getPrioridadeHtml(data)}</td>
@@ -790,11 +804,12 @@
             const basePend = getDataPendente(data);
             if (basePend) diasPendente = calcularDiasTexto(basePend);
             const abertoPorTexto = getNomeComFuncao(data.aberto_por_nome, data.aberto_por);
+            const anexoFlag = getAnexoFlagHtml(data);
 
             html += `
                 <div class="os-card ${atrasada ? 'atrasada' : ''}" onclick="window.location.href='os-detalhe.html?id=${id}'">
                     <div class="card-topo">
-                        <span class="card-numero">OS #${data.numero || '—'}</span>
+                        <span class="card-numero">OS #${data.numero || '—'}${anexoFlag}</span>
                         <span class="card-badges-topo">
                             ${getPrioridadeHtml(data)}
                             ${atrasada ? `<span class="badge badge-atrasada">⚠️ Atrasada</span>` : ''}
@@ -878,7 +893,6 @@
             const termos = normalizarTexto(buscaBruta).split(/\s+/).filter(Boolean);
             docs = docs.filter(d => {
                 const texto = normalizarTexto(construirTextBusca(d));
-                // Todos os termos precisam casar (AND)
                 return termos.every(t => fuzzyMatch(t, texto));
             });
         }
