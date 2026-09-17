@@ -57,6 +57,88 @@
         }
         select:focus { outline: none; border-color: #2e7d32; box-shadow: 0 0 0 2px rgba(46,125,50,0.15); }
 
+        /* ============================================================
+           FILTRO DE PERSONAGENS — chips/checkboxes
+           ============================================================ */
+        .personagens-filtro { margin-bottom: 14px; }
+        .personagens-bloco {
+            border: 1px solid #c8e6c9;
+            border-radius: 12px;
+            padding: 12px 14px;
+            margin-bottom: 10px;
+            background: #f8fdf8;
+        }
+        .personagens-bloco.bloco-admin { border-left: 5px solid #ffe082; }
+        .personagens-bloco.bloco-diretor { border-left: 5px solid #a5d6a7; }
+        .personagens-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .personagens-titulo {
+            font-weight: 700;
+            font-size: 13.5px;
+            color: #1b5e20;
+        }
+        .personagens-contador {
+            font-size: 12px;
+            color: #558b2f;
+            font-weight: 600;
+        }
+        .personagens-lista {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .personagens-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            background: #fff;
+            border: 1.5px solid #c8e6c9;
+            font-size: 13px;
+            cursor: pointer;
+            user-select: none;
+            transition: 0.15s;
+            line-height: 1.2;
+        }
+        .personagens-item:hover { background: #e8f5e9; }
+        .personagens-item input[type="checkbox"] {
+            margin: 0;
+            cursor: pointer;
+            width: 14px;
+            height: 14px;
+            accent-color: #2e7d32;
+            flex-shrink: 0;
+        }
+        .personagens-item span { white-space: nowrap; }
+
+        .personagens-item.item-admin { border-color: #ffe082; background: #fffde7; }
+        .personagens-item.item-admin:hover { background: #fff9c4; }
+        .personagens-item.item-diretor { border-color: #a5d6a7; background: #f1f8e9; }
+        .personagens-item.item-diretor:hover { background: #dcedc8; }
+        .personagens-item.item-grupo { font-weight: 700; }
+        .personagens-item.item-todos {
+            border-color: #2e7d32;
+            background: #e8f5e9;
+            font-weight: 700;
+            color: #1b5e20;
+        }
+        .personagens-item.item-todos:hover { background: #c8e6c9; }
+        .personagens-item input:checked ~ span { color: #1b5e20; font-weight: 600; }
+
+        .personagens-vazio {
+            font-size: 13px;
+            color: #888;
+            font-style: italic;
+            padding: 4px 0;
+        }
+
         .info-resumo {
             background: #f1f8e9;
             border: 1px solid #c8e6c9;
@@ -102,6 +184,7 @@
             body { padding: 10px 8px; }
             .container { padding: 14px; border-radius: 12px; }
             .page-title { font-size: 20px; }
+            .personagens-item { font-size: 12.5px; padding: 4px 10px; }
             textarea#textoGerado { min-height: 360px; font-size: 13px; padding: 12px; }
             .acoes .btn { flex: 1 1 100%; }
         }
@@ -122,8 +205,11 @@
         <select id="tipoLog">
             <option value="admin">Administração</option>
             <option value="diretor">Diretoria</option>
+            <option value="todas">TODAS</option>
         </select>
     </div>
+
+    <div id="personagensFiltro" class="personagens-filtro"></div>
 
     <div class="info-resumo" id="infoResumo">
         <span class="contador" id="contador">—</span>
@@ -223,6 +309,7 @@
     }
 
     const tipoLogSelect = document.getElementById('tipoLog');
+    const personagensFiltroEl = document.getElementById('personagensFiltro');
     const textoGerado = document.getElementById('textoGerado');
     const btnCopiar = document.getElementById('btnCopiar');
     const btnAtualizar = document.getElementById('btnAtualizar');
@@ -235,8 +322,15 @@
     let allDocs = [];
 
     // ============================================================
+    // ESTADO DE SELEÇÃO POR FUNÇÃO
+    // modo 'todos' → tudo marcado (inclusive novos que apareçam)
+    // modo 'custom' → respeita a seleção do usuário
+    // ============================================================
+    const modoSelecao = { admin: 'todos', diretor: 'todos' };
+    const sel = { admin: new Set(), diretor: new Set() };
+
+    // ============================================================
     // URL BASE — para montar link absoluto da OS
-    // Ex: https://dominio.com/os-pendencias.html → https://dominio.com/
     // ============================================================
     function getBaseUrl() {
         return window.location.origin + window.location.pathname.replace(/[^\/]*$/, '');
@@ -358,26 +452,299 @@
     }
 
     // ============================================================
-    // GERAÇÃO DO TEXTO
+    // PERSONAGENS POR FUNÇÃO
+    // Fonte 1: userMap (usuários ativos carregados do Firestore)
+    // Fonte 2: OS pendentes que apontam para UIDs desconhecidos
+    //          (garante que ninguém "suma" do filtro mesmo inativo)
     // ============================================================
-    function gerarTextoLog() {
-        const tipo = tipoLogSelect.value;
-        const titulo = tipo === 'admin' ? 'ADMINISTRAÇÃO' : 'DIRETORIA';
-        const cat = tipo === 'admin' ? 'admin' : 'diretoria';
+    function getPersonagensPorFuncao(role) {
+        const catEsperada = role === 'admin' ? 'admin' : 'diretoria';
+        const mapa = {};
 
-        const pendentes = allDocs.filter(d => {
-            const s = (d.status || '').toLowerCase();
-            if (s !== 'aberta' && s !== 'em_andamento') return false;
-            return getPendenteCategoria(d) === cat;
+        Object.keys(userMap).forEach(uid => {
+            if (userMap[uid].funcao === role) {
+                mapa[uid] = userMap[uid].nome || uid;
+            }
         });
 
-        pendentes.sort((a, b) => {
+        allDocs.forEach(os => {
+            const s = (os.status || '').toLowerCase();
+            if (s !== 'aberta' && s !== 'em_andamento') return;
+            const alvo = os.direcionado_para;
+            if (!alvo || alvo.startsWith('group:')) return;
+            if (mapa[alvo]) return;
+            if (getPendenteCategoria(os) !== catEsperada) return;
+            mapa[alvo] = os.direcionado_para_nome || alvo;
+        });
+
+        return Object.keys(mapa)
+            .map(uid => ({ uid, nome: mapa[uid] }))
+            .sort((a, b) => a.nome.localeCompare(b.nome));
+    }
+
+    function getGrupoKey(role) {
+        return role === 'admin' ? 'group:admin' : 'group:diretor';
+    }
+
+    function getAllKeys(role) {
+        const grupoKey = getGrupoKey(role);
+        const pessoas = getPersonagensPorFuncao(role);
+        return [grupoKey, ...pessoas.map(p => p.uid)];
+    }
+
+    // Sincroniza sel[role] com a lista atual
+    function sincronizarSel(role) {
+        const allKeys = getAllKeys(role);
+        if (modoSelecao[role] === 'todos') {
+            sel[role] = new Set(allKeys);
+        } else {
+            // Remove chaves que não existem mais, mantém o resto
+            const novo = new Set();
+            sel[role].forEach(k => { if (allKeys.includes(k)) novo.add(k); });
+            sel[role] = novo;
+        }
+    }
+
+    // ============================================================
+    // RENDERIZAÇÃO DOS CHIPS DE PERSONAGEM
+    // ============================================================
+    function renderPersonagensFiltro() {
+        const tipo = tipoLogSelect.value;
+        personagensFiltroEl.innerHTML = '';
+
+        const roles = [];
+        if (tipo === 'todas') roles.push('admin', 'diretor');
+        else roles.push(tipo);
+
+        roles.forEach(role => {
+            sincronizarSel(role);
+            const bloco = criarBlocoPersonagens(role);
+            personagensFiltroEl.appendChild(bloco);
+        });
+
+        atualizarTela();
+    }
+
+    function criarBlocoPersonagens(role) {
+        const grupoKey = getGrupoKey(role);
+        const pessoas = getPersonagensPorFuncao(role);
+        const allKeys = getAllKeys(role);
+        const todosMarcados = allKeys.length > 0 && allKeys.every(k => sel[role].has(k));
+
+        const bloco = document.createElement('div');
+        bloco.className = 'personagens-bloco bloco-' + role;
+
+        const titulo = role === 'admin' ? '🏛️ Administração' : '⚖️ Diretoria';
+        const grupoLabel = role === 'admin' ? 'Administração (grupo)' : 'Diretoria (grupo)';
+
+        let html = `
+            <div class="personagens-header">
+                <span class="personagens-titulo">${titulo}</span>
+                <span class="personagens-contador" data-contador="${role}"></span>
+            </div>
+            <div class="personagens-lista">
+                <label class="personagens-item item-todos">
+                    <input type="checkbox" data-todos="${role}" ${todosMarcados ? 'checked' : ''}>
+                    <span>✓ Todos</span>
+                </label>
+                <label class="personagens-item item-${role} item-grupo">
+                    <input type="checkbox" data-role="${role}" data-key="${grupoKey}" ${sel[role].has(grupoKey) ? 'checked' : ''}>
+                    <span>${grupoLabel}</span>
+                </label>
+        `;
+
+        pessoas.forEach(p => {
+            html += `
+                <label class="personagens-item item-${role}">
+                    <input type="checkbox" data-role="${role}" data-key="${p.uid}" ${sel[role].has(p.uid) ? 'checked' : ''}>
+                    <span>${p.nome}</span>
+                </label>
+            `;
+        });
+
+        html += `</div>`;
+        bloco.innerHTML = html;
+
+        atualizarContadorBloco(bloco, role);
+        return bloco;
+    }
+
+    function atualizarContadorBloco(bloco, role) {
+        const el = bloco.querySelector(`[data-contador="${role}"]`);
+        if (!el) return;
+        const total = getAllKeys(role).length;
+        const marcados = sel[role].size;
+        if (total === 0) {
+            el.textContent = 'nenhum cadastrado';
+        } else if (marcados === total) {
+            el.textContent = `todos (${total})`;
+        } else {
+            el.textContent = `${marcados} de ${total}`;
+        }
+    }
+
+    // ============================================================
+    // EVENTOS DOS CHECKBOXES
+    // ============================================================
+    personagensFiltroEl.addEventListener('change', (e) => {
+        const input = e.target;
+        if (!input.matches('input[type="checkbox"]')) return;
+
+        const roleTodos = input.dataset.todos;
+        const role = input.dataset.role;
+        const key = input.dataset.key;
+
+        if (roleTodos) {
+            // Master "Todos"
+            sincronizarSel(roleTodos);
+            if (input.checked) {
+                modoSelecao[roleTodos] = 'todos';
+                sel[roleTodos] = new Set(getAllKeys(roleTodos));
+            } else {
+                modoSelecao[roleTodos] = 'custom';
+                sel[roleTodos] = new Set();
+            }
+            atualizarCheckboxesDoBloco(roleTodos);
+            atualizarTodosOsContadores();
+        } else if (role && key) {
+            // Chip individual
+            sincronizarSel(role);
+            if (input.checked) sel[role].add(key);
+            else sel[role].delete(key);
+
+            const allKeys = getAllKeys(role);
+            const todosMarcados = allKeys.length > 0 && allKeys.every(k => sel[role].has(k));
+            modoSelecao[role] = todosMarcados ? 'todos' : 'custom';
+
+            atualizarMasterCheckbox(role);
+            atualizarTodosOsContadores();
+        }
+
+        atualizarTela();
+    });
+
+    function atualizarCheckboxesDoBloco(role) {
+        const inputs = personagensFiltroEl.querySelectorAll(`input[data-role="${role}"][data-key]`);
+        inputs.forEach(inp => {
+            inp.checked = sel[role].has(inp.dataset.key);
+        });
+    }
+
+    function atualizarMasterCheckbox(role) {
+        const master = personagensFiltroEl.querySelector(`input[data-todos="${role}"]`);
+        if (!master) return;
+        const allKeys = getAllKeys(role);
+        master.checked = allKeys.length > 0 && allKeys.every(k => sel[role].has(k));
+    }
+
+    function atualizarTodosOsContadores() {
+        personagensFiltroEl.querySelectorAll('[data-contador]').forEach(el => {
+            atualizarContadorBloco(el.closest('.personagens-bloco'), el.dataset.contador);
+        });
+    }
+
+    // ============================================================
+    // MATCH: a OS pertence à seleção?
+    // ============================================================
+    function matchSelecao(os, role) {
+        const alvo = os.direcionado_para;
+        if (!alvo) return false;
+        sincronizarSel(role);
+        return sel[role].has(alvo);
+    }
+
+    // ============================================================
+    // MONTAGEM DOS BLOCOS DE TEXTO
+    // ============================================================
+    function gerarBlocoOS(os) {
+        const linhas = [];
+        linhas.push(`*#OS ${os.numero || '—'} - ${os.titulo || 'Sem título'}*`);
+        const pend = getUltimoCardMensagem(os);
+        linhas.push(`Pendência: ${pend || '(sem descrição)'}`);
+        linhas.push(`Responsável: ${getResponsavelTexto(os)}`);
+        const abertaHa = tempoDecorrido(os.criado_em);
+        const pendenteHa = tempoDecorrido(os.direcionado_em || os.criado_em);
+        linhas.push(`OS aberta a ${abertaHa}, pendente há ${pendenteHa}`);
+        linhas.push(`🔗 Ver OS: ${getUrlOS(os.id)}`);
+        return linhas;
+    }
+
+    function ordenarPendentes(lista) {
+        return lista.sort((a, b) => {
             const da = a.direcionado_em || a.criado_em || '';
             const dbb = b.direcionado_em || b.criado_em || '';
             return da.localeCompare(dbb);
         });
+    }
+
+    // ============================================================
+    // GERAÇÃO DO TEXTO PRINCIPAL
+    // ============================================================
+    function gerarTextoLog() {
+        const tipo = tipoLogSelect.value;
+
+        const pendentesBase = allDocs.filter(d => {
+            const s = (d.status || '').toLowerCase();
+            return s === 'aberta' || s === 'em_andamento';
+        });
 
         const linhas = [];
+
+        // --------------------------------------------------------
+        // MODO "TODAS" — duas seções (ADMINISTRAÇÃO + DIRETORIA)
+        // --------------------------------------------------------
+        if (tipo === 'todas') {
+            const admin = ordenarPendentes(pendentesBase.filter(d =>
+                getPendenteCategoria(d) === 'admin' && matchSelecao(d, 'admin')));
+            const dir = ordenarPendentes(pendentesBase.filter(d =>
+                getPendenteCategoria(d) === 'diretoria' && matchSelecao(d, 'diretor')));
+            const total = admin.length + dir.length;
+
+            linhas.push('📋 *LISTA DE PENDÊNCIAS*');
+            linhas.push(`_Atualizado em ${formatarDataHoraAgora()}_`);
+            linhas.push('');
+
+            linhas.push('━━━━━━━━━━━━━━━━━━━━');
+            linhas.push('🏛️ *ADMINISTRAÇÃO*');
+            linhas.push('━━━━━━━━━━━━━━━━━━━━');
+            if (admin.length === 0) {
+                linhas.push('✅ Nenhuma pendência.');
+            } else {
+                admin.forEach((os, i) => {
+                    if (i > 0) linhas.push('');
+                    linhas.push(...gerarBlocoOS(os));
+                });
+            }
+
+            linhas.push('');
+            linhas.push('━━━━━━━━━━━━━━━━━━━━');
+            linhas.push('⚖️ *DIRETORIA*');
+            linhas.push('━━━━━━━━━━━━━━━━━━━━');
+            if (dir.length === 0) {
+                linhas.push('✅ Nenhuma pendência.');
+            } else {
+                dir.forEach((os, i) => {
+                    if (i > 0) linhas.push('');
+                    linhas.push(...gerarBlocoOS(os));
+                });
+            }
+
+            linhas.push('');
+            linhas.push(`_Total: ${total} pendência(s) — ${admin.length} admin · ${dir.length} diretoria_`);
+
+            return { texto: linhas.join('\n'), total, titulo: 'TODAS' };
+        }
+
+        // --------------------------------------------------------
+        // MODO NORMAL — apenas uma categoria
+        // --------------------------------------------------------
+        const role = tipo;
+        const cat = tipo === 'admin' ? 'admin' : 'diretoria';
+        const titulo = tipo === 'admin' ? 'ADMINISTRAÇÃO' : 'DIRETORIA';
+
+        const pendentes = ordenarPendentes(pendentesBase.filter(d =>
+            getPendenteCategoria(d) === cat && matchSelecao(d, role)));
+
         linhas.push(`📋 *LISTA DE PENDÊNCIAS - ${titulo}*`);
         linhas.push(`_Atualizado em ${formatarDataHoraAgora()}_`);
         linhas.push('');
@@ -389,15 +756,7 @@
 
         pendentes.forEach((os, i) => {
             linhas.push('━━━━━━━━━━━━━━━━━━━━');
-            linhas.push(`*#OS ${os.numero || '—'} - ${os.titulo || 'Sem título'}*`);
-            const pend = getUltimoCardMensagem(os);
-            linhas.push(`Pendência: ${pend || '(sem descrição)'}`);
-            linhas.push(`Responsável: ${getResponsavelTexto(os)}`);
-            const abertaHa = tempoDecorrido(os.criado_em);
-            const pendenteHa = tempoDecorrido(os.direcionado_em || os.criado_em);
-            linhas.push(`OS aberta a ${abertaHa}, pendente há ${pendenteHa}`);
-            // Link clicável para a OS no sistema
-            linhas.push(`🔗 Ver OS: ${getUrlOS(os.id)}`);
+            linhas.push(...gerarBlocoOS(os));
             if (i < pendentes.length - 1) linhas.push('');
         });
 
@@ -411,9 +770,15 @@
         const r = gerarTextoLog();
         textoGerado.value = r.texto;
         contadorEl.textContent = r.total;
-        contadorLabelEl.textContent = r.total === 1
-            ? `pendência para ${r.titulo}`
-            : `pendências para ${r.titulo}`;
+        if (r.titulo === 'TODAS') {
+            contadorLabelEl.textContent = r.total === 1
+                ? 'pendência no total'
+                : 'pendências no total';
+        } else {
+            contadorLabelEl.textContent = r.total === 1
+                ? `pendência para ${r.titulo}`
+                : `pendências para ${r.titulo}`;
+        }
     }
 
     function mostrarMsg(texto, tipo) {
@@ -453,10 +818,13 @@
         }
     }
 
-    tipoLogSelect.addEventListener('change', atualizarTela);
+    tipoLogSelect.addEventListener('change', () => {
+        renderPersonagensFiltro();
+    });
     btnCopiar.addEventListener('click', copiarTexto);
     btnAtualizar.addEventListener('click', () => {
         mostrarMsg('🔄 Recarregando...', 'info');
+        // Força recarregar: zera estado de seleção para re-sincronizar com dados novos
         carregarTudo();
     });
 
@@ -488,7 +856,7 @@
             allDocs = [];
             snapOS.forEach(doc => allDocs.push({ id: doc.id, ...doc.data() }));
 
-            atualizarTela();
+            renderPersonagensFiltro();
         } catch (err) {
             console.error(err);
             mostrarMsg('Erro ao carregar: ' + err.message, 'error');
