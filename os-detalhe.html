@@ -345,8 +345,15 @@
         const min = String(d.getMinutes()).padStart(2, '0');
         return `${dia}/${mes}/${ano} ${hora}:${min}`;
     }
+
+    // ============================================================
+    // CORRIGIDO: getNome NÃO retorna mais o UID como fallback.
+    // Retorna null quando não encontra, para permitir que a cadeia
+    // de fallbacks (|| g.usuario || item.usuario) funcione.
+    // ============================================================
     function getFuncao(uid) { return (uid && userMap[uid]) ? userMap[uid].funcao : null; }
-    function getNome(uid) { return (uid && userMap[uid]) ? userMap[uid].nome : (uid || '—'); }
+    function getNome(uid) { return (uid && userMap[uid]) ? userMap[uid].nome : null; }
+
     function formatarLote(valor) {
         if (!valor) return '';
         const num = parseInt(valor.trim(), 10);
@@ -487,12 +494,7 @@
     // ============================================================
     // DIRECIONAMENTO ORIGINAL — preserva o destino da abertura
     // ============================================================
-    // Ordem de busca:
-    //   1) Campos _original (gravados desde a introdução)
-    //   2) Histórico da ação "abertura" (fonte confiável em qualquer OS)
-    //   3) Fallback pro valor atual (último recurso)
     function getDirecionamentoOriginal() {
-        // 1) Campos dedicados
         if (osData.direcionado_para_original) {
             return {
                 direcionado_para: osData.direcionado_para_original,
@@ -501,7 +503,6 @@
             };
         }
 
-        // 2) Ação de abertura no histórico
         const abertura = (osData.historico || []).find(h => h.acao === 'abertura');
         if (abertura && abertura.direcionado_para) {
             return {
@@ -511,7 +512,6 @@
             };
         }
 
-        // 3) Fallback
         return {
             direcionado_para: osData.direcionado_para || '—',
             direcionado_para_nome: osData.direcionado_para_nome || '—',
@@ -611,7 +611,8 @@
                     valor_antigo: e.valor_antigo == null ? '' : String(e.valor_antigo),
                     valor_novo: e.valor_novo == null ? '' : String(e.valor_novo),
                     usuario_uid: e.usuario_uid || null,
-                    usuario: e.usuario || null
+                    usuario: e.usuario || null,
+                    usuario_funcao: e.usuario_funcao || null
                 });
             });
         });
@@ -624,6 +625,7 @@
                     data: e.data,
                     usuario_uid: e.usuario_uid,
                     usuario: e.usuario,
+                    usuario_funcao: e.usuario_funcao,
                     campos: []
                 };
             }
@@ -661,8 +663,9 @@
             <div class="edicoes-titulo">📝 Edições realizadas</div>
             <div class="edicoes-lista">`;
         lista.forEach(g => {
+            // CORRIGIDO: getNome pode retornar null; cadeia de fallback agora funciona
             const nome = getNome(g.usuario_uid) || g.usuario || 'Anônimo';
-            const funcao = getFuncao(g.usuario_uid);
+            const funcao = getFuncao(g.usuario_uid) || g.usuario_funcao || null;
             const nomeComFuncao = (funcao && !nome.includes('(')) ? `${nome} (${funcao})` : nome;
             const dataFmt = formatarDataHoraCurta(g.data);
             const mud = g.mudancas.map(m =>
@@ -714,27 +717,46 @@
         return resultado;
     }
 
+    // ============================================================
+    // CORRIGIDO: agora também inclui masters, para que qualquer
+    // usuário com função master sempre apareça no userMap.
+    // ============================================================
     async function buscarAdminsEDiretores() {
         const resultado = {};
         const snap = await db.collection('usuarios').where('status', '==', 'ativo').get();
         snap.forEach(doc => {
             const d = doc.data();
-            if (d.funcao === 'admin' || d.funcao === 'diretor') {
+            if (d.funcao === 'admin' || d.funcao === 'diretor' || d.funcao === 'master') {
                 resultado[doc.id] = { nome: d.nome, funcao: d.funcao };
             }
         });
         return resultado;
     }
 
+    // ============================================================
+    // CORRIGIDO: prepararUserMap agora MESCLA o cache com UIDs que
+    // faltam. Antes, se o cache existisse (mesmo desatualizado),
+    // retornava cedo e o usuário autor da edição ficava de fora,
+    // exibindo o UID cru na tela.
+    // ============================================================
     async function prepararUserMap(os) {
         const cache = lerUserMapDoCache();
+        const uidsDaOS = extrairUidsDaOS(os);
+
         if (cache) {
-            userMap = cache;
+            const faltando = uidsDaOS.filter(uid => !cache[uid]);
+            if (faltando.length === 0) {
+                userMap = cache;
+                return;
+            }
+            const novos = await buscarUsuariosPorUids(faltando);
+            userMap = { ...cache, ...novos };
+            salvarUserMapNoCache(userMap);
             return;
         }
-        const uidsRelevantes = extrairUidsDaOS(os);
+
         const [relevantes, adminsDiretores] = await Promise.all([
-            buscarUsuariosPorUids(uidsRelevantes),
+            buscarUsuariosPorUids(uidsDaOS),
             buscarAdminsEDiretores()
         ]);
         userMap = { ...relevantes, ...adminsDiretores };
@@ -770,7 +792,8 @@
         osStatusBadge.textContent = statusMap[osData.status] || osData.status;
         osStatusBadge.className = `badge badge-${osData.status || 'aberta'}`;
 
-        const nomeAbertura = getNome(osData.aberto_por);
+        // CORRIGIDO: fallback explícito pro UID caso o userMap não tenha o autor
+        const nomeAbertura = getNome(osData.aberto_por) || osData.aberto_por;
         const abertoPorBadge = getBadgePerfil(osData.aberto_por, nomeAbertura);
 
         let tipoCap = osData.tipo || '—';
@@ -778,7 +801,6 @@
 
         const prioLabel = getValorExibicao('prioridade', osData.prioridade) || osData.prioridade;
 
-        // Direcionamento ORIGINAL — preservado mesmo após ações mudarem o atual
         const dirOriginalData = getDirecionamentoOriginal();
         const dirBadgeOriginal = getBadgeDirecionado(dirOriginalData);
 
@@ -852,8 +874,9 @@
             if (item.acao === 'edicao') return;
 
             const uid = item.usuario_uid;
+            // CORRIGIDO: fallback explícito para item.usuario e item.usuario_funcao
             const nome = getNome(uid) || item.usuario || 'Anônimo';
-            const funcao = getFuncao(uid) || 'outros';
+            const funcao = getFuncao(uid) || item.usuario_funcao || 'outros';
             const dataFormat = formatarDataHora(item.data);
             const acao = item.acao || 'ação';
             const mensagem = item.mensagem || '';
@@ -1106,13 +1129,19 @@
         editando = { campo: null, original: null };
     }
 
+    // ============================================================
+    // CORRIGIDO: agora grava usuario_funcao junto do registro.
+    // Assim, mesmo que o userMap não tenha o autor, o log mostra
+    // "Nome (função)" em vez de UID.
+    // ============================================================
     function montarRegistroEdicao(valorAntigo, valorNovo) {
         return {
             data: new Date().toISOString(),
             valor_antigo: valorAntigo || '',
             valor_novo: valorNovo || '',
             usuario_uid: currentUser ? currentUser.uid : null,
-            usuario: currentUserData?.nome || (currentUser ? currentUser.email : '—')
+            usuario: currentUserData?.nome || (currentUser ? currentUser.email : '—'),
+            usuario_funcao: currentUserData?.funcao || (isMaster() ? 'master' : null)
         };
     }
 
@@ -1222,6 +1251,7 @@
                     data: agora, acao: 'ação',
                     usuario_uid: currentUser.uid,
                     usuario: currentUserData?.nome || 'Usuário',
+                    usuario_funcao: currentUserData?.funcao || (isMaster() ? 'master' : null),
                     mensagem: descricao
                 };
 
@@ -1314,6 +1344,7 @@
                     data: agora, acao: 'conclusão',
                     usuario_uid: currentUser.uid,
                     usuario: currentUserData?.nome || 'Usuário',
+                    usuario_funcao: currentUserData?.funcao || (isMaster() ? 'master' : null),
                     mensagem: 'OS concluída'
                 });
                 transaction.update(docRef, { status: 'concluida', historico, atualizado_em: agora });
@@ -1339,6 +1370,7 @@
                     data: agora, acao: 'reabertura',
                     usuario_uid: currentUser.uid,
                     usuario: currentUserData?.nome || 'Usuário',
+                    usuario_funcao: currentUserData?.funcao || (isMaster() ? 'master' : null),
                     mensagem: 'OS reaberta'
                 });
                 transaction.update(docRef, { status: 'em_andamento', historico, atualizado_em: agora });
