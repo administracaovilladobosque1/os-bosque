@@ -45,20 +45,77 @@
         .btn-voltar { background: #558b2f; }
         .btn-voltar:hover { background: #33691e; }
 
-        .filtros { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 16px; align-items: center; }
-        .filtros select, .filtros input { padding: 6px 10px; border: 1px solid #a5d6a7; border-radius: 6px; font-size: 14px; background: #fafffe; flex: 0 1 auto; min-width: 120px; }
-        .filtros input[type="text"] { flex: 1 1 150px; min-width: 100px; }
-        .filtros .btn-filtrar { background: #2e7d32; color: white; border: none; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; transition: 0.2s; }
+        /* ============================================================
+           FILTROS — labels sempre visíveis, layout mais claro
+           ============================================================ */
+        .filtros {
+            display: flex; flex-wrap: wrap; gap: 10px;
+            margin: 12px 0 16px;
+            align-items: flex-end;
+            padding: 12px 14px;
+            background: #f8fdf8;
+            border: 1px solid #c8e6c9;
+            border-radius: 12px;
+        }
+        .filtros .filtro-bloco { display: flex; flex-direction: column; gap: 4px; flex: 0 1 auto; }
+        .filtros .filtro-bloco.filtro-bloco-busca { flex: 1 1 220px; min-width: 180px; }
+
+        .filtro-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            color: #1b5e20;
+            margin: 0;
+            line-height: 1.2;
+            white-space: nowrap;
+        }
+        .filtro-label.label-reclamante { color: #2e7d32; }
+        .filtro-label.label-reclamado  { color: #e65100; }
+
+        .filtros select, .filtros input[type="text"] {
+            padding: 6px 10px;
+            border: 1px solid #a5d6a7;
+            border-radius: 6px;
+            font-size: 14px;
+            background: #fafffe;
+            width: 100%;
+        }
+        .filtros select { min-width: 120px; }
+        .filtros .grupo-filtro { display: flex; gap: 4px; }
+        .filtros .grupo-filtro input { min-width: 70px; width: 78px; }
+
+        .filtros .filtro-acoes {
+            display: flex;
+            gap: 8px;
+            align-items: stretch;
+        }
+        .filtros .btn-filtrar,
+        .filtros .btn-limpar {
+            padding: 6px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: 0.2s;
+            white-space: nowrap;
+            color: #fff;
+        }
+        .filtros .btn-filtrar { background: #2e7d32; }
         .filtros .btn-filtrar:hover { background: #1b5e20; }
-        .filtros .btn-filtrar.pendente { box-shadow: 0 0 0 3px rgba(240, 173, 78, 0.5); background: #f0ad4e; color: #000; animation: pulseBtn 1.6s infinite; }
+        .filtros .btn-filtrar.pendente {
+            box-shadow: 0 0 0 3px rgba(240, 173, 78, 0.5);
+            background: #f0ad4e;
+            color: #000;
+            animation: pulseBtn 1.6s infinite;
+        }
         @keyframes pulseBtn {
             0%, 100% { box-shadow: 0 0 0 3px rgba(240, 173, 78, 0.5); }
             50%      { box-shadow: 0 0 0 6px rgba(240, 173, 78, 0.15); }
         }
-        .filtros .grupo-filtro { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
-        .filtros .grupo-filtro label { font-size: 12px; font-weight: 600; color: #1b5e20; margin-right: 2px; }
-        .filtros .grupo-filtro input { min-width: 70px; flex: 0 1 80px; }
-        .filtro-label { display: none; }
+        .filtros .btn-limpar { background: #c62828; }
+        .filtros .btn-limpar:hover { background: #b71c1c; }
+
         .filtros-toggle { display: none; }
 
         .table-responsive { overflow-x: auto; margin-top: 12px; }
@@ -126,14 +183,25 @@
             .filtros-toggle .badge-contador { background: #2e7d32; color: #fff; border-radius: 20px; padding: 1px 8px; font-size: 12px; font-weight: 700; display: none; }
             .filtros-toggle .badge-contador.ativo { display: inline-block; }
 
-            .filtros { display: none; flex-direction: column; align-items: stretch; gap: 12px; padding: 14px; background: #f8fdf8; border: 1px solid #c8e6c9; border-radius: 12px; margin-bottom: 12px; }
+            .filtros {
+                display: none;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+                padding: 14px;
+                background: #f8fdf8;
+                border: 1px solid #c8e6c9;
+                border-radius: 12px;
+                margin-bottom: 12px;
+            }
             .filtros.aberto { display: flex; }
             .filtros .filtro-bloco { display: flex; flex-direction: column; gap: 4px; width: 100%; }
-            .filtros .filtro-bloco .filtro-label { display: block; font-size: 13px; font-weight: 700; color: #1b5e20; margin: 0; }
+            .filtros .filtro-label { display: block; font-size: 13px; font-weight: 700; color: #1b5e20; margin: 0; white-space: normal; }
             .filtros select, .filtros input, .filtros input[type="text"] { width: 100%; min-width: 0; flex: 1 1 auto; padding: 10px 12px; font-size: 15px; border-radius: 8px; }
             .filtros .grupo-filtro { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; }
             .filtros .grupo-filtro input { width: 100%; min-width: 0; padding: 10px 12px; font-size: 15px; border-radius: 8px; }
-            .filtros .btn-filtrar { width: 100%; padding: 12px; font-size: 15px; border-radius: 10px; margin-top: 4px; }
+            .filtros .filtro-acoes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; }
+            .filtros .btn-filtrar, .filtros .btn-limpar { width: 100%; padding: 12px; font-size: 15px; border-radius: 10px; }
 
             .table-responsive { display: none; }
             .lista-cards { display: flex; }
@@ -177,24 +245,27 @@
             </select>
         </div>
         <div class="filtro-bloco">
-            <label class="filtro-label">Reclamante (Quadra / Lote)</label>
+            <label class="filtro-label label-reclamante" for="filtroQuadraReclamante">🟢 Reclamante (Quadra / Lote)</label>
             <span class="grupo-filtro">
                 <input type="text" id="filtroQuadraReclamante" placeholder="Quadra">
                 <input type="text" id="filtroLoteReclamante" placeholder="Lote">
             </span>
         </div>
         <div class="filtro-bloco">
-            <label class="filtro-label">Reclamado (Quadra / Lote)</label>
+            <label class="filtro-label label-reclamado" for="filtroQuadraReclamada">🟠 Reclamado (Quadra / Lote)</label>
             <span class="grupo-filtro">
                 <input type="text" id="filtroQuadraReclamada" placeholder="Quadra">
                 <input type="text" id="filtroLoteReclamada" placeholder="Lote">
             </span>
         </div>
-        <div class="filtro-bloco">
-            <label class="filtro-label" for="filtroBusca">Buscar</label>
-            <input type="text" id="filtroBusca" placeholder="Nº, título ou responsável...">
+        <div class="filtro-bloco filtro-bloco-busca">
+            <label class="filtro-label" for="filtroBusca">🔍 Busca avançada</label>
+            <input type="text" id="filtroBusca" placeholder="Nº, título, descrição, responsável, quadra, mensagem...">
         </div>
-        <button class="btn-filtrar" id="btnFiltrar">Aplicar Filtros</button>
+        <div class="filtro-acoes">
+            <button class="btn-filtrar" id="btnFiltrar" type="button">Aplicar Filtros</button>
+            <button class="btn-limpar" id="btnLimpar" type="button">Limpar Filtros</button>
+        </div>
     </div>
 
     <div id="listaContainer"><p class="empty-message">Carregando ordens de serviço...</p></div>
@@ -292,6 +363,7 @@
     const filtroPendente = document.getElementById('filtroPendente');
     const filtroBusca = document.getElementById('filtroBusca');
     const btnFiltrar = document.getElementById('btnFiltrar');
+    const btnLimpar = document.getElementById('btnLimpar');
     const filtroQuadraReclamante = document.getElementById('filtroQuadraReclamante');
     const filtroLoteReclamante = document.getElementById('filtroLoteReclamante');
     const filtroQuadraReclamada = document.getElementById('filtroQuadraReclamada');
@@ -450,16 +522,12 @@
     // ============================================================
     // TEMPO DECORRIDO — horas até 24h, depois dias
     // ============================================================
-    // Recebe um diff em horas (número). Retorna string no formato:
-    //   "menos de 1 hora" | "X horas" | "X dia(s)"
     function formatarTempoDecorrido(diffHoras) {
         if (diffHoras < 1) return 'menos de 1 hora';
         if (diffHoras < 24) return `${diffHoras} hora${diffHoras === 1 ? '' : 's'}`;
         const dias = Math.floor(diffHoras / 24);
         return `${dias} dia${dias === 1 ? '' : 's'}`;
     }
-
-    // Versão HTML (com classe verde para "menos de 1 hora")
     function calcularDias(dataISO) {
         if (!dataISO) return '—';
         const d = new Date(dataISO);
@@ -471,8 +539,6 @@
         if (diffDias === 1) return '1 dia';
         return `${diffDias} dias`;
     }
-
-    // Versão texto puro (para reuso em cards mobile)
     function calcularDiasTexto(dataISO) {
         if (!dataISO) return '—';
         const d = new Date(dataISO);
@@ -512,6 +578,106 @@
         if (classe.funcao === 'diretor') return 'diretoria';
         if (classe.funcao === 'admin') return 'admin';
         return 'outros';
+    }
+
+    // ============================================================
+    // BUSCA AVANÇADA — normaliza acentos + tolera erros de digitação
+    // ============================================================
+    // Normaliza: minúsculas + sem acentos + sem espaços nas pontas
+    function normalizarTexto(s) {
+        if (s == null) return '';
+        return String(s)
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .trim();
+    }
+
+    // Distância de Levenshtein (quantas edições para transformar a em b)
+    function levenshtein(a, b) {
+        if (a === b) return 0;
+        const la = a.length, lb = b.length;
+        if (la === 0) return lb;
+        if (lb === 0) return la;
+        let linhaAnterior = new Array(lb + 1);
+        let linhaAtual = new Array(lb + 1);
+        for (let j = 0; j <= lb; j++) linhaAnterior[j] = j;
+        for (let i = 1; i <= la; i++) {
+            linhaAtual[0] = i;
+            const ca = a.charCodeAt(i - 1);
+            for (let j = 1; j <= lb; j++) {
+                const custo = (ca === b.charCodeAt(j - 1)) ? 0 : 1;
+                linhaAtual[j] = Math.min(
+                    linhaAnterior[j] + 1,      // remoção
+                    linhaAtual[j - 1] + 1,     // inserção
+                    linhaAnterior[j - 1] + custo // substituição
+                );
+            }
+            [linhaAnterior, linhaAtual] = [linhaAtual, linhaAnterior];
+        }
+        return linhaAnterior[lb];
+    }
+
+    // Tolerância conforme o tamanho do termo:
+    //   <=3 chars  → exato (evita casar "rua" com "rua" e "rua" e "rua")
+    //   4-6 chars  → 1 erro
+    //   7+ chars   → 2 erros
+    function distanciaMaxima(len) {
+        if (len <= 3) return 0;
+        if (len <= 6) return 1;
+        return 2;
+    }
+
+    // Retorna true se o termo aparece no texto (exato) ou se alguma palavra
+    // do texto está a uma distância aceitável do termo (fuzzy).
+    function fuzzyMatch(termo, texto) {
+        if (!termo) return true;
+        if (!texto) return false;
+        if (texto.includes(termo)) return true;
+        if (termo.length <= 3) return false;
+        const maxDist = distanciaMaxima(termo.length);
+        // Varre palavra por palavra do texto
+        const palavras = texto.split(/[\s,;:\-\/\\|()[\]{}"']+/);
+        for (let i = 0; i < palavras.length; i++) {
+            const p = palavras[i];
+            if (!p) continue;
+            if (Math.abs(p.length - termo.length) > maxDist) continue;
+            if (levenshtein(termo, p) <= maxDist) return true;
+        }
+        return false;
+    }
+
+    // Concatena todos os campos textuais relevantes da OS em uma string
+    function construirTextBusca(d) {
+        const partes = [
+            d.numero,
+            d.titulo,
+            d.descricao,
+            d.tipo,
+            d.prioridade,
+            d.status,
+            d.quadra_reclamante, d.lote_reclamante,
+            d.quadra_reclamada, d.lote_reclamada,
+            d.aberto_por_nome,
+            d.direcionado_para_nome
+        ];
+        if (Array.isArray(d.historico)) {
+            d.historico.forEach(h => {
+                if (h.mensagem) partes.push(h.mensagem);
+                if (h.usuario) partes.push(h.usuario);
+                if (h.direcionado_para_nome) partes.push(h.direcionado_para_nome);
+            });
+        }
+        if (d.edicoes && typeof d.edicoes === 'object') {
+            Object.keys(d.edicoes).forEach(campo => {
+                (d.edicoes[campo] || []).forEach(e => {
+                    if (e.valor_novo) partes.push(e.valor_novo);
+                    if (e.valor_antigo) partes.push(e.valor_antigo);
+                    if (e.usuario) partes.push(e.usuario);
+                });
+            });
+        }
+        return partes.filter(v => v !== null && v !== undefined && v !== '').join(' ');
     }
 
     function ordenarDados(docs) {
@@ -704,13 +870,18 @@
         if (qa) docs = docs.filter(d => (d.quadra_reclamada || '').toLowerCase().includes(qa));
         if (la) docs = docs.filter(d => (d.lote_reclamada || '').toLowerCase().includes(la));
 
-        const busca = filtroBusca.value.trim().toLowerCase();
-        if (busca) docs = docs.filter(d => {
-            const num = d.numero ? String(d.numero) : '';
-            const tit = (d.titulo || '').toLowerCase();
-            const r = (d.aberto_por_nome || '').toLowerCase();
-            return num.includes(busca) || tit.includes(busca) || r.includes(busca);
-        });
+        // ============================================================
+        // BUSCA AVANÇADA — fuzzy em todos os campos
+        // ============================================================
+        const buscaBruta = filtroBusca.value.trim();
+        if (buscaBruta) {
+            const termos = normalizarTexto(buscaBruta).split(/\s+/).filter(Boolean);
+            docs = docs.filter(d => {
+                const texto = normalizarTexto(construirTextBusca(d));
+                // Todos os termos precisam casar (AND)
+                return termos.every(t => fuzzyMatch(t, texto));
+            });
+        }
 
         filtrosAplicados = lerFiltrosDoFormulario();
         atualizarEstadoVisual();
@@ -720,6 +891,17 @@
             filtrosToggle.classList.remove('aberto');
         }
         renderizarLista(docs);
+    }
+
+    function limparFiltros() {
+        filtroStatus.value = 'aberto';
+        filtroPendente.value = 'todos';
+        filtroQuadraReclamante.value = '';
+        filtroLoteReclamante.value = '';
+        filtroQuadraReclamada.value = '';
+        filtroLoteReclamada.value = '';
+        filtroBusca.value = '';
+        aplicarFiltros();
     }
 
     function renderizarDocs(docs) {
@@ -774,6 +956,7 @@
     }
 
     btnFiltrar.addEventListener('click', aplicarFiltros);
+    btnLimpar.addEventListener('click', limparFiltros);
     [filtroStatus, filtroPendente,
      filtroQuadraReclamante, filtroLoteReclamante,
      filtroQuadraReclamada, filtroLoteReclamada,
