@@ -332,7 +332,6 @@
     const USER_CACHE_KEY = 'vb_userMapCache';
     const USER_CACHE_TTL = 10 * 60 * 1000;
 
-    // SLA por prioridade (mesma regra do os-list)
     const SLA_HORAS = { 'emergencial': 24, 'urgente': 72, 'normal': 168 };
 
     function salvarUserMapNoCache(map) {
@@ -483,9 +482,6 @@
         return 'outros';
     }
 
-    // ============================================================
-    // SLA / ATRASO — mesma lógica do os-list
-    // ============================================================
     function getDataPendente(data) {
         return data.direcionado_em || data.criado_em;
     }
@@ -589,10 +585,6 @@
         }
     }
 
-    // ============================================================
-    // CONTADORES POR ROLE
-    // Retorna { abertas, atrasadas, emDia } para a seleção atual
-    // ============================================================
     function contarPorRole(role) {
         const catEsperada = role === 'admin' ? 'admin' : 'diretoria';
         sincronizarSel(role);
@@ -611,21 +603,6 @@
         return { abertas, atrasadas, emDia };
     }
 
-    function contarTotal() {
-        const a = contarPorRole('admin');
-        const d = contarPorRole('diretor');
-        return {
-            abertas: a.abertas + d.abertas,
-            atrasadas: a.atrasadas + d.atrasadas,
-            emDia: a.emDia + d.emDia,
-            admin: a,
-            diretor: d
-        };
-    }
-
-    // ============================================================
-    // RENDERIZAÇÃO DOS CHIPS DE PERSONAGEM
-    // ============================================================
     function renderPersonagensFiltro() {
         const tipo = tipoLogSelect.value;
         personagensFiltroEl.innerHTML = '';
@@ -659,7 +636,6 @@
         const grupoLabel = role === 'admin' ? 'Administração (grupo)' : 'Diretoria (grupo)';
         const classeTitulo = role === 'admin' ? 'bloco-admin-titulo' : 'bloco-diretor-titulo';
 
-        // Mini-contadores no cabeçalho do bloco
         const badgeAbertas = contagens.abertas > 0
             ? `<span class="mini-contador mc-abertas">📂 ${contagens.abertas} aberta${contagens.abertas === 1 ? '' : 's'}</span>`
             : `<span class="mini-contador mc-zero">📂 0 abertas</span>`;
@@ -753,12 +729,10 @@
             atualizarTodosOsContadores();
         }
 
-        // Re-renderiza os blocos pra atualizar os mini-contadores
         renderPersonagensFiltroLeve();
     });
 
     function renderPersonagensFiltroLeve() {
-        // Atualiza só os mini-contadores sem recriar os checkboxes
         ['admin', 'diretor'].forEach(role => {
             const blocoEl = personagensFiltroEl.querySelector('.bloco-' + role);
             if (!blocoEl) return;
@@ -804,14 +778,14 @@
     }
 
     // ============================================================
-    // CABEÇALHOS DIFERENCIADOS
+    // CABEÇALHOS DIFERENCIADOS — ADMINISTRAÇÃO/DIRETORIA primeiro
     // ============================================================
     function cabecalhoAdmin(qtdAbertas, qtdAtrasadas) {
         const linha = '▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬';
         const atraso = qtdAtrasadas > 0 ? ` · ⚠️ ${qtdAtrasadas} atrasada${qtdAtrasadas === 1 ? '' : 's'}` : ' · ✓ sem atraso';
         return [
             linha,
-            `🏛️  *PENDÊNCIAS — ADMINISTRAÇÃO*`,
+            `🏛️  *ADMINISTRAÇÃO — PENDÊNCIAS*`,
             `📊 ${qtdAbertas} aberta${qtdAbertas === 1 ? '' : 's'}${atraso}`,
             linha
         ];
@@ -822,7 +796,7 @@
         const atraso = qtdAtrasadas > 0 ? ` · ⚠️ ${qtdAtrasadas} atrasada${qtdAtrasadas === 1 ? '' : 's'}` : ' · ✓ sem atraso';
         return [
             linha,
-            `⚖️  _PENDÊNCIAS — DIRETORIA_`,
+            `⚖️  _DIRETORIA — PENDÊNCIAS_`,
             `📊 ${qtdAbertas} aberta${qtdAbertas === 1 ? '' : 's'}${atraso}`,
             linha
         ];
@@ -832,9 +806,6 @@
         return '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
     }
 
-    // ============================================================
-    // BLOCO DE UMA OS (com status Em dia / Atrasada)
-    // ============================================================
     function gerarBlocoOS(os) {
         const linhas = [];
         const atrasada = isAtrasada(os);
@@ -858,9 +829,6 @@
         });
     }
 
-    // ============================================================
-    // GERAÇÃO DO TEXTO PRINCIPAL
-    // ============================================================
     function gerarTextoLog() {
         const tipo = tipoLogSelect.value;
 
@@ -871,9 +839,6 @@
 
         const linhas = [];
 
-        // --------------------------------------------------------
-        // MODO "TODAS" — duas seções com cabeçalhos distintos
-        // --------------------------------------------------------
         if (tipo === 'todas') {
             const adminList = ordenarPendentes(pendentesBase.filter(d =>
                 getPendenteCategoria(d) === 'admin' && matchSelecao(d, 'admin')));
@@ -923,9 +888,6 @@
             return { texto: linhas.join('\n'), total, atrasadas: totalAtrasadas, emDia: total - totalAtrasadas, titulo: 'TODAS', admin: adminList.length, diretor: dirList.length };
         }
 
-        // --------------------------------------------------------
-        // MODO NORMAL — apenas uma categoria
-        // --------------------------------------------------------
         const role = tipo;
         const cat = tipo === 'admin' ? 'admin' : 'diretoria';
 
@@ -964,12 +926,10 @@
         const r = gerarTextoLog();
         textoGerado.value = r.texto;
 
-        // Painel grande no topo
         contadorAbertas.textContent = r.total;
         contadorAtrasadas.textContent = r.atrasadas;
         contadorSub.textContent = `${r.emDia} em dia · ${r.atrasadas} atrasada${r.atrasadas === 1 ? '' : 's'}`;
 
-        // Descrição do lado direito
         if (r.titulo === 'TODAS') {
             contadorLabel.innerHTML = `Para TODAS as áreas <span class="info-desc-sub" id="contadorSub">${r.emDia} em dia · ${r.atrasadas} atrasada${r.atrasadas === 1 ? '' : 's'}</span>`;
         } else if (r.titulo === 'ADMINISTRAÇÃO') {
@@ -978,7 +938,6 @@
             contadorLabel.innerHTML = `Para DIRETORIA <span class="info-desc-sub" id="contadorSub">${r.emDia} em dia · ${r.atrasadas} atrasada${r.atrasadas === 1 ? '' : 's'}</span>`;
         }
 
-        // Pulso vermelho se houver atrasadas
         if (r.atrasadas > 0) statAtraso.classList.add('tem-atraso');
         else statAtraso.classList.remove('tem-atraso');
     }
