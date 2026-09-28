@@ -60,6 +60,7 @@
         }
         .filtros .filtro-bloco { display: flex; flex-direction: column; gap: 4px; flex: 0 1 auto; }
         .filtros .filtro-bloco.filtro-bloco-busca { flex: 1 1 220px; min-width: 180px; }
+        .filtros .filtro-bloco.filtro-bloco-pendente { min-width: 180px; }
 
         .filtro-label {
             display: block;
@@ -120,40 +121,19 @@
         .filtros-toggle { display: none; }
 
         .table-responsive { overflow-x: auto; margin-top: 12px; }
-        table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 1200px; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 1420px; }
         th { background: #c8e6c9; padding: 10px 8px; text-align: left; color: #1b5e20; border-bottom: 2px solid #81c784; white-space: nowrap; cursor: pointer; user-select: none; position: relative; }
         th:hover { background: #b8d9b9; }
         th .sorter { display: inline-block; margin-left: 4px; font-size: 12px; }
         td { padding: 10px 8px; border-bottom: 1px solid #c8e6c9; vertical-align: middle; }
+        td.td-local { white-space: nowrap; font-weight: 600; color: #1b5e20; }
 
-        /* ============================================================
-           ANEXOS — Desktop (coluna) e Mobile (chip)
-           ============================================================ */
-        .td-anexo { text-align: center; }
-        .flag-anexo {
+        .anexo-flag {
             display: inline-block;
-            font-size: 16px;
-            line-height: 1;
+            margin-left: 4px;
+            font-size: 14px;
             cursor: help;
-            filter: drop-shadow(0 1px 2px rgba(198,40,40,0.25));
-        }
-
-        /* Chip de clipe no mobile — arredondado, com fundo azul suave */
-        .anexo-flag-mobile {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 24px;
-            height: 24px;
-            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-            border: 1px solid #90caf9;
-            border-radius: 50%;
-            font-size: 12px;
-            margin-left: 6px;
-            box-shadow: 0 1px 3px rgba(13,71,161,0.18);
-            vertical-align: middle;
-            line-height: 1;
-            cursor: help;
+            filter: drop-shadow(0 1px 1px rgba(0,0,0,0.15));
         }
 
         .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; }
@@ -181,7 +161,7 @@
         .os-card:active { transform: scale(0.985); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
         .os-card.atrasada { border-left-color: #c62828; background: #fff8f8; }
         .os-card .card-topo { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
-        .os-card .card-numero { font-weight: 700; color: #1b5e20; font-size: 15px; background: #e8f5e9; padding: 3px 10px; border-radius: 6px; display: inline-flex; align-items: center; }
+        .os-card .card-numero { font-weight: 700; color: #1b5e20; font-size: 15px; background: #e8f5e9; padding: 2px 10px; border-radius: 6px; }
         .os-card .card-badges-topo { display: flex; gap: 6px; flex-wrap: wrap; }
         .os-card .card-titulo { font-size: 16px; font-weight: 600; color: #222; line-height: 1.3; margin-bottom: 10px; word-break: break-word; }
         .os-card .card-divisor { border-top: 1px dashed #d0e7d0; margin: 8px 0; }
@@ -189,6 +169,7 @@
         .os-card .card-linha .icone { flex-shrink: 0; font-size: 14px; width: 18px; text-align: center; }
         .os-card .card-linha .rotulo { font-weight: 600; color: #1b5e20; font-size: 12px; min-width: 78px; }
         .os-card .card-linha .valor { color: #333; flex: 1; word-break: break-word; }
+        .os-card .card-linha.card-local { background: #f8fdf8; border-radius: 6px; padding: 4px 8px; margin: 3px 0; }
         .os-card .card-rodape { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #e8f5e9; flex-wrap: wrap; }
         .os-card .card-status { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
         .os-card .card-dias { font-size: 12px; color: #666; text-align: right; }
@@ -268,12 +249,10 @@
                 <option value="fechado">Fechado</option>
             </select>
         </div>
-        <div class="filtro-bloco">
-            <label class="filtro-label" for="filtroPendente">Pendente</label>
+        <div class="filtro-bloco filtro-bloco-pendente">
+            <label class="filtro-label" for="filtroPendente">Pendente para</label>
             <select id="filtroPendente">
                 <option value="todos">Todos</option>
-                <option value="diretoria">Diretoria</option>
-                <option value="admin">Admin</option>
             </select>
         </div>
         <div class="filtro-bloco">
@@ -329,9 +308,6 @@
     const USER_CACHE_KEY = 'vb_userMapCache';
     const USER_CACHE_TTL = 10 * 60 * 1000;
 
-    // ============================================================
-    // CACHE DE OS — stale-while-revalidate (TTL 2 min)
-    // ============================================================
     const OS_CACHE_KEY = 'vb_osCache';
     const OS_CACHE_TTL = 2 * 60 * 1000;
     const OS_CACHE_MAX = 400;
@@ -584,20 +560,27 @@
 
     function getDataPendente(data) { return data.direcionado_em || data.criado_em; }
 
-    // ============================================================
-    // ANEXOS — desktop usa 🚩 na coluna; mobile usa 📎 em chip
-    // ============================================================
     function temAnexos(os) {
         if (!os || !Array.isArray(os.historico)) return false;
         return os.historico.some(h => h && h.link_anexos);
     }
     function getAnexoFlagDesktopHtml(os) {
         if (!temAnexos(os)) return '';
-        return `<span class="flag-anexo" title="Esta OS tem anexos (link para pasta do Drive)">🚩</span>`;
+        return `<span class="anexo-flag" title="Esta OS tem anexos (link para pasta do Drive)">🚩</span>`;
     }
     function getAnexoFlagMobileHtml(os) {
         if (!temAnexos(os)) return '';
         return `<span class="anexo-flag-mobile" title="Esta OS tem anexos">📎</span>`;
+    }
+
+    // ============================================================
+    // RECLAMANTE / RECLAMADO — texto sucinto "C 09"
+    // ============================================================
+    function getLocalTexto(quadra, lote) {
+        const q = (quadra || '').toString().trim();
+        const l = (lote || '').toString().trim();
+        if (!q && !l) return '';
+        return [q, l].filter(Boolean).join(' ');
     }
 
     function formatarTempoDecorrido(diffHoras) {
@@ -658,9 +641,6 @@
         return 'outros';
     }
 
-    // ============================================================
-    // BUSCA AVANÇADA — normalização + fuzzy
-    // ============================================================
     function normalizarTexto(s) {
         if (s == null) return '';
         return String(s)
@@ -778,6 +758,8 @@
                     break;
                 }
                 case 'dias_aberto': va = a.criado_em ? new Date(a.criado_em).getTime() : 0; vb = b.criado_em ? new Date(b.criado_em).getTime() : 0; break;
+                case 'reclamante': va = (a.quadra_reclamante || '').toLowerCase(); vb = (b.quadra_reclamante || '').toLowerCase(); break;
+                case 'reclamado': va = (a.quadra_reclamada || '').toLowerCase(); vb = (b.quadra_reclamada || '').toLowerCase(); break;
                 default: va = 0; vb = 0;
             }
             if (typeof va === 'string') return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
@@ -806,11 +788,81 @@
         return `<span class="badge ${c}">${l.toUpperCase()}</span>`;
     }
 
+    // ============================================================
+    // POPULA O FILTRO "PENDENTE" COM GRUPOS + PESSOAS
+    // ============================================================
+    function popularFiltroPendente() {
+        const valorAtual = filtroPendente.value;
+        const pendentes = window.allDocs || [];
+
+        // Mapeia pessoas que têm pelo menos 1 OS pendente
+        const pessoas = {};
+        pendentes.forEach(d => {
+            const s = (d.status || '').toLowerCase();
+            if (s !== 'aberta' && s !== 'em_andamento') return;
+            const alvo = d.direcionado_para;
+            if (!alvo || alvo.startsWith('group:')) return;
+
+            const info = userMap[alvo];
+            const nome = info?.nome || limparSufixoFuncao(d.direcionado_para_nome) || alvo;
+            const funcao = info?.funcao || d.direcionado_para_funcao || null;
+
+            if (!pessoas[alvo]) {
+                pessoas[alvo] = { uid: alvo, nome, funcao };
+            }
+        });
+
+        const lista = Object.values(pessoas).sort((a, b) => a.nome.localeCompare(b.nome));
+        const admins = lista.filter(p => p.funcao === 'admin');
+        const diretores = lista.filter(p => p.funcao === 'diretor');
+        const outros = lista.filter(p => p.funcao !== 'admin' && p.funcao !== 'diretor');
+
+        let html = `<option value="todos">Todos</option>`;
+
+        // Grupos
+        html += `<optgroup label="Grupos">`;
+        html += `<option value="group:admin">🏛️ ${GRUPO_ADMIN_TEXTO} (grupo)</option>`;
+        html += `<option value="group:diretor">⚖️ ${GRUPO_DIRETOR_TEXTO} (grupo)</option>`;
+        html += `</optgroup>`;
+
+        // Pessoas
+        if (admins.length > 0) {
+            html += `<optgroup label="👤 Administradores">`;
+            admins.forEach(p => {
+                html += `<option value="${p.uid}">${p.nome}</option>`;
+            });
+            html += `</optgroup>`;
+        }
+        if (diretores.length > 0) {
+            html += `<optgroup label="👤 Diretores">`;
+            diretores.forEach(p => {
+                html += `<option value="${p.uid}">${p.nome}</option>`;
+            });
+            html += `</optgroup>`;
+        }
+        if (outros.length > 0) {
+            html += `<optgroup label="👤 Outros">`;
+            outros.forEach(p => {
+                const f = p.funcao ? ` (${p.funcao})` : '';
+                html += `<option value="${p.uid}">${p.nome}${f}</option>`;
+            });
+            html += `</optgroup>`;
+        }
+
+        filtroPendente.innerHTML = html;
+
+        // Tenta preservar o valor anterior
+        const existe = Array.from(filtroPendente.options).some(o => o.value === valorAtual);
+        filtroPendente.value = existe ? valorAtual : 'todos';
+    }
+
     function renderizarTabelaDesktop(docs) {
         let html = `<div class="table-responsive"><table>
             <thead><tr>
                 <th data-sort="numero">Nº <span class="sorter">${sortField === 'numero' ? (sortAsc ? '▲' : '▼') : '⇅'}</span></th>
                 <th data-sort="titulo">Título <span class="sorter">${sortField === 'titulo' ? (sortAsc ? '▲' : '▼') : '⇅'}</span></th>
+                <th data-sort="reclamante">Reclamante <span class="sorter">${sortField === 'reclamante' ? (sortAsc ? '▲' : '▼') : '⇅'}</span></th>
+                <th data-sort="reclamado">Reclamado <span class="sorter">${sortField === 'reclamado' ? (sortAsc ? '▲' : '▼') : '⇅'}</span></th>
                 <th data-sort="aberto_por_nome">Aberto por <span class="sorter">${sortField === 'aberto_por_nome' ? (sortAsc ? '▲' : '▼') : '⇅'}</span></th>
                 <th data-sort="prioridade">Prioridade <span class="sorter">${sortField === 'prioridade' ? (sortAsc ? '▲' : '▼') : '⇅'}</span></th>
                 <th data-sort="status">Status <span class="sorter">${sortField === 'status' ? (sortAsc ? '▲' : '▼') : '⇅'}</span></th>
@@ -834,11 +886,15 @@
             const atrasada = isAtrasada(data);
             const abertoPorTexto = getNomeComFuncao(data.aberto_por_nome, data.aberto_por);
             const anexoFlag = getAnexoFlagDesktopHtml(data);
+            const reclamante = getLocalTexto(data.quadra_reclamante, data.lote_reclamante);
+            const reclamado = getLocalTexto(data.quadra_reclamada, data.lote_reclamada);
 
             html += `
                 <tr onclick="window.location.href='os-detalhe.html?id=${id}'" style="cursor:pointer;${atrasada ? ' background:#fff5f5;' : ''}">
                     <td><strong>${data.numero || 'N/A'}</strong></td>
                     <td>${data.titulo || 'Sem título'}</td>
+                    <td class="td-local">${reclamante}</td>
+                    <td class="td-local">${reclamado}</td>
                     <td>${abertoPorTexto}</td>
                     <td>${getPrioridadeHtml(data)}</td>
                     <td>${getStatusHtml(data)}</td>
@@ -869,12 +925,30 @@
             const basePend = getDataPendente(data);
             if (basePend) diasPendente = calcularDiasTexto(basePend);
             const abertoPorTexto = getNomeComFuncao(data.aberto_por_nome, data.aberto_por);
-            const anexoFlagMobile = getAnexoFlagMobileHtml(data);
+            const reclamante = getLocalTexto(data.quadra_reclamante, data.lote_reclamante);
+            const reclamado = getLocalTexto(data.quadra_reclamada, data.lote_reclamada);
+
+            // Linhas de reclamante/reclamado (só mostra as que existem)
+            let localHtml = '';
+            if (reclamante) {
+                localHtml += `<div class="card-linha card-local">
+                    <span class="icone">🏠</span>
+                    <span class="rotulo">Reclamante:</span>
+                    <span class="valor">${reclamante}</span>
+                </div>`;
+            }
+            if (reclamado) {
+                localHtml += `<div class="card-linha card-local">
+                    <span class="icone">🎯</span>
+                    <span class="rotulo">Reclamado:</span>
+                    <span class="valor">${reclamado}</span>
+                </div>`;
+            }
 
             html += `
                 <div class="os-card ${atrasada ? 'atrasada' : ''}" onclick="window.location.href='os-detalhe.html?id=${id}'">
                     <div class="card-topo">
-                        <span class="card-numero">OS #${data.numero || '—'}${anexoFlagMobile}</span>
+                        <span class="card-numero">OS #${data.numero || '—'}</span>
                         <span class="card-badges-topo">
                             ${getPrioridadeHtml(data)}
                             ${atrasada ? `<span class="badge badge-atrasada">⚠️ Atrasada</span>` : ''}
@@ -882,6 +956,7 @@
                     </div>
                     <div class="card-titulo">${data.titulo || 'Sem título'}</div>
                     <div class="card-divisor"></div>
+                    ${localHtml}
                     <div class="card-linha">
                         <span class="icone">👤</span>
                         <span class="rotulo">Pendente:</span>
@@ -936,9 +1011,15 @@
         if (sf === 'aberto') docs = docs.filter(d => d.status === 'aberta' || d.status === 'em_andamento');
         else if (sf === 'fechado') docs = docs.filter(d => d.status === 'concluida' || d.status === 'cancelada');
 
+        // Filtro "pendente" — grupos ou pessoa específica
         const pf = filtroPendente.value;
-        if (pf === 'diretoria') docs = docs.filter(d => getPendenteCategoria(d) === 'diretoria');
-        else if (pf === 'admin') docs = docs.filter(d => getPendenteCategoria(d) === 'admin');
+        if (pf === 'group:admin') {
+            docs = docs.filter(d => getPendenteCategoria(d) === 'admin');
+        } else if (pf === 'group:diretor') {
+            docs = docs.filter(d => getPendenteCategoria(d) === 'diretoria');
+        } else if (pf !== 'todos' && pf) {
+            docs = docs.filter(d => d.direcionado_para === pf);
+        }
 
         const qr = filtroQuadraReclamante.value.trim().toLowerCase();
         const lr = filtroLoteReclamante.value.trim().toLowerCase();
@@ -969,14 +1050,6 @@
         renderizarLista(docs);
     }
 
-    let debounceTimer = null;
-    function aplicarFiltrosDebounced() {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
-            aplicarFiltros();
-        }, 300);
-    }
-
     function limparFiltros() {
         filtroStatus.value = 'aberto';
         filtroPendente.value = 'todos';
@@ -991,11 +1064,13 @@
     function renderizarDocs(docs) {
         if (!docs || docs.length === 0) {
             window.allDocs = [];
+            popularFiltroPendente();
             listaDiv.innerHTML = '<p class="empty-message">Nenhuma ordem de serviço encontrada.</p>';
             return;
         }
         precomputarTextosBusca(docs);
         window.allDocs = docs;
+        popularFiltroPendente();
         aplicarFiltros();
     }
 
@@ -1058,10 +1133,14 @@
             });
     }
 
+    // ============================================================
+    // EVENTOS DOS FILTROS — NADA DE AUTO-APLICAR
+    // ============================================================
     btnFiltrar.addEventListener('click', aplicarFiltros);
     btnLimpar.addEventListener('click', limparFiltros);
     btnRefresh.addEventListener('click', carregarOSForcado);
 
+    // Enter em qualquer campo aplica
     [filtroStatus, filtroPendente,
      filtroQuadraReclamante, filtroLoteReclamante,
      filtroQuadraReclamada, filtroLoteReclamada,
@@ -1071,20 +1150,14 @@
         });
     });
 
+    // Mudanças em selects/inputs só ATUALIZAM O VISUAL (não aplicam filtro)
     [filtroStatus, filtroPendente].forEach(el => {
-        el.addEventListener('change', () => {
-            atualizarEstadoVisual();
-            aplicarFiltros();
-        });
+        el.addEventListener('change', atualizarEstadoVisual);
     });
-
     [filtroQuadraReclamante, filtroLoteReclamante,
      filtroQuadraReclamada, filtroLoteReclamada,
      filtroBusca].forEach(el => {
-        el.addEventListener('input', () => {
-            atualizarEstadoVisual();
-            aplicarFiltrosDebounced();
-        });
+        el.addEventListener('input', atualizarEstadoVisual);
     });
 
     let lastIsMobile = isMobile();
