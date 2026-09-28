@@ -95,9 +95,6 @@
         select option.admin { background-color: #ffe082; }
         select option.diretor { background-color: #a5d6a7; }
 
-        /* ============================================================
-           CARDS DO HISTÓRICO — fundos mais evidentes + contorno por função
-           ============================================================ */
         .historico-container { margin: 20px 0; display: flex; flex-direction: column; gap: 14px; }
         .historico-container .card {
             border-radius: 10px; padding: 14px 16px;
@@ -149,9 +146,6 @@
         .card .card-body .direcionado { font-size: 13px; color: #555; margin-top: 4px; }
         .card .card-body .mensagem { margin-top: 4px; }
 
-        /* ============================================================
-           BOTÃO DE ANEXOS (Google Drive, etc.)
-           ============================================================ */
         .anexo-btn {
             display: inline-flex;
             align-items: center;
@@ -222,6 +216,77 @@
         }
         .edit-field textarea { resize: vertical; min-height: 60px; width: 100%; min-width: 220px; }
 
+        /* ============================================================
+           MODAL DE LOG DE CONCLUSÃO
+           ============================================================ */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-box {
+            background: #fff;
+            max-width: 560px;
+            width: 100%;
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+            border: 2px solid #a5d6a7;
+            animation: modalIn 0.2s ease-out;
+        }
+        @keyframes modalIn {
+            from { transform: scale(0.94); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .modal-box h2 {
+            color: #1b5e20;
+            margin-bottom: 6px;
+            font-size: 21px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .modal-box .modal-sub {
+            color: #558b2f;
+            font-size: 13px;
+            margin-bottom: 14px;
+            line-height: 1.4;
+        }
+        .modal-box textarea {
+            width: 100%;
+            min-height: 130px;
+            padding: 12px 14px;
+            border: 1px solid #a5d6a7;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Menlo', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.55;
+            background: #f8fdf8;
+            color: #1b3a1e;
+            resize: vertical;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .modal-box textarea:focus {
+            outline: none;
+            border-color: #2e7d32;
+            box-shadow: 0 0 0 3px rgba(46,125,50,0.15);
+        }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 14px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+        .modal-actions .btn { padding: 10px 20px; }
+
         @media (max-width: 600px) {
             .container { padding: 14px; }
             .page-title { font-size: 20px; }
@@ -232,6 +297,9 @@
             .card .card-header { flex-direction: column; align-items: flex-start; gap: 4px; }
             .edicoes-item { font-size: 12px; }
             .historico-container .card { padding: 12px 14px; border-left-width: 5px; }
+            .modal-box { padding: 18px; }
+            .modal-actions { flex-direction: column; }
+            .modal-actions .btn { width: 100%; }
         }
     </style>
 </head>
@@ -252,6 +320,21 @@
 
     <div class="os-info" id="osInfoContainer"></div>
     <div id="historicoContainer" class="historico-container"><p>Carregando...</p></div>
+</div>
+
+<!-- ============================================================
+     MODAL DE LOG DE CONCLUSÃO (efêmero - só existe nesse instante)
+     ============================================================ -->
+<div class="modal-overlay" id="modalConclusao">
+    <div class="modal-box">
+        <h2>✅ OS Concluída!</h2>
+        <p class="modal-sub">Copie o log abaixo e cole no grupo de diretores (WhatsApp).</p>
+        <textarea id="logConclusao" readonly></textarea>
+        <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" id="btnFecharModal">Fechar</button>
+            <button type="button" class="btn btn-success" id="btnCopiarLog">📋 Copiar log</button>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -354,6 +437,8 @@
     const osInfoContainer = document.getElementById('osInfoContainer');
     const historicoContainer = document.getElementById('historicoContainer');
     const userHeaderBadge = document.getElementById('userHeaderBadge');
+    const modalConclusao = document.getElementById('modalConclusao');
+    const logConclusao = document.getElementById('logConclusao');
 
     function removerAcentos(str) { return str.normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
     function formatarDataHora(dataISO) {
@@ -379,7 +464,6 @@
         return `${dia}/${mes}/${ano} ${hora}:${min}`;
     }
 
-    // CORRIGIDO: getNome NÃO retorna mais o UID como fallback.
     function getFuncao(uid) { return (uid && userMap[uid]) ? userMap[uid].funcao : null; }
     function getNome(uid) { return (uid && userMap[uid]) ? userMap[uid].nome : null; }
 
@@ -520,9 +604,6 @@
         return { dirPara, dirNome, dirFuncao: dirFuncao || '', dirEm };
     }
 
-    // ============================================================
-    // DIRECIONAMENTO ORIGINAL — preserva o destino da abertura
-    // ============================================================
     function getDirecionamentoOriginal() {
         if (osData.direcionado_para_original) {
             return {
@@ -757,7 +838,6 @@
         return resultado;
     }
 
-    // CORRIGIDO: mescla cache com UIDs que faltam
     async function prepararUserMap(os) {
         const cache = lerUserMapDoCache();
         const uidsDaOS = extrairUidsDaOS(os);
@@ -802,19 +882,12 @@
             });
     }
 
-    // ============================================================
-    // SANITIZAÇÃO DE URL — usada no link de anexos
-    // ============================================================
-    // Aceita apenas http(s). Se o usuário colar sem protocolo,
-    // assume https://. Retorna '' se a string for vazia/inválida.
     function sanitizarUrl(raw) {
         if (!raw) return '';
         let s = String(raw).trim();
         if (!s) return '';
-        // Remove caracteres de controle e espaços internos
         s = s.replace(/[\u0000-\u001F\u007F\s]/g, '');
         if (!/^https?:\/\//i.test(s)) {
-            // Se tem cara de domínio (contém ponto), assume https
             if (/^[\w.-]+\.[a-z]{2,}/i.test(s)) {
                 s = 'https://' + s;
             } else {
@@ -929,9 +1002,6 @@
                 })}</div>`;
             }
 
-            // ============================================================
-            // BOTÃO DE ANEXOS — aparece somente se a ação tiver link
-            // ============================================================
             let anexoHtml = '';
             const linkSanitizado = sanitizarUrl(item.link_anexos);
             if (linkSanitizado) {
@@ -1040,7 +1110,6 @@
                 if (!desc) { mostrarMensagemAcao('A descrição é obrigatória.', 'error'); return; }
                 const dir = document.getElementById('acaoDirecionar').value;
                 const linkRaw = document.getElementById('acaoLink').value.trim();
-                // Se preencheu, valida e sanitiza
                 let link = '';
                 if (linkRaw) {
                     link = sanitizarUrl(linkRaw);
@@ -1297,9 +1366,6 @@
         });
     }
 
-    // ============================================================
-    // ADICIONAR AÇÃO — agora aceita link de anexos opcional
-    // ============================================================
     async function adicionarAcao(descricao, direcionarPara, linkAnexos) {
         const agora = new Date().toISOString();
         const docRef = db.collection('ordens_servico').doc(osId);
@@ -1319,7 +1385,6 @@
                     mensagem: descricao
                 };
 
-                // Link de anexos (opcional)
                 if (linkAnexos) {
                     novaAcao.link_anexos = linkAnexos;
                 }
@@ -1401,8 +1466,16 @@
         if (el) el.style.display = 'none';
     }
 
+    // ============================================================
+    // CONCLUIR OS — usa descrição digitada + mostra modal com log
+    // ============================================================
     async function concluirOS() {
+        // Pega a descrição digitada (se houver)
+        const descricaoEl = document.getElementById('acaoDescricao');
+        const descricao = descricaoEl ? descricaoEl.value.trim() : '';
+
         if (!confirm('Deseja concluir esta OS?')) return;
+
         const agora = new Date().toISOString();
         const docRef = db.collection('ordens_servico').doc(osId);
         try {
@@ -1415,7 +1488,7 @@
                     usuario_uid: currentUser.uid,
                     usuario: currentUserData?.nome || 'Usuário',
                     usuario_funcao: currentUserData?.funcao || (isMaster() ? 'master' : null),
-                    mensagem: 'OS concluída'
+                    mensagem: descricao || 'OS concluída'
                 });
                 transaction.update(docRef, { status: 'concluida', historico, atualizado_em: agora });
                 return historico;
@@ -1423,9 +1496,69 @@
             osData.status = 'concluida';
             osData.historico = resultado;
             osData.atualizado_em = agora;
+
+            // Mostra o modal de log (efêmero)
+            mostrarModalConclusao();
+
             renderizarDetalhe();
         } catch (err) { alert('Erro: ' + err.message); }
     }
+
+    // ============================================================
+    // MODAL DE CONCLUSÃO — gera o log e oferece botão copiar
+    // Esse modal só existe naquele instante. Se recarregar, some.
+    // ============================================================
+    function mostrarModalConclusao() {
+        const baseUrl = window.location.origin + window.location.pathname.replace(/[^\/]*$/, '');
+        const urlOS = `${baseUrl}os-detalhe.html?id=${encodeURIComponent(osId)}`;
+        const log = `*Aviso de OS concluída!*\n\nOS #${osData.numero || '—'}\nTítulo: ${osData.titulo || 'Sem título'}\nLink: ${urlOS}`;
+        logConclusao.value = log;
+        modalConclusao.classList.add('active');
+    }
+
+    function fecharModalConclusao() {
+        modalConclusao.classList.remove('active');
+        logConclusao.value = '';
+    }
+
+    document.getElementById('btnFecharModal')?.addEventListener('click', fecharModalConclusao);
+
+    modalConclusao?.addEventListener('click', (e) => {
+        if (e.target === modalConclusao) fecharModalConclusao();
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modalConclusao.classList.contains('active')) {
+            fecharModalConclusao();
+        }
+    });
+
+    document.getElementById('btnCopiarLog')?.addEventListener('click', async () => {
+        const txt = logConclusao.value;
+        if (!txt) return;
+        try {
+            if (navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(txt);
+            } else {
+                logConclusao.removeAttribute('readonly');
+                logConclusao.select();
+                logConclusao.setSelectionRange(0, 99999);
+                document.execCommand('copy');
+                logConclusao.setAttribute('readonly', 'readonly');
+                window.getSelection().removeAllRanges();
+            }
+            const btn = document.getElementById('btnCopiarLog');
+            const original = btn.textContent;
+            btn.textContent = '✅ Copiado!';
+            btn.disabled = true;
+            setTimeout(() => {
+                btn.textContent = original;
+                btn.disabled = false;
+            }, 2000);
+        } catch (e) {
+            alert('Não foi possível copiar automaticamente. Selecione o texto e use Ctrl+C.');
+        }
+    });
 
     async function reabrirOS() {
         if (!confirm('Deseja reabrir esta OS?')) return;
