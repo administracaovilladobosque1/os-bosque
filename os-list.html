@@ -573,9 +573,6 @@
         return `<span class="anexo-flag-mobile" title="Esta OS tem anexos">📎</span>`;
     }
 
-    // ============================================================
-    // RECLAMANTE / RECLAMADO — texto sucinto "C 09"
-    // ============================================================
     function getLocalTexto(quadra, lote) {
         const q = (quadra || '').toString().trim();
         const l = (lote || '').toString().trim();
@@ -606,6 +603,21 @@
         const a = new Date();
         const diffHoras = Math.floor((a - d) / (1000 * 60 * 60));
         return formatarTempoDecorrido(diffHoras);
+    }
+
+    // ============================================================
+    // DATA/HORA — formato fixo dd/mm/aaaa hh:mm (sem segundos)
+    // ============================================================
+    function formatarDataHora(dataISO) {
+        if (!dataISO) return '—';
+        const d = new Date(dataISO);
+        if (isNaN(d)) return '—';
+        const dia = String(d.getDate()).padStart(2, '0');
+        const mes = String(d.getMonth()+1).padStart(2, '0');
+        const ano = d.getFullYear();
+        const hora = String(d.getHours()).padStart(2, '0');
+        const min = String(d.getMinutes()).padStart(2, '0');
+        return `${dia}/${mes}/${ano} ${hora}:${min}`;
     }
 
     const SLA_HORAS = { 'emergencial': 24, 'urgente': 72, 'normal': 168 };
@@ -788,14 +800,10 @@
         return `<span class="badge ${c}">${l.toUpperCase()}</span>`;
     }
 
-    // ============================================================
-    // POPULA O FILTRO "PENDENTE" COM GRUPOS + PESSOAS
-    // ============================================================
     function popularFiltroPendente() {
         const valorAtual = filtroPendente.value;
         const pendentes = window.allDocs || [];
 
-        // Mapeia pessoas que têm pelo menos 1 OS pendente
         const pessoas = {};
         pendentes.forEach(d => {
             const s = (d.status || '').toLowerCase();
@@ -819,13 +827,11 @@
 
         let html = `<option value="todos">Todos</option>`;
 
-        // Grupos
         html += `<optgroup label="Grupos">`;
         html += `<option value="group:admin">🏛️ ${GRUPO_ADMIN_TEXTO} (grupo)</option>`;
         html += `<option value="group:diretor">⚖️ ${GRUPO_DIRETOR_TEXTO} (grupo)</option>`;
         html += `</optgroup>`;
 
-        // Pessoas
         if (admins.length > 0) {
             html += `<optgroup label="👤 Administradores">`;
             admins.forEach(p => {
@@ -851,7 +857,6 @@
 
         filtroPendente.innerHTML = html;
 
-        // Tenta preservar o valor anterior
         const existe = Array.from(filtroPendente.options).some(o => o.value === valorAtual);
         filtroPendente.value = existe ? valorAtual : 'todos';
     }
@@ -877,7 +882,7 @@
 
         docs.forEach(data => {
             const id = data.id;
-            const dataHora = data.criado_em ? new Date(data.criado_em).toLocaleString('pt-BR') : '—';
+            const dataHora = formatarDataHora(data.criado_em);
             const diasAberto = data.criado_em ? calcularDias(data.criado_em) : '—';
             let diasPendente = '—';
             const basePend = getDataPendente(data);
@@ -917,9 +922,7 @@
         docs.forEach(data => {
             const id = data.id;
             const atrasada = isAtrasada(data);
-            const dataHora = data.criado_em
-                ? new Date(data.criado_em).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' })
-                : '—';
+            const dataHora = formatarDataHora(data.criado_em);
             const diasAberto = data.criado_em ? calcularDiasTexto(data.criado_em) : '—';
             let diasPendente = '—';
             const basePend = getDataPendente(data);
@@ -928,7 +931,6 @@
             const reclamante = getLocalTexto(data.quadra_reclamante, data.lote_reclamante);
             const reclamado = getLocalTexto(data.quadra_reclamada, data.lote_reclamada);
 
-            // Linhas de reclamante/reclamado (só mostra as que existem)
             let localHtml = '';
             if (reclamante) {
                 localHtml += `<div class="card-linha card-local">
@@ -1011,7 +1013,6 @@
         if (sf === 'aberto') docs = docs.filter(d => d.status === 'aberta' || d.status === 'em_andamento');
         else if (sf === 'fechado') docs = docs.filter(d => d.status === 'concluida' || d.status === 'cancelada');
 
-        // Filtro "pendente" — grupos ou pessoa específica
         const pf = filtroPendente.value;
         if (pf === 'group:admin') {
             docs = docs.filter(d => getPendenteCategoria(d) === 'admin');
@@ -1133,14 +1134,10 @@
             });
     }
 
-    // ============================================================
-    // EVENTOS DOS FILTROS — NADA DE AUTO-APLICAR
-    // ============================================================
     btnFiltrar.addEventListener('click', aplicarFiltros);
     btnLimpar.addEventListener('click', limparFiltros);
     btnRefresh.addEventListener('click', carregarOSForcado);
 
-    // Enter em qualquer campo aplica
     [filtroStatus, filtroPendente,
      filtroQuadraReclamante, filtroLoteReclamante,
      filtroQuadraReclamada, filtroLoteReclamada,
@@ -1150,7 +1147,6 @@
         });
     });
 
-    // Mudanças em selects/inputs só ATUALIZAM O VISUAL (não aplicam filtro)
     [filtroStatus, filtroPendente].forEach(el => {
         el.addEventListener('change', atualizarEstadoVisual);
     });
