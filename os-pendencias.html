@@ -65,8 +65,8 @@
             margin-bottom: 10px;
             background: #f8fdf8;
         }
-        .personagens-bloco.bloco-admin { border-left: 5px solid #ffe082; }
-        .personagens-bloco.bloco-diretor { border-left: 5px solid #a5d6a7; }
+        .personagens-bloco.bloco-admin { border-left: 5px solid #ffe082; background: #fffde7; }
+        .personagens-bloco.bloco-diretor { border-left: 5px solid #a5d6a7; background: #f1f8e9; }
         .personagens-header {
             display: flex;
             justify-content: space-between;
@@ -77,9 +77,38 @@
         }
         .personagens-titulo {
             font-weight: 700;
-            font-size: 13.5px;
+            font-size: 14.5px;
             color: #1b5e20;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
         }
+        .personagens-titulo .icone-role { font-size: 18px; }
+        .personagens-titulo.bloco-admin-titulo { color: #4e342e; }
+        .personagens-titulo.bloco-diretor-titulo { color: #1b5e20; }
+
+        /* Mini-contadores dentro do header de cada bloco */
+        .mini-contadores {
+            display: inline-flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-left: 6px;
+        }
+        .mini-contador {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11.5px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .mini-contador.mc-abertas { background: #e3f2fd; color: #0d47a1; border: 1px solid #90caf9; }
+        .mini-contador.mc-atrasadas { background: #ffebee; color: #b71c1c; border: 1px solid #ef9a9a; }
+        .mini-contador.mc-zero { background: #eceff1; color: #78909c; border: 1px solid #cfd8dc; }
+
         .personagens-contador {
             font-size: 12px;
             color: #558b2f;
@@ -129,28 +158,69 @@
         .personagens-item.item-todos:hover { background: #c8e6c9; }
         .personagens-item input:checked ~ span { color: #1b5e20; font-weight: 600; }
 
-        .personagens-vazio {
-            font-size: 13px;
-            color: #888;
-            font-style: italic;
-            padding: 4px 0;
-        }
-
+        /* ============================================================
+           INFO-RESUMO — contadores grandes no topo da tela
+           ============================================================ */
         .info-resumo {
-            background: #f1f8e9;
+            background: linear-gradient(135deg, #f1f8e9 0%, #e8f5e9 100%);
             border: 1px solid #c8e6c9;
-            border-left: 4px solid #2e7d32;
-            border-radius: 8px;
-            padding: 10px 14px;
-            font-size: 14px;
-            color: #1b5e20;
+            border-left: 5px solid #2e7d32;
+            border-radius: 12px;
+            padding: 14px 18px;
             margin-bottom: 14px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 16px;
             flex-wrap: wrap;
         }
-        .info-resumo .contador { font-weight: 700; font-size: 16px; }
+        .info-stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 60px;
+        }
+        .info-stat .stat-numero {
+            font-size: 26px;
+            font-weight: 800;
+            line-height: 1;
+            color: #1b5e20;
+        }
+        .info-stat .stat-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #558b2f;
+            font-weight: 700;
+            margin-top: 2px;
+        }
+        .info-stat.info-stat-atraso .stat-numero { color: #c62828; }
+        .info-stat.info-stat-atraso .stat-label { color: #c62828; }
+        .info-stat.info-stat-atraso.tem-atraso .stat-numero {
+            animation: pulseAtraso 2s infinite;
+        }
+        @keyframes pulseAtraso {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.55; }
+        }
+        .info-stat-divisor {
+            width: 1px;
+            height: 38px;
+            background: #c8e6c9;
+        }
+        .info-desc {
+            font-size: 15px;
+            font-weight: 700;
+            color: #1b5e20;
+            margin-left: auto;
+            text-align: right;
+        }
+        .info-desc .info-desc-sub {
+            display: block;
+            font-size: 11.5px;
+            font-weight: 500;
+            color: #558b2f;
+            margin-top: 2px;
+        }
 
         textarea#textoGerado {
             width: 100%;
@@ -184,6 +254,8 @@
             .personagens-item { font-size: 12.5px; padding: 4px 10px; }
             textarea#textoGerado { min-height: 360px; font-size: 13px; padding: 12px; }
             .acoes .btn { flex: 1 1 100%; }
+            .info-desc { margin-left: 0; text-align: left; }
+            .info-stat .stat-numero { font-size: 22px; }
         }
     </style>
 </head>
@@ -200,17 +272,28 @@
     <div class="form-group">
         <label for="tipoLog">Destino das pendências</label>
         <select id="tipoLog">
-            <option value="admin">Administração</option>
-            <option value="diretor">Diretoria</option>
-            <option value="todas">TODAS</option>
+            <option value="admin">🏛️ Administração</option>
+            <option value="diretor">⚖️ Diretoria</option>
+            <option value="todas">📋 TODAS (admin + diretoria)</option>
         </select>
     </div>
 
     <div id="personagensFiltro" class="personagens-filtro"></div>
 
     <div class="info-resumo" id="infoResumo">
-        <span class="contador" id="contador">—</span>
-        <span id="contadorLabel">pendência(s) encontrada(s)</span>
+        <div class="info-stat">
+            <span class="stat-numero" id="contadorAbertas">0</span>
+            <span class="stat-label">abertas</span>
+        </div>
+        <div class="info-stat-divisor"></div>
+        <div class="info-stat info-stat-atraso" id="statAtraso">
+            <span class="stat-numero" id="contadorAtrasadas">0</span>
+            <span class="stat-label">atrasadas</span>
+        </div>
+        <div class="info-desc" id="contadorLabel">
+            Para ADMINISTRAÇÃO
+            <span class="info-desc-sub" id="contadorSub">0 em dia · 0 atrasadas</span>
+        </div>
     </div>
 
     <textarea id="textoGerado" readonly placeholder="O texto aparecerá aqui..."></textarea>
@@ -248,6 +331,9 @@
 
     const USER_CACHE_KEY = 'vb_userMapCache';
     const USER_CACHE_TTL = 10 * 60 * 1000;
+
+    // SLA por prioridade (mesma regra do os-list)
+    const SLA_HORAS = { 'emergencial': 24, 'urgente': 72, 'normal': 168 };
 
     function salvarUserMapNoCache(map) {
         try {
@@ -311,8 +397,11 @@
     const btnCopiar = document.getElementById('btnCopiar');
     const btnAtualizar = document.getElementById('btnAtualizar');
     const msgEl = document.getElementById('msg');
-    const contadorEl = document.getElementById('contador');
-    const contadorLabelEl = document.getElementById('contadorLabel');
+    const contadorAbertas = document.getElementById('contadorAbertas');
+    const contadorAtrasadas = document.getElementById('contadorAtrasadas');
+    const contadorLabel = document.getElementById('contadorLabel');
+    const contadorSub = document.getElementById('contadorSub');
+    const statAtraso = document.getElementById('statAtraso');
     const userHeaderBadge = document.getElementById('userHeaderBadge');
 
     let userMap = {};
@@ -392,6 +481,23 @@
         if (c.funcao === 'diretor') return 'diretoria';
         if (c.funcao === 'admin') return 'admin';
         return 'outros';
+    }
+
+    // ============================================================
+    // SLA / ATRASO — mesma lógica do os-list
+    // ============================================================
+    function getDataPendente(data) {
+        return data.direcionado_em || data.criado_em;
+    }
+    function isAtrasada(data) {
+        if (!data) return false;
+        const s = (data.status || '').toLowerCase();
+        if (s === 'concluida' || s === 'cancelada') return false;
+        const dataBase = getDataPendente(data);
+        if (!dataBase) return false;
+        const limite = SLA_HORAS[data.prioridade || 'normal'] || 168;
+        const horas = (Date.now() - new Date(dataBase).getTime()) / (1000 * 60 * 60);
+        return horas > limite;
     }
 
     function formatarDataHoraAgora() {
@@ -483,6 +589,43 @@
         }
     }
 
+    // ============================================================
+    // CONTADORES POR ROLE
+    // Retorna { abertas, atrasadas, emDia } para a seleção atual
+    // ============================================================
+    function contarPorRole(role) {
+        const catEsperada = role === 'admin' ? 'admin' : 'diretoria';
+        sincronizarSel(role);
+        let abertas = 0, atrasadas = 0, emDia = 0;
+        allDocs.forEach(os => {
+            const s = (os.status || '').toLowerCase();
+            if (s !== 'aberta' && s !== 'em_andamento') return;
+            if (getPendenteCategoria(os) !== catEsperada) return;
+            const alvo = os.direcionado_para;
+            if (!alvo) return;
+            if (!sel[role].has(alvo)) return;
+            abertas++;
+            if (isAtrasada(os)) atrasadas++;
+            else emDia++;
+        });
+        return { abertas, atrasadas, emDia };
+    }
+
+    function contarTotal() {
+        const a = contarPorRole('admin');
+        const d = contarPorRole('diretor');
+        return {
+            abertas: a.abertas + d.abertas,
+            atrasadas: a.atrasadas + d.atrasadas,
+            emDia: a.emDia + d.emDia,
+            admin: a,
+            diretor: d
+        };
+    }
+
+    // ============================================================
+    // RENDERIZAÇÃO DOS CHIPS DE PERSONAGEM
+    // ============================================================
     function renderPersonagensFiltro() {
         const tipo = tipoLogSelect.value;
         personagensFiltroEl.innerHTML = '';
@@ -506,15 +649,35 @@
         const allKeys = getAllKeys(role);
         const todosMarcados = allKeys.length > 0 && allKeys.every(k => sel[role].has(k));
 
+        const contagens = contarPorRole(role);
+
         const bloco = document.createElement('div');
         bloco.className = 'personagens-bloco bloco-' + role;
 
-        const titulo = role === 'admin' ? '🏛️ Administração' : '⚖️ Diretoria';
+        const icone = role === 'admin' ? '🏛️' : '⚖️';
+        const titulo = role === 'admin' ? 'Administração' : 'Diretoria';
         const grupoLabel = role === 'admin' ? 'Administração (grupo)' : 'Diretoria (grupo)';
+        const classeTitulo = role === 'admin' ? 'bloco-admin-titulo' : 'bloco-diretor-titulo';
+
+        // Mini-contadores no cabeçalho do bloco
+        const badgeAbertas = contagens.abertas > 0
+            ? `<span class="mini-contador mc-abertas">📂 ${contagens.abertas} aberta${contagens.abertas === 1 ? '' : 's'}</span>`
+            : `<span class="mini-contador mc-zero">📂 0 abertas</span>`;
+
+        const badgeAtrasadas = contagens.atrasadas > 0
+            ? `<span class="mini-contador mc-atrasadas">⚠️ ${contagens.atrasadas} atrasada${contagens.atrasadas === 1 ? '' : 's'}</span>`
+            : `<span class="mini-contador mc-zero">✓ sem atraso</span>`;
 
         let html = `
             <div class="personagens-header">
-                <span class="personagens-titulo">${titulo}</span>
+                <span class="personagens-titulo ${classeTitulo}">
+                    <span class="icone-role">${icone}</span>
+                    ${titulo}
+                    <span class="mini-contadores">
+                        ${badgeAbertas}
+                        ${badgeAtrasadas}
+                    </span>
+                </span>
                 <span class="personagens-contador" data-contador="${role}"></span>
             </div>
             <div class="personagens-lista">
@@ -590,8 +753,28 @@
             atualizarTodosOsContadores();
         }
 
-        atualizarTela();
+        // Re-renderiza os blocos pra atualizar os mini-contadores
+        renderPersonagensFiltroLeve();
     });
+
+    function renderPersonagensFiltroLeve() {
+        // Atualiza só os mini-contadores sem recriar os checkboxes
+        ['admin', 'diretor'].forEach(role => {
+            const blocoEl = personagensFiltroEl.querySelector('.bloco-' + role);
+            if (!blocoEl) return;
+            const contagens = contarPorRole(role);
+            const wrap = blocoEl.querySelector('.mini-contadores');
+            if (!wrap) return;
+            const badgeAbertas = contagens.abertas > 0
+                ? `<span class="mini-contador mc-abertas">📂 ${contagens.abertas} aberta${contagens.abertas === 1 ? '' : 's'}</span>`
+                : `<span class="mini-contador mc-zero">📂 0 abertas</span>`;
+            const badgeAtrasadas = contagens.atrasadas > 0
+                ? `<span class="mini-contador mc-atrasadas">⚠️ ${contagens.atrasadas} atrasada${contagens.atrasadas === 1 ? '' : 's'}</span>`
+                : `<span class="mini-contador mc-zero">✓ sem atraso</span>`;
+            wrap.innerHTML = badgeAbertas + badgeAtrasadas;
+        });
+        atualizarTela();
+    }
 
     function atualizarCheckboxesDoBloco(role) {
         const inputs = personagensFiltroEl.querySelectorAll(`input[data-role="${role}"][data-key]`);
@@ -620,12 +803,46 @@
         return sel[role].has(alvo);
     }
 
+    // ============================================================
+    // CABEÇALHOS DIFERENCIADOS
+    // ============================================================
+    function cabecalhoAdmin(qtdAbertas, qtdAtrasadas) {
+        const linha = '▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬';
+        const atraso = qtdAtrasadas > 0 ? ` · ⚠️ ${qtdAtrasadas} atrasada${qtdAtrasadas === 1 ? '' : 's'}` : ' · ✓ sem atraso';
+        return [
+            linha,
+            `🏛️  *PENDÊNCIAS — ADMINISTRAÇÃO*`,
+            `📊 ${qtdAbertas} aberta${qtdAbertas === 1 ? '' : 's'}${atraso}`,
+            linha
+        ];
+    }
+
+    function cabecalhoDiretor(qtdAbertas, qtdAtrasadas) {
+        const linha = '═══════════════════════════════';
+        const atraso = qtdAtrasadas > 0 ? ` · ⚠️ ${qtdAtrasadas} atrasada${qtdAtrasadas === 1 ? '' : 's'}` : ' · ✓ sem atraso';
+        return [
+            linha,
+            `⚖️  _PENDÊNCIAS — DIRETORIA_`,
+            `📊 ${qtdAbertas} aberta${qtdAbertas === 1 ? '' : 's'}${atraso}`,
+            linha
+        ];
+    }
+
+    function linhaSeparadorOS() {
+        return '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
+    }
+
+    // ============================================================
+    // BLOCO DE UMA OS (com status Em dia / Atrasada)
+    // ============================================================
     function gerarBlocoOS(os) {
         const linhas = [];
+        const atrasada = isAtrasada(os);
         linhas.push(`*#OS ${os.numero || '—'} - ${os.titulo || 'Sem título'}*`);
         const pend = getUltimoCardMensagem(os);
         linhas.push(`Pendência: ${pend || '(sem descrição)'}`);
         linhas.push(`Responsável: ${getResponsavelTexto(os)}`);
+        linhas.push(atrasada ? `Status: 🔴 *ATRASADA*` : `Status: 🟢 *Em dia*`);
         const abertaHa = tempoDecorrido(os.criado_em);
         const pendenteHa = tempoDecorrido(os.direcionado_em || os.criado_em);
         linhas.push(`OS aberta a ${abertaHa}, pendente há ${pendenteHa}`);
@@ -641,6 +858,9 @@
         });
     }
 
+    // ============================================================
+    // GERAÇÃO DO TEXTO PRINCIPAL
+    // ============================================================
     function gerarTextoLog() {
         const tipo = tipoLogSelect.value;
 
@@ -651,89 +871,116 @@
 
         const linhas = [];
 
+        // --------------------------------------------------------
+        // MODO "TODAS" — duas seções com cabeçalhos distintos
+        // --------------------------------------------------------
         if (tipo === 'todas') {
-            const admin = ordenarPendentes(pendentesBase.filter(d =>
+            const adminList = ordenarPendentes(pendentesBase.filter(d =>
                 getPendenteCategoria(d) === 'admin' && matchSelecao(d, 'admin')));
-            const dir = ordenarPendentes(pendentesBase.filter(d =>
+            const dirList = ordenarPendentes(pendentesBase.filter(d =>
                 getPendenteCategoria(d) === 'diretoria' && matchSelecao(d, 'diretor')));
-            const total = admin.length + dir.length;
 
-            linhas.push('📋 *LISTA DE PENDÊNCIAS*');
+            const adminAtrasadas = adminList.filter(isAtrasada).length;
+            const dirAtrasadas = dirList.filter(isAtrasada).length;
+            const total = adminList.length + dirList.length;
+            const totalAtrasadas = adminAtrasadas + dirAtrasadas;
+
+            linhas.push('▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬');
+            linhas.push('📋  *LISTA DE PENDÊNCIAS*');
+            linhas.push(`📊 ${total} aberta${total === 1 ? '' : 's'}` + (totalAtrasadas > 0 ? ` · ⚠️ ${totalAtrasadas} atrasada${totalAtrasadas === 1 ? '' : 's'}` : ' · ✓ sem atraso'));
             linhas.push(`_Atualizado em ${formatarDataHoraAgora()}_`);
+            linhas.push('▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬');
             linhas.push('');
-
-            linhas.push('━━━━━━━━━━━━━━━━━━━━');
-            linhas.push('🏛️ *ADMINISTRAÇÃO*');
-            linhas.push('━━━━━━━━━━━━━━━━━━━━');
-            if (admin.length === 0) {
+            linhas.push('');
+            linhas.push(...cabecalhoAdmin(adminList.length, adminAtrasadas));
+            linhas.push('');
+            if (adminList.length === 0) {
                 linhas.push('✅ Nenhuma pendência.');
             } else {
-                admin.forEach((os, i) => {
+                adminList.forEach((os, i) => {
                     if (i > 0) linhas.push('');
                     linhas.push(...gerarBlocoOS(os));
                 });
             }
 
             linhas.push('');
-            linhas.push('━━━━━━━━━━━━━━━━━━━━');
-            linhas.push('⚖️ *DIRETORIA*');
-            linhas.push('━━━━━━━━━━━━━━━━━━━━');
-            if (dir.length === 0) {
+            linhas.push('');
+            linhas.push(...cabecalhoDiretor(dirList.length, dirAtrasadas));
+            linhas.push('');
+            if (dirList.length === 0) {
                 linhas.push('✅ Nenhuma pendência.');
             } else {
-                dir.forEach((os, i) => {
+                dirList.forEach((os, i) => {
                     if (i > 0) linhas.push('');
                     linhas.push(...gerarBlocoOS(os));
                 });
             }
 
             linhas.push('');
-            linhas.push(`_Total: ${total} pendência(s) — ${admin.length} admin · ${dir.length} diretoria_`);
+            linhas.push(linhaSeparadorOS());
+            linhas.push(`_Total: ${total} pendência(s) — 🏛️ ${adminList.length} admin · ⚖️ ${dirList.length} diretoria_`);
 
-            return { texto: linhas.join('\n'), total, titulo: 'TODAS' };
+            return { texto: linhas.join('\n'), total, atrasadas: totalAtrasadas, emDia: total - totalAtrasadas, titulo: 'TODAS', admin: adminList.length, diretor: dirList.length };
         }
 
+        // --------------------------------------------------------
+        // MODO NORMAL — apenas uma categoria
+        // --------------------------------------------------------
         const role = tipo;
         const cat = tipo === 'admin' ? 'admin' : 'diretoria';
-        const titulo = tipo === 'admin' ? 'ADMINISTRAÇÃO' : 'DIRETORIA';
 
         const pendentes = ordenarPendentes(pendentesBase.filter(d =>
             getPendenteCategoria(d) === cat && matchSelecao(d, role)));
 
-        linhas.push(`📋 *LISTA DE PENDÊNCIAS - ${titulo}*`);
+        const qtdAtrasadas = pendentes.filter(isAtrasada).length;
+        const qtdEmDia = pendentes.length - qtdAtrasadas;
+
+        if (tipo === 'admin') {
+            linhas.push(...cabecalhoAdmin(pendentes.length, qtdAtrasadas));
+        } else {
+            linhas.push(...cabecalhoDiretor(pendentes.length, qtdAtrasadas));
+        }
         linhas.push(`_Atualizado em ${formatarDataHoraAgora()}_`);
         linhas.push('');
 
         if (pendentes.length === 0) {
             linhas.push('✅ Nenhuma pendência no momento.');
-            return { texto: linhas.join('\n'), total: 0, titulo };
+            return { texto: linhas.join('\n'), total: 0, atrasadas: 0, emDia: 0, titulo: tipo === 'admin' ? 'ADMINISTRAÇÃO' : 'DIRETORIA' };
         }
 
         pendentes.forEach((os, i) => {
-            linhas.push('━━━━━━━━━━━━━━━━━━━━');
+            linhas.push(linhaSeparadorOS());
             linhas.push(...gerarBlocoOS(os));
             if (i < pendentes.length - 1) linhas.push('');
         });
 
-        linhas.push('━━━━━━━━━━━━━━━━━━━━');
-        linhas.push(`_Total: ${pendentes.length} pendência(s)_`);
+        linhas.push(linhaSeparadorOS());
+        linhas.push(`_Total: ${pendentes.length} pendência(s) · ${qtdEmDia} em dia · ${qtdAtrasadas} atrasada(s)_`);
 
-        return { texto: linhas.join('\n'), total: pendentes.length, titulo };
+        return { texto: linhas.join('\n'), total: pendentes.length, atrasadas: qtdAtrasadas, emDia: qtdEmDia, titulo: tipo === 'admin' ? 'ADMINISTRAÇÃO' : 'DIRETORIA' };
     }
 
     function atualizarTela() {
         const r = gerarTextoLog();
         textoGerado.value = r.texto;
-        contadorEl.textContent = r.total;
+
+        // Painel grande no topo
+        contadorAbertas.textContent = r.total;
+        contadorAtrasadas.textContent = r.atrasadas;
+        contadorSub.textContent = `${r.emDia} em dia · ${r.atrasadas} atrasada${r.atrasadas === 1 ? '' : 's'}`;
+
+        // Descrição do lado direito
         if (r.titulo === 'TODAS') {
-            contadorLabelEl.textContent = r.total === 1
-                ? 'pendência no total'
-                : 'pendências no total';
+            contadorLabel.innerHTML = `Para TODAS as áreas <span class="info-desc-sub" id="contadorSub">${r.emDia} em dia · ${r.atrasadas} atrasada${r.atrasadas === 1 ? '' : 's'}</span>`;
+        } else if (r.titulo === 'ADMINISTRAÇÃO') {
+            contadorLabel.innerHTML = `Para ADMINISTRAÇÃO <span class="info-desc-sub" id="contadorSub">${r.emDia} em dia · ${r.atrasadas} atrasada${r.atrasadas === 1 ? '' : 's'}</span>`;
         } else {
-            contadorLabelEl.textContent = r.total === 1
-                ? `pendência para ${r.titulo}`
-                : `pendências para ${r.titulo}`;
+            contadorLabel.innerHTML = `Para DIRETORIA <span class="info-desc-sub" id="contadorSub">${r.emDia} em dia · ${r.atrasadas} atrasada${r.atrasadas === 1 ? '' : 's'}</span>`;
         }
+
+        // Pulso vermelho se houver atrasadas
+        if (r.atrasadas > 0) statAtraso.classList.add('tem-atraso');
+        else statAtraso.classList.remove('tem-atraso');
     }
 
     function mostrarMsg(texto, tipo) {
@@ -788,17 +1035,11 @@
         userHeaderBadge.textContent = `${nome || 'Usuário'} (${f})`;
     }
 
-    // ============================================================
-    // CARREGAMENTO OTIMIZADO
-    // Só baixa OS abertas/em andamento (o log não usa as fechadas).
-    // Fallback para query completa se faltar índice.
-    // ============================================================
     async function carregarTudo() {
         try {
             const cache = lerUserMapDoCache();
             const promises = [];
 
-            // Usuários
             if (cache) {
                 userMap = cache;
                 promises.push(Promise.resolve());
@@ -816,7 +1057,6 @@
                 );
             }
 
-            // OS — tenta query filtrada, com fallback
             promises.push(
                 db.collection('ordens_servico')
                     .where('status', 'in', ['aberta', 'em_andamento'])
@@ -827,7 +1067,7 @@
                         return docs;
                     })
                     .catch(err => {
-                        console.warn('Query filtrada falhou (falta índice?). Caindo para query completa.', err.message);
+                        console.warn('Query filtrada falhou. Caindo para query completa.', err.message);
                         return db.collection('ordens_servico').get().then(snap => {
                             const docs = [];
                             snap.forEach(doc => {
@@ -850,7 +1090,8 @@
             console.error(err);
             mostrarMsg('Erro ao carregar: ' + err.message, 'error');
             textoGerado.value = 'Erro ao carregar ordens de serviço.';
-            contadorEl.textContent = '0';
+            contadorAbertas.textContent = '0';
+            contadorAtrasadas.textContent = '0';
         }
     }
 
