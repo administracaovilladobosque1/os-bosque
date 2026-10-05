@@ -1484,7 +1484,7 @@
             const naoVotaram = getNaoVotaram(enq);
             if (naoVotaram.length > 0) {
                 html += `<div class="enq-secao">
-                    <div class="enq-secao-titulo">⏳ Não votaram ainda (${naoVotaram.length})</div>
+                    <div class="enq-secao-titulo">⏳ Não votaram (${naoVotaram.length})</div>
                     <div>`;
                 naoVotaram.forEach(d => {
                     html += `<span class="nao-votaram-item">${d.nome}</span>`;
