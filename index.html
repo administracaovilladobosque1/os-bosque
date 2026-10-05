@@ -186,9 +186,6 @@
     const menuButtons = document.getElementById('menuButtons');
     const userHeaderBadge = document.getElementById('userHeaderBadge');
 
-    // ============================================================
-    // TIMEOUT
-    // ============================================================
     function registrarAtividade() {
         try { localStorage.setItem(TIMEOUT_KEY, Date.now().toString()); } catch(e) {}
     }
@@ -249,9 +246,6 @@
         });
     }
 
-    // ============================================================
-    // TELAS
-    // ============================================================
     function hideAllScreens() {
         if (loadingScreen) loadingScreen.style.display = 'none';
         if (loginScreen) loginScreen.classList.add('hidden');
@@ -316,9 +310,6 @@
 
     function showMessage(el, text, type) { el.textContent = text; el.className = 'message ' + type; }
 
-    // ============================================================
-    // LOGIN / LOGOUT
-    // ============================================================
     loginForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const email = loginEmail.value.trim();
@@ -353,9 +344,6 @@
         auth.signOut();
     });
 
-    // ============================================================
-    // OBSERVADOR DE AUTENTICAÇÃO
-    // ============================================================
     let authResolvido = false;
 
     auth.onAuthStateChanged((user) => {

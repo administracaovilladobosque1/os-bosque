@@ -150,11 +150,30 @@
         .badge-diretor { background: #a5d6a7; color: #000; }
         .badge-atrasada { background: #ffcdd2; color: #b71c1c; font-weight: bold; white-space: nowrap; }
         .badge-no-prazo { background: #c8e6c9; color: #1b5e20; white-space: nowrap; }
+
+        .badge-restrita {
+            background: #000;
+            color: #ffd54f;
+            border: 1px solid #ffd54f;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+
         .btn-ver { padding: 4px 12px; background: #2e7d32; color: #fff; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; white-space: nowrap; }
         .btn-ver:hover { background: #1b5e20; }
         .dias-numero { font-weight: 700; color: #1b5e20; }
         .dias-hoje { color: #558b2f; }
         .empty-message { text-align: center; color: #555; padding: 30px 0; }
+
+        tr.restrita { background: #1e1e1e !important; }
+        tr.restrita td { color: #e0e0e0 !important; border-bottom-color: #333 !important; }
+        tr.restrita td strong { color: #ffd54f; }
+        tr.restrita:hover { background: #2a2a2a !important; }
+        tr.restrita .badge { opacity: 0.92; }
+        tr.restrita .btn-ver { background: #ffd54f; color: #000; }
+        tr.restrita .btn-ver:hover { background: #ffca28; }
+        tr.restrita .dias-numero { color: #ffd54f; }
+        tr.restrita .anexo-flag { filter: drop-shadow(0 1px 1px rgba(255,213,79,0.4)); }
 
         .lista-cards { display: none; flex-direction: column; gap: 10px; margin-top: 12px; }
         .os-card { background: #fff; border: 1px solid #c8e6c9; border-left: 4px solid #2e7d32; border-radius: 12px; padding: 14px; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
@@ -174,6 +193,47 @@
         .os-card .card-status { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
         .os-card .card-dias { font-size: 12px; color: #666; text-align: right; }
         .os-card .card-dias strong { color: #1b5e20; }
+
+        .os-card.restrita {
+            background: #1e1e1e;
+            border: 2px solid #ffd54f;
+            border-left: 6px solid #ffd54f;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+        }
+        .os-card.restrita .card-numero {
+            background: #333;
+            color: #ffd54f;
+        }
+        .os-card.restrita .card-titulo { color: #fff; }
+        .os-card.restrita .card-linha { color: #b0b0b0; }
+        .os-card.restrita .card-linha .rotulo { color: #ffd54f; }
+        .os-card.restrita .card-linha .valor { color: #e0e0e0; }
+        .os-card.restrita .card-divisor { border-top-color: #444; }
+        .os-card.restrita .card-rodape { border-top-color: #444; }
+        .os-card.restrita .card-dias { color: #999; }
+        .os-card.restrita .card-dias strong { color: #ffd54f; }
+        .os-card.restrita .card-linha.card-local { background: #2a2a2a; }
+
+        .anexo-flag-mobile {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border: 1px solid #90caf9;
+            border-radius: 50%;
+            font-size: 12px;
+            margin-left: 6px;
+            box-shadow: 0 1px 3px rgba(13,71,161,0.18);
+            vertical-align: middle;
+            line-height: 1;
+            cursor: help;
+        }
+        .os-card.restrita .anexo-flag-mobile {
+            background: linear-gradient(135deg, #ffd54f 0%, #ffca28 100%);
+            border-color: #000;
+        }
 
         @media (max-width: 768px) {
             body { padding: 10px 8px; }
@@ -418,6 +478,8 @@
     let sortAsc = false;
     let userMap = {};
     let docsRenderizados = [];
+    let currentUser = null;
+    let currentUserData = null;
 
     let filtrosAplicados = {
         status: 'aberto', pendente: 'todos',
@@ -435,6 +497,19 @@
     };
 
     function isMobile() { return window.matchMedia('(max-width: 768px)').matches; }
+
+    function ehDiretorOuMaster() {
+        if (!currentUser) return false;
+        if (currentUser.email === MASTER_EMAIL) return true;
+        const f = currentUserData?.funcao;
+        return f === 'diretor' || f === 'master';
+    }
+
+    function podeVerOS(os) {
+        if (!os) return false;
+        if (os.restrita !== true) return true;
+        return ehDiretorOuMaster();
+    }
 
     function atualizarHeader(nome, funcao) {
         const f = funcao || 'tecnico';
@@ -605,9 +680,6 @@
         return formatarTempoDecorrido(diffHoras);
     }
 
-    // ============================================================
-    // DATA/HORA — formato fixo dd/mm/aaaa hh:mm (sem segundos)
-    // ============================================================
     function formatarDataHora(dataISO) {
         if (!dataISO) return '—';
         const d = new Date(dataISO);
@@ -799,6 +871,10 @@
         const l = statusLabelMap[data.status] || (data.status || 'aberta').replace('_',' ');
         return `<span class="badge ${c}">${l.toUpperCase()}</span>`;
     }
+    function getRestritaBadgeHtml(data) {
+        if (!data || data.restrita !== true) return '';
+        return `<span class="badge badge-restrita">🔒 RESTRITA</span>`;
+    }
 
     function popularFiltroPendente() {
         const valorAtual = filtroPendente.value;
@@ -893,10 +969,12 @@
             const anexoFlag = getAnexoFlagDesktopHtml(data);
             const reclamante = getLocalTexto(data.quadra_reclamante, data.lote_reclamante);
             const reclamado = getLocalTexto(data.quadra_reclamada, data.lote_reclamada);
+            const restritaBadge = getRestritaBadgeHtml(data);
+            const ehRestrita = data.restrita === true;
 
             html += `
-                <tr onclick="window.location.href='os-detalhe.html?id=${id}'" style="cursor:pointer;${atrasada ? ' background:#fff5f5;' : ''}">
-                    <td><strong>${data.numero || 'N/A'}</strong></td>
+                <tr class="${ehRestrita ? 'restrita' : ''}" onclick="window.location.href='os-detalhe.html?id=${id}'" style="cursor:pointer;${atrasada && !ehRestrita ? ' background:#fff5f5;' : ''}">
+                    <td><strong>${data.numero || 'N/A'}</strong>${restritaBadge ? ' ' + restritaBadge : ''}</td>
                     <td>${data.titulo || 'Sem título'}</td>
                     <td class="td-local">${reclamante}</td>
                     <td class="td-local">${reclamado}</td>
@@ -930,6 +1008,8 @@
             const abertoPorTexto = getNomeComFuncao(data.aberto_por_nome, data.aberto_por);
             const reclamante = getLocalTexto(data.quadra_reclamante, data.lote_reclamante);
             const reclamado = getLocalTexto(data.quadra_reclamada, data.lote_reclamada);
+            const ehRestrita = data.restrita === true;
+            const restritaBadge = getRestritaBadgeHtml(data);
 
             let localHtml = '';
             if (reclamante) {
@@ -948,10 +1028,11 @@
             }
 
             html += `
-                <div class="os-card ${atrasada ? 'atrasada' : ''}" onclick="window.location.href='os-detalhe.html?id=${id}'">
+                <div class="os-card ${atrasada && !ehRestrita ? 'atrasada' : ''} ${ehRestrita ? 'restrita' : ''}" onclick="window.location.href='os-detalhe.html?id=${id}'">
                     <div class="card-topo">
                         <span class="card-numero">OS #${data.numero || '—'}</span>
                         <span class="card-badges-topo">
+                            ${restritaBadge}
                             ${getPrioridadeHtml(data)}
                             ${atrasada ? `<span class="badge badge-atrasada">⚠️ Atrasada</span>` : ''}
                         </span>
@@ -1009,6 +1090,8 @@
 
     function aplicarFiltros() {
         let docs = window.allDocs || [];
+        docs = docs.filter(podeVerOS);
+
         const sf = filtroStatus.value;
         if (sf === 'aberto') docs = docs.filter(d => d.status === 'aberta' || d.status === 'em_andamento');
         else if (sf === 'fechado') docs = docs.filter(d => d.status === 'concluida' || d.status === 'cancelada');
@@ -1171,6 +1254,7 @@
 
     auth.onAuthStateChanged((user) => {
         if (!user) { window.location.href = 'index.html'; return; }
+        currentUser = user;
         registrarAtividade();
         iniciarMonitorTimeout();
 
@@ -1188,11 +1272,13 @@
                     funcao = d.funcao || 'tecnico';
                 }
                 if (user.email === MASTER_EMAIL) funcao = 'master';
+                currentUserData = { nome, funcao };
                 atualizarHeader(nome, funcao);
                 carregarOSComCache();
             })
             .catch(() => {
                 const funcao = user.email === MASTER_EMAIL ? 'master' : 'tecnico';
+                currentUserData = { nome: user.displayName || user.email, funcao };
                 atualizarHeader(user.displayName || user.email, funcao);
                 carregarOSComCache();
             });

@@ -54,6 +54,52 @@
         .btn-edit:hover { background: #e8f5e9; }
         .header-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; align-items: center; }
 
+        .banner-restrita {
+            background: #212121;
+            color: #ffd54f;
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            border: 2px solid #000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .banner-restrita .icone-lock { font-size: 22px; }
+        .banner-restrita .texto-banner { display: flex; flex-direction: column; gap: 2px; }
+        .banner-restrita .texto-banner strong { font-size: 15px; }
+        .banner-restrita .texto-banner small {
+            font-size: 11.5px;
+            color: #b0b0b0;
+            font-weight: 500;
+        }
+
+        .tela-bloqueio {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        .tela-bloqueio .icone-lock {
+            font-size: 64px;
+            display: block;
+            margin-bottom: 16px;
+            opacity: 0.35;
+        }
+        .tela-bloqueio h2 {
+            color: #666;
+            font-size: 22px;
+            margin-bottom: 8px;
+        }
+        .tela-bloqueio p {
+            color: #888;
+            font-size: 14px;
+            max-width: 400px;
+            margin: 0 auto 20px;
+            line-height: 1.5;
+        }
+
         .os-info { background: #f8f9fa; border-radius: 12px; padding: 16px; margin-bottom: 20px; border: 1px solid #c8e6c9; }
         .os-info .info-row { display: flex; flex-wrap: wrap; padding: 4px 0; border-bottom: 1px solid #e8f5e9; align-items: center; }
         .os-info .info-row:last-child { border-bottom: none; }
@@ -75,6 +121,13 @@
         .badge-emergencial { background: #ffcdd2; color: #b71c1c; font-weight: bold; }
         .badge-urgente { background: #fff9c4; color: #f57f17; font-weight: bold; }
         .badge-normal { background: #c8e6c9; color: #1b5e20; font-weight: bold; }
+        .badge-restrita {
+            background: #000;
+            color: #ffd54f;
+            border: 1px solid #ffd54f;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
 
         .edicoes-bloco { margin-top: 14px; padding-top: 12px; border-top: 2px dashed #c8e6c9; }
         .edicoes-titulo { font-size: 13px; font-weight: 700; color: #1b5e20; margin-bottom: 6px; }
@@ -106,36 +159,12 @@
         .historico-container .card:hover {
             box-shadow: 0 6px 18px rgba(0,80,0,0.16);
         }
-        .card-admin {
-            background: #fff9c4;
-            border-color: #ffe082;
-            border-left-color: #ffb300;
-        }
-        .card-diretor {
-            background: #dcedc8;
-            border-color: #a5d6a7;
-            border-left-color: #66bb6a;
-        }
-        .card-master {
-            background: #ffe0b2;
-            border-color: #ffcc80;
-            border-left-color: #fb8c00;
-        }
-        .card-outros {
-            background: #eceff1;
-            border-color: #ced4da;
-            border-left-color: #90a4ae;
-        }
-        .card-ultimo {
-            background: #ffebee;
-            border-color: #ef9a9a;
-            border-left-color: #c62828;
-        }
-        .card-concluida {
-            background: #c8e6c9;
-            border-color: #81c784;
-            border-left-color: #2e7d32;
-        }
+        .card-admin { background: #fff9c4; border-color: #ffe082; border-left-color: #ffb300; }
+        .card-diretor { background: #dcedc8; border-color: #a5d6a7; border-left-color: #66bb6a; }
+        .card-master { background: #ffe0b2; border-color: #ffcc80; border-left-color: #fb8c00; }
+        .card-outros { background: #eceff1; border-color: #ced4da; border-left-color: #90a4ae; }
+        .card-ultimo { background: #ffebee; border-color: #ef9a9a; border-left-color: #c62828; }
+        .card-concluida { background: #c8e6c9; border-color: #81c784; border-left-color: #2e7d32; }
         .aviso-concluida { font-size: 14px; color: #1b5e20; margin: 4px 0; }
 
         .card .card-header { display: flex; justify-content: space-between; font-size: 13px; color: #555; margin-bottom: 4px; flex-wrap: wrap; align-items: center; gap: 6px; }
@@ -203,6 +232,16 @@
             margin-top: 3px;
             font-style: italic;
         }
+        .nova-acao .campo-help.help-restrita {
+            color: #b71c1c;
+            font-style: normal;
+            font-weight: 600;
+            background: #fff3f3;
+            padding: 4px 8px;
+            border-left: 3px solid #c62828;
+            border-radius: 4px;
+            margin-top: 6px;
+        }
         .acoes-rodape { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; align-items: center; }
         .acoes-rodape .btn { margin-right: 0; }
         .message { margin-top: 8px; padding: 6px 10px; border-radius: 6px; display: none; font-size: 13px; }
@@ -216,9 +255,6 @@
         }
         .edit-field textarea { resize: vertical; min-height: 60px; width: 100%; min-width: 220px; }
 
-        /* ============================================================
-           MODAL DE LOG DE CONCLUSÃO
-           ============================================================ */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -318,13 +354,12 @@
 
     <h1 class="page-title" id="osTitulo">📋 OS #<span id="osNumero">---</span></h1>
 
+    <div id="bannerRestrita"></div>
+
     <div class="os-info" id="osInfoContainer"></div>
     <div id="historicoContainer" class="historico-container"><p>Carregando...</p></div>
 </div>
 
-<!-- ============================================================
-     MODAL DE LOG DE CONCLUSÃO (efêmero - só existe nesse instante)
-     ============================================================ -->
 <div class="modal-overlay" id="modalConclusao">
     <div class="modal-box">
         <h2>✅ OS Concluída!</h2>
@@ -439,6 +474,7 @@
     const userHeaderBadge = document.getElementById('userHeaderBadge');
     const modalConclusao = document.getElementById('modalConclusao');
     const logConclusao = document.getElementById('logConclusao');
+    const bannerRestrita = document.getElementById('bannerRestrita');
 
     function removerAcentos(str) { return str.normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
     function formatarDataHora(dataISO) {
@@ -666,6 +702,19 @@
         return false;
     }
 
+    function ehDiretorOuMaster() {
+        if (!currentUser) return false;
+        if (currentUser.email === MASTER_EMAIL) return true;
+        const f = currentUserData?.funcao;
+        return f === 'diretor' || f === 'master';
+    }
+
+    function podeVerOS(os) {
+        if (!os) return false;
+        if (os.restrita !== true) return true;
+        return ehDiretorOuMaster();
+    }
+
     function podeEditarOS() {
         if (!osData) return false;
         const s = osData.status ? removerAcentos(osData.status.toLowerCase()) : '';
@@ -862,17 +911,39 @@
         salvarUserMapNoCache(userMap);
     }
 
+    function renderizarBloqueio() {
+        osNumero.textContent = '---';
+        osTitulo.textContent = '📋 OS';
+        osStatusBadge.style.display = 'none';
+        bannerRestrita.innerHTML = '';
+        osInfoContainer.innerHTML = '';
+        historicoContainer.innerHTML = `
+            <div class="tela-bloqueio">
+                <span class="icone-lock">🔒</span>
+                <h2>OS não encontrada</h2>
+                <p>O número da OS informado não corresponde a nenhuma ordem de serviço disponível.</p>
+                <a href="os-list.html" class="btn btn-voltar">← Voltar para a lista</a>
+            </div>
+        `;
+    }
+
     function carregarOS() {
         if (!osId) return;
         historicoContainer.innerHTML = '<p>Carregando...</p>';
         db.collection('ordens_servico').doc(osId).get()
             .then(async (doc) => {
                 if (!doc.exists) {
-                    historicoContainer.innerHTML = '<p style="color:red;">OS não encontrada.</p>';
+                    renderizarBloqueio();
                     return;
                 }
                 osData = { id: doc.id, ...doc.data() };
                 if (!osData.edicoes) osData.edicoes = {};
+
+                if (!podeVerOS(osData)) {
+                    renderizarBloqueio();
+                    return;
+                }
+
                 await prepararUserMap(osData);
                 renderizarDetalhe();
             })
@@ -902,9 +973,24 @@
         osNumero.textContent = osData.numero || '---';
         osTitulo.textContent = `📋 OS #${osData.numero || '---'}`;
 
+        if (osData.restrita === true) {
+            bannerRestrita.innerHTML = `
+                <div class="banner-restrita">
+                    <span class="icone-lock">🔒</span>
+                    <span class="texto-banner">
+                        <strong>OS Restrita à Diretoria</strong>
+                        <small>Apenas diretores e master têm acesso a esta OS.</small>
+                    </span>
+                </div>
+            `;
+        } else {
+            bannerRestrita.innerHTML = '';
+        }
+
         const statusMap = { 'aberta':'Aberta', 'em_andamento':'Em andamento', 'concluida':'Concluída', 'cancelada':'Cancelada' };
         osStatusBadge.textContent = statusMap[osData.status] || osData.status;
         osStatusBadge.className = `badge badge-${osData.status || 'aberta'}`;
+        osStatusBadge.style.display = '';
 
         const nomeAbertura = getNome(osData.aberto_por) || osData.aberto_por;
         const abertoPorBadge = getBadgePerfil(osData.aberto_por, nomeAbertura);
@@ -1080,6 +1166,7 @@
                     <div class="form-group">
                         <label for="acaoDirecionar">Direcionar para (opcional)</label>
                         <select id="acaoDirecionar"><option value="">Manter destino atual</option></select>
+                        ${osData.restrita === true ? `<div class="campo-help help-restrita">🔒 Em OS restrita, o direcionamento é limitado a diretores e grupo Diretores — administradores foram removidos.</div>` : ''}
                     </div>
                     <div class="acoes-rodape">
                         <button type="submit" class="btn btn-success">➕ Adicionar Ação</button>
@@ -1334,12 +1421,17 @@
         const select = document.getElementById('acaoDirecionar');
         if (!select) return;
         select.innerHTML = '';
+
         const optDef = document.createElement('option');
         optDef.value = ''; optDef.textContent = 'Manter destino atual'; select.appendChild(optDef);
 
-        const optGA = document.createElement('option');
-        optGA.value = 'group:admin'; optGA.textContent = `GRUPO: ${GRUPO_ADMIN_TEXTO}`;
-        optGA.style.backgroundColor = '#ffe082'; select.appendChild(optGA);
+        const restrita = osData && osData.restrita === true;
+
+        if (!restrita) {
+            const optGA = document.createElement('option');
+            optGA.value = 'group:admin'; optGA.textContent = `GRUPO: ${GRUPO_ADMIN_TEXTO}`;
+            optGA.style.backgroundColor = '#ffe082'; select.appendChild(optGA);
+        }
 
         const optGD = document.createElement('option');
         optGD.value = 'group:diretor'; optGD.textContent = `GRUPO: ${GRUPO_DIRETOR_TEXTO}`;
@@ -1350,15 +1442,18 @@
             const u = userMap[uid];
             if (u.funcao === 'admin') admins.push({ uid, nome: u.nome });
             else if (u.funcao === 'diretor') diretores.push({ uid, nome: u.nome });
+            // master nunca é destino
         });
         admins.sort((a,b) => a.nome.localeCompare(b.nome));
         diretores.sort((a,b) => a.nome.localeCompare(b.nome));
 
-        admins.forEach(a => {
-            const o = document.createElement('option');
-            o.value = a.uid; o.textContent = `${a.nome} (admin)`;
-            o.style.backgroundColor = '#ffe082'; select.appendChild(o);
-        });
+        if (!restrita) {
+            admins.forEach(a => {
+                const o = document.createElement('option');
+                o.value = a.uid; o.textContent = `${a.nome} (admin)`;
+                o.style.backgroundColor = '#ffe082'; select.appendChild(o);
+            });
+        }
         diretores.forEach(d => {
             const o = document.createElement('option');
             o.value = d.uid; o.textContent = `${d.nome} (diretor)`;
@@ -1375,6 +1470,11 @@
                 const doc = await transaction.get(docRef);
                 if (!doc.exists) throw new Error('OS não encontrada.');
                 const dataAtual = doc.data();
+
+                if (dataAtual.restrita === true && !ehDiretorOuMaster()) {
+                    throw new Error('Acesso negado.');
+                }
+
                 const historico = dataAtual.historico || [];
 
                 const novaAcao = {
@@ -1392,6 +1492,7 @@
                 let mudouCategoria = false;
                 if (direcionarPara) {
                     novaAcao.direcionado_para = direcionarPara;
+
                     if (direcionarPara === 'group:admin') {
                         novaAcao.direcionado_para_nome = GRUPO_ADMIN_TEXTO;
                         novaAcao.direcionado_para_funcao = 'admin';
@@ -1401,6 +1502,20 @@
                     } else if (userMap[direcionarPara]) {
                         novaAcao.direcionado_para_nome = userMap[direcionarPara].nome;
                         novaAcao.direcionado_para_funcao = userMap[direcionarPara].funcao;
+                    }
+
+                    if (dataAtual.restrita === true) {
+                        if (direcionarPara === 'group:admin') {
+                            throw new Error('OS restrita não pode ser direcionada para a Administração.');
+                        }
+                        const destFuncao = novaAcao.direcionado_para_funcao;
+                        if (destFuncao === 'admin') {
+                            throw new Error('OS restrita não pode ser direcionada para um administrador.');
+                        }
+                    }
+
+                    if (novaAcao.direcionado_para_funcao === 'master') {
+                        throw new Error('Master não recebe direcionamento de OS.');
                     }
 
                     const catAtual = getCategoriaDestino(
@@ -1466,11 +1581,7 @@
         if (el) el.style.display = 'none';
     }
 
-    // ============================================================
-    // CONCLUIR OS — usa descrição digitada + mostra modal com log
-    // ============================================================
     async function concluirOS() {
-        // Pega a descrição digitada (se houver)
         const descricaoEl = document.getElementById('acaoDescricao');
         const descricao = descricaoEl ? descricaoEl.value.trim() : '';
 
@@ -1482,7 +1593,13 @@
             const resultado = await db.runTransaction(async (transaction) => {
                 const doc = await transaction.get(docRef);
                 if (!doc.exists) throw new Error('OS não encontrada.');
-                const historico = doc.data().historico || [];
+                const dataAtual = doc.data();
+
+                if (dataAtual.restrita === true && !ehDiretorOuMaster()) {
+                    throw new Error('Acesso negado.');
+                }
+
+                const historico = dataAtual.historico || [];
                 historico.push({
                     data: agora, acao: 'conclusão',
                     usuario_uid: currentUser.uid,
@@ -1497,17 +1614,11 @@
             osData.historico = resultado;
             osData.atualizado_em = agora;
 
-            // Mostra o modal de log (efêmero)
             mostrarModalConclusao();
-
             renderizarDetalhe();
         } catch (err) { alert('Erro: ' + err.message); }
     }
 
-    // ============================================================
-    // MODAL DE CONCLUSÃO — gera o log e oferece botão copiar
-    // Esse modal só existe naquele instante. Se recarregar, some.
-    // ============================================================
     function mostrarModalConclusao() {
         const baseUrl = window.location.origin + window.location.pathname.replace(/[^\/]*$/, '');
         const urlOS = `${baseUrl}os-detalhe.html?id=${encodeURIComponent(osId)}`;
@@ -1522,17 +1633,14 @@
     }
 
     document.getElementById('btnFecharModal')?.addEventListener('click', fecharModalConclusao);
-
     modalConclusao?.addEventListener('click', (e) => {
         if (e.target === modalConclusao) fecharModalConclusao();
     });
-
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && modalConclusao.classList.contains('active')) {
             fecharModalConclusao();
         }
     });
-
     document.getElementById('btnCopiarLog')?.addEventListener('click', async () => {
         const txt = logConclusao.value;
         if (!txt) return;
@@ -1568,7 +1676,13 @@
             const resultado = await db.runTransaction(async (transaction) => {
                 const doc = await transaction.get(docRef);
                 if (!doc.exists) throw new Error('OS não encontrada.');
-                const historico = doc.data().historico || [];
+                const dataAtual = doc.data();
+
+                if (dataAtual.restrita === true && !ehDiretorOuMaster()) {
+                    throw new Error('Acesso negado.');
+                }
+
+                const historico = dataAtual.historico || [];
                 historico.push({
                     data: agora, acao: 'reabertura',
                     usuario_uid: currentUser.uid,

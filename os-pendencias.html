@@ -330,6 +330,9 @@
 
     const SLA_HORAS = { 'emergencial': 24, 'urgente': 72, 'normal': 168 };
 
+    let currentUser = null;
+    let currentUserData = null;
+
     function salvarUserMapNoCache(map) {
         try {
             sessionStorage.setItem(USER_CACHE_KEY, JSON.stringify({
@@ -410,6 +413,18 @@
     }
     function getUrlOS(osId) {
         return `${getBaseUrl()}os-detalhe.html?id=${encodeURIComponent(osId)}`;
+    }
+
+    function ehDiretorOuMaster() {
+        if (!currentUser) return false;
+        if (currentUser.email === MASTER_EMAIL) return true;
+        const f = currentUserData?.funcao;
+        return f === 'diretor' || f === 'master';
+    }
+    function podeVerOS(os) {
+        if (!os) return false;
+        if (os.restrita !== true) return true;
+        return ehDiretorOuMaster();
     }
 
     function limparSufixoFuncao(nome) {
@@ -535,9 +550,6 @@
         return c.texto;
     }
 
-    // ============================================================
-    // DETENTORES — nome limpo do responsável (pessoa ou grupo)
-    // ============================================================
     function getNomeDetentor(os) {
         const alvo = os.direcionado_para;
         if (!alvo) return null;
@@ -551,15 +563,12 @@
             if (c.subtipo === 'master') return 'Master';
             return c.texto;
         }
-        // Pessoa: usa nome limpo (sem "(funcao)")
         const nomeLimpo = limparSufixoFuncao(os.direcionado_para_nome);
         if (nomeLimpo) return nomeLimpo;
         if (userMap[alvo] && userMap[alvo].nome) return userMap[alvo].nome;
         return alvo;
     }
 
-    // Retorna "Laerte: 9 OS; Decio: 5 OS; Diretoria: 3 OS"
-    // Ordenado por quantidade desc, empate por alfabético
     function getDetentoresTexto(listaOS) {
         if (!listaOS || listaOS.length === 0) return '';
         const mapa = {};
@@ -628,6 +637,7 @@
         allDocs.forEach(os => {
             const s = (os.status || '').toLowerCase();
             if (s !== 'aberta' && s !== 'em_andamento') return;
+            if (!podeVerOS(os)) return;
             if (getPendenteCategoria(os) !== catEsperada) return;
             const alvo = os.direcionado_para;
             if (!alvo) return;
@@ -813,9 +823,6 @@
         return sel[role].has(alvo);
     }
 
-    // ============================================================
-    // CABEÇALHOS — divisores com 10 símbolos + linha de detentores
-    // ============================================================
     function cabecalhoAdmin(listaOS) {
         const linha = '▬▬▬▬▬▬▬▬▬▬';
         const qtdAbertas = listaOS.length;
@@ -880,7 +887,9 @@
 
         const pendentesBase = allDocs.filter(d => {
             const s = (d.status || '').toLowerCase();
-            return s === 'aberta' || s === 'em_andamento';
+            if (s !== 'aberta' && s !== 'em_andamento') return false;
+            if (!podeVerOS(d)) return false;
+            return true;
         });
 
         const linhas = [];
@@ -1107,6 +1116,7 @@
 
     auth.onAuthStateChanged((user) => {
         if (!user) { window.location.href = 'index.html'; return; }
+        currentUser = user;
         registrarAtividade();
         iniciarMonitorTimeout();
 
@@ -1124,11 +1134,13 @@
                     funcao = d.funcao || 'tecnico';
                 }
                 if (user.email === MASTER_EMAIL) funcao = 'master';
+                currentUserData = { nome, funcao };
                 atualizarHeader(nome, funcao);
                 carregarTudo();
             })
             .catch(() => {
                 const funcao = user.email === MASTER_EMAIL ? 'master' : 'tecnico';
+                currentUserData = { nome: user.displayName || user.email, funcao };
                 atualizarHeader(user.displayName || user.email, funcao);
                 carregarTudo();
             });

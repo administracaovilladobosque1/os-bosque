@@ -45,7 +45,7 @@
         .btn-voltar:hover { background: #33691e; }
         .form-group { margin-bottom: 10px; }
         label { display: block; font-weight: 600; font-size: 13px; color: #1b5e20; margin-bottom: 2px; }
-        input, select, textarea { width: 100%; padding: 6px 10px; border: 1px solid #a5d6a7; border-radius: 6px; font-size: 14px; background: #fafffe; }
+        input, select, textarea { width: 100%; padding: 6px 10px; border: 1px solid #a5d6a7; border-radius: 6px; font-size: 14px; background: #fafffe; font-family: inherit; }
         textarea { resize: vertical; min-height: 50px; }
         input:focus, select:focus, textarea:focus { outline: none; border-color: #2e7d32; box-shadow: 0 0 0 2px rgba(46,125,50,0.15); }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -61,6 +61,73 @@
         .bloco-reclamante .bloco-title { color: #2e7d32; }
         .bloco-reclamado .bloco-title { color: #e65100; }
         .bloco .form-group { margin-bottom: 6px; }
+
+        .grupo-restrita {
+            border: 2px dashed #212121;
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-bottom: 14px;
+            background: #fafafa;
+        }
+        .check-restrita {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: #fff;
+            border: 1.5px solid #ccc;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #333;
+            transition: 0.15s;
+            user-select: none;
+        }
+        .check-restrita:hover { background: #f0f0f0; }
+        .check-restrita input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #000;
+            margin: 0;
+            flex-shrink: 0;
+        }
+        .check-restrita .lock-icon { font-size: 18px; }
+        .check-restrita .texto-flag {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .check-restrita .texto-flag strong {
+            font-size: 14px;
+            color: #000;
+        }
+        .check-restrita .texto-flag small {
+            font-size: 11.5px;
+            color: #666;
+            font-weight: 500;
+        }
+        .check-restrita:has(input:checked) {
+            background: #212121;
+            border-color: #000;
+        }
+        .check-restrita:has(input:checked) .texto-flag strong { color: #ffd54f; }
+        .check-restrita:has(input:checked) .texto-flag small { color: #b0b0b0; }
+
+        .aviso-restrita {
+            background: #212121;
+            color: #ffd54f;
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-top: 8px;
+            font-size: 12.5px;
+            line-height: 1.4;
+            display: none;
+            align-items: center;
+            gap: 8px;
+        }
+        .aviso-restrita.ativo { display: flex; }
+        .aviso-restrita .icone-lock { font-size: 16px; }
 
         @media (max-width: 600px) {
             .container { padding: 14px; }
@@ -142,6 +209,22 @@
                 <option value="normal">🟢 Normal (resolver)</option>
             </select>
         </div>
+
+        <div class="grupo-restrita" id="grupoRestrita" style="display:none;">
+            <label class="check-restrita" for="osRestrita">
+                <input type="checkbox" id="osRestrita">
+                <span class="lock-icon">🔒</span>
+                <span class="texto-flag">
+                    <strong>Restrita à diretoria</strong>
+                    <small>Apenas diretores e master poderão ver ou responder. Administradores não terão nenhum acesso.</small>
+                </span>
+            </label>
+            <div class="aviso-restrita" id="avisoRestrita">
+                <span class="icone-lock">⚠️</span>
+                <span>Nesta OS, o direcionamento fica limitado a <strong>diretores</strong> e <strong>grupo Diretores</strong> — administradores foram removidos da lista.</span>
+            </div>
+        </div>
+
         <button type="submit" class="btn btn-success" id="btnAbrir" style="width:100%;">Abrir OS</button>
         <div id="formMessage" class="message"></div>
     </form>
@@ -207,7 +290,6 @@
             window.location.href = 'index.html';
         });
     }
-    // NOVO: bloqueio de usuário inativo
     function fazerLogoutInativo() {
         if (window.__fazendoLogout) return;
         window.__fazendoLogout = true;
@@ -248,10 +330,22 @@
     const formMsg = document.getElementById('formMessage');
     const btnAbrir = document.getElementById('btnAbrir');
     const userHeaderBadge = document.getElementById('userHeaderBadge');
+    const grupoRestrita = document.getElementById('grupoRestrita');
+    const osRestritaCheck = document.getElementById('osRestrita');
+    const avisoRestrita = document.getElementById('avisoRestrita');
 
     let currentUser = null;
+    let currentUserData = null;
     let currentUserNome = '';
     let personagensList = [];
+    let userMapCompleto = null;
+
+    function ehDiretorOuMaster() {
+        if (!currentUser) return false;
+        if (currentUser.email === MASTER_EMAIL) return true;
+        const f = currentUserData?.funcao;
+        return f === 'diretor' || f === 'master';
+    }
 
     function formatarLote(valor) {
         if (!valor) return '';
@@ -276,26 +370,42 @@
     loteReclamante.addEventListener('blur', aplicarFormatacaoLotes);
     loteReclamado.addEventListener('blur', aplicarFormatacaoLotes);
 
-    function montarSelectPersonagens(userMapCompleto) {
+    function montarSelectPersonagens(map) {
+        userMapCompleto = map;
+        reconstruirSelectPersonagens();
+    }
+
+    function reconstruirSelectPersonagens() {
+        if (!userMapCompleto) return;
+        const restrita = osRestritaCheck.checked;
+        const valAtual = direcionadoSelect.value;
+
         const admins = [], diretores = [];
         Object.keys(userMapCompleto).forEach(uid => {
             const u = userMapCompleto[uid];
-            if (u.funcao === 'admin') admins.push({ id: uid, nome: u.nome, funcao: u.funcao });
-            else if (u.funcao === 'diretor') diretores.push({ id: uid, nome: u.nome, funcao: u.funcao });
+            if (u.funcao === 'admin') admins.push({ id: uid, nome: u.nome, funcao: 'admin' });
+            else if (u.funcao === 'diretor') diretores.push({ id: uid, nome: u.nome, funcao: 'diretor' });
+            // master nunca é destino
         });
         admins.sort((a,b) => a.nome.localeCompare(b.nome));
         diretores.sort((a,b) => a.nome.localeCompare(b.nome));
+
         personagensList = [...admins, ...diretores];
 
         let html = '<option value="">Selecione um destino...</option>';
-        html += `<option value="group:admin" style="background-color:#ffe082;">GRUPO: ${GRUPO_ADMIN_TEXTO}</option>`;
+
+        if (!restrita) {
+            html += `<option value="group:admin" style="background-color:#ffe082;">GRUPO: ${GRUPO_ADMIN_TEXTO}</option>`;
+        }
         html += `<option value="group:diretor" style="background-color:#a5d6a7;">GRUPO: ${GRUPO_DIRETOR_TEXTO}</option>`;
 
-        admins.forEach(item => {
-            const isMe = (item.id === currentUser.uid);
-            const label = isMe ? `${item.nome} (você) (admin)` : `${item.nome} (admin)`;
-            html += `<option value="${item.id}" style="background-color:#ffe082;">${label}</option>`;
-        });
+        if (!restrita) {
+            admins.forEach(item => {
+                const isMe = (item.id === currentUser.uid);
+                const label = isMe ? `${item.nome} (você) (admin)` : `${item.nome} (admin)`;
+                html += `<option value="${item.id}" style="background-color:#ffe082;">${label}</option>`;
+            });
+        }
         diretores.forEach(item => {
             const isMe = (item.id === currentUser.uid);
             const label = isMe ? `${item.nome} (você) (diretor)` : `${item.nome} (diretor)`;
@@ -303,10 +413,20 @@
         });
 
         if (admins.length === 0 && diretores.length === 0) {
-            html = '<option value="">Nenhum administrador ou diretor ativo</option>';
+            html = '<option value="">Nenhum usuário ativo</option>';
         }
+
         direcionadoSelect.innerHTML = html;
+
+        if (valAtual && Array.from(direcionadoSelect.options).some(o => o.value === valAtual)) {
+            direcionadoSelect.value = valAtual;
+        }
+
+        if (restrita) avisoRestrita.classList.add('ativo');
+        else avisoRestrita.classList.remove('ativo');
     }
+
+    osRestritaCheck.addEventListener('change', reconstruirSelectPersonagens);
 
     function carregarPersonagens() {
         direcionadoSelect.innerHTML = '<option value="">Carregando...</option>';
@@ -351,9 +471,22 @@
         const lA = loteReclamado.value.trim();
         const valSel = direcionadoSelect.value;
         const prioridade = prioridadeSelect.value;
+        const restrita = ehDiretorOuMaster() && osRestritaCheck.checked;
 
         if (!titulo || !descricao) { showMessage(formMsg, 'Preencha título e descrição.', 'error'); return; }
         if (!valSel) { showMessage(formMsg, 'Selecione para quem direcionar a OS.', 'error'); return; }
+
+        if (restrita) {
+            if (valSel === 'group:admin') {
+                showMessage(formMsg, 'OS restrita não pode ser direcionada para Administração.', 'error');
+                return;
+            }
+            const found = personagensList.find(p => p.id === valSel);
+            if (found && found.funcao === 'admin') {
+                showMessage(formMsg, 'OS restrita não pode ser direcionada para um administrador. Escolha a diretoria ou um diretor.', 'error');
+                return;
+            }
+        }
 
         btnAbrir.disabled = true;
         btnAbrir.textContent = 'Abrindo...';
@@ -381,6 +514,7 @@
                 quadra_reclamante: qR || null, lote_reclamante: lR || null,
                 quadra_reclamada: qA || null, lote_reclamada: lA || null,
                 prioridade, status: 'aberta',
+                restrita: restrita || false,
                 aberto_por: currentUser.uid,
                 aberto_por_nome: currentUserNome,
                 direcionado_para: dirPara,
@@ -393,7 +527,7 @@
                 historico: [{
                     data: agora, acao: 'abertura',
                     usuario_uid: currentUser.uid, usuario: currentUserNome,
-                    mensagem: `OS aberta por ${currentUserNome}`,
+                    mensagem: `OS aberta por ${currentUserNome}${restrita ? ' (🔒 RESTRITA)' : ''}`,
                     direcionado_para: dirPara, direcionado_para_nome: dirNome
                 }],
                 criado_em: agora, atualizado_em: agora
@@ -428,7 +562,6 @@
                 let funcao = 'tecnico';
                 if (doc.exists) {
                     const d = doc.data();
-                    // NOVO: bloqueio de inativos (master é isento)
                     if (user.email !== MASTER_EMAIL && d.status && d.status !== 'ativo') {
                         fazerLogoutInativo();
                         return;
@@ -438,13 +571,19 @@
                 }
                 if (user.email === MASTER_EMAIL) funcao = 'master';
                 currentUserNome = nome;
+                currentUserData = { nome, funcao };
                 atualizarHeader(nome, funcao);
+
+                if (ehDiretorOuMaster()) {
+                    grupoRestrita.style.display = 'block';
+                }
+
                 carregarPersonagens();
             })
             .catch(() => {
-                // Fallback em caso de erro de leitura
                 currentUserNome = user.displayName || user.email;
                 const f = user.email === MASTER_EMAIL ? 'master' : 'tecnico';
+                currentUserData = { nome: currentUserNome, funcao: f };
                 atualizarHeader(currentUserNome, f);
                 carregarPersonagens();
             });
