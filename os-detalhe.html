@@ -71,34 +71,12 @@
         .banner-restrita .icone-lock { font-size: 22px; }
         .banner-restrita .texto-banner { display: flex; flex-direction: column; gap: 2px; }
         .banner-restrita .texto-banner strong { font-size: 15px; }
-        .banner-restrita .texto-banner small {
-            font-size: 11.5px;
-            color: #b0b0b0;
-            font-weight: 500;
-        }
+        .banner-restrita .texto-banner small { font-size: 11.5px; color: #b0b0b0; font-weight: 500; }
 
-        .tela-bloqueio {
-            text-align: center;
-            padding: 60px 20px;
-        }
-        .tela-bloqueio .icone-lock {
-            font-size: 64px;
-            display: block;
-            margin-bottom: 16px;
-            opacity: 0.35;
-        }
-        .tela-bloqueio h2 {
-            color: #666;
-            font-size: 22px;
-            margin-bottom: 8px;
-        }
-        .tela-bloqueio p {
-            color: #888;
-            font-size: 14px;
-            max-width: 400px;
-            margin: 0 auto 20px;
-            line-height: 1.5;
-        }
+        .tela-bloqueio { text-align: center; padding: 60px 20px; }
+        .tela-bloqueio .icone-lock { font-size: 64px; display: block; margin-bottom: 16px; opacity: 0.35; }
+        .tela-bloqueio h2 { color: #666; font-size: 22px; margin-bottom: 8px; }
+        .tela-bloqueio p { color: #888; font-size: 14px; max-width: 400px; margin: 0 auto 20px; line-height: 1.5; }
 
         .os-info { background: #f8f9fa; border-radius: 12px; padding: 16px; margin-bottom: 20px; border: 1px solid #c8e6c9; }
         .os-info .info-row { display: flex; flex-wrap: wrap; padding: 4px 0; border-bottom: 1px solid #e8f5e9; align-items: center; }
@@ -121,13 +99,7 @@
         .badge-emergencial { background: #ffcdd2; color: #b71c1c; font-weight: bold; }
         .badge-urgente { background: #fff9c4; color: #f57f17; font-weight: bold; }
         .badge-normal { background: #c8e6c9; color: #1b5e20; font-weight: bold; }
-        .badge-restrita {
-            background: #000;
-            color: #ffd54f;
-            border: 1px solid #ffd54f;
-            font-weight: 800;
-            letter-spacing: 0.5px;
-        }
+        .badge-restrita { background: #000; color: #ffd54f; border: 1px solid #ffd54f; font-weight: 800; letter-spacing: 0.5px; }
 
         .edicoes-bloco { margin-top: 14px; padding-top: 12px; border-top: 2px dashed #c8e6c9; }
         .edicoes-titulo { font-size: 13px; font-weight: 700; color: #1b5e20; margin-bottom: 6px; }
@@ -156,9 +128,7 @@
             border-left-width: 6px; border-left-style: solid;
             transition: box-shadow 0.2s, transform 0.15s;
         }
-        .historico-container .card:hover {
-            box-shadow: 0 6px 18px rgba(0,80,0,0.16);
-        }
+        .historico-container .card:hover { box-shadow: 0 6px 18px rgba(0,80,0,0.16); }
         .card-admin { background: #fff9c4; border-color: #ffe082; border-left-color: #ffb300; }
         .card-diretor { background: #dcedc8; border-color: #a5d6a7; border-left-color: #66bb6a; }
         .card-master { background: #ffe0b2; border-color: #ffcc80; border-left-color: #fb8c00; }
@@ -176,71 +146,38 @@
         .card .card-body .mensagem { margin-top: 4px; }
 
         .anexo-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            margin-top: 10px;
-            padding: 7px 14px;
-            background: #1565c0;
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            transition: 0.2s;
-            box-shadow: 0 2px 4px rgba(21,101,192,0.25);
+            display: inline-flex; align-items: center; gap: 6px; margin-top: 10px;
+            padding: 7px 14px; background: #1565c0; color: #fff; border: none;
+            border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;
+            text-decoration: none; transition: 0.2s; box-shadow: 0 2px 4px rgba(21,101,192,0.25);
         }
         .anexo-btn:hover { background: #0d47a1; color: #fff; }
         .anexo-btn .icone { font-size: 15px; }
 
         .btn-delete-card {
-            background: #fff;
-            border: 1px solid #c62828;
-            color: #c62828;
-            width: 22px;
-            height: 22px;
-            border-radius: 50%;
-            font-size: 12px;
-            line-height: 1;
-            cursor: pointer;
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: 0.2s;
-            flex-shrink: 0;
-            font-weight: 700;
+            background: #fff; border: 1px solid #c62828; color: #c62828;
+            width: 22px; height: 22px; border-radius: 50%; font-size: 12px;
+            line-height: 1; cursor: pointer; padding: 0;
+            display: flex; align-items: center; justify-content: center;
+            transition: 0.2s; flex-shrink: 0; font-weight: 700;
         }
         .btn-delete-card:hover { background: #c62828; color: #fff; }
 
         .nova-acao .form-group { margin-bottom: 10px; }
         .nova-acao label { font-weight: 600; font-size: 13px; color: #1b5e20; display: block; margin-bottom: 2px; }
-        .nova-acao textarea, .nova-acao select, .nova-acao input[type="url"], .nova-acao input[type="text"] {
+        .nova-acao textarea, .nova-acao select, .nova-acao input[type="url"], .nova-acao input[type="text"], .nova-acao input[type="datetime-local"] {
             width: 100%; padding: 6px 10px; border: 1px solid #a5d6a7;
-            border-radius: 6px; font-size: 14px; background: #fafffe;
-            font-family: inherit;
+            border-radius: 6px; font-size: 14px; background: #fafffe; font-family: inherit;
         }
         .nova-acao textarea { resize: vertical; min-height: 50px; }
-        .nova-acao input[type="url"]:focus, .nova-acao input[type="text"]:focus {
+        .nova-acao input:focus, .nova-acao select:focus, .nova-acao textarea:focus {
             outline: none; border-color: #2e7d32; box-shadow: 0 0 0 2px rgba(46,125,50,0.15);
         }
-        .nova-acao .campo-help {
-            font-size: 11.5px;
-            color: #666;
-            margin-top: 3px;
-            font-style: italic;
-        }
+        .nova-acao .campo-help { font-size: 11.5px; color: #666; margin-top: 3px; font-style: italic; }
         .nova-acao .campo-help.help-restrita {
-            color: #b71c1c;
-            font-style: normal;
-            font-weight: 600;
-            background: #fff3f3;
-            padding: 4px 8px;
-            border-left: 3px solid #c62828;
-            border-radius: 4px;
-            margin-top: 6px;
+            color: #b71c1c; font-style: normal; font-weight: 600;
+            background: #fff3f3; padding: 4px 8px;
+            border-left: 3px solid #c62828; border-radius: 4px; margin-top: 6px;
         }
         .acoes-rodape { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; align-items: center; }
         .acoes-rodape .btn { margin-right: 0; }
@@ -250,11 +187,332 @@
 
         .edit-field { display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap; }
         .edit-field input, .edit-field select, .edit-field textarea {
-            padding: 2px 6px; border: 1px solid #a5d6a7; border-radius: 4px; font-size: 14px;
-            font-family: inherit;
+            padding: 2px 6px; border: 1px solid #a5d6a7; border-radius: 4px;
+            font-size: 14px; font-family: inherit;
         }
         .edit-field textarea { resize: vertical; min-height: 60px; width: 100%; min-width: 220px; }
 
+        /* ============================================================
+           ENQUETE — form (adicionar ação)
+           ============================================================ */
+        .grupo-enquete {
+            border: 2px dashed #6a1b9a;
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-bottom: 10px;
+            background: #faf7fd;
+        }
+        .check-enquete {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: #fff;
+            border: 1.5px solid #ce93d8;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.15s;
+            user-select: none;
+        }
+        .check-enquete:hover { background: #f3e5f5; }
+        .check-enquete input[type="checkbox"] {
+            width: 18px; height: 18px; cursor: pointer;
+            accent-color: #6a1b9a; margin: 0; flex-shrink: 0;
+        }
+        .check-enquete .icone { font-size: 18px; }
+        .check-enquete .texto-flag { display: flex; flex-direction: column; gap: 2px; }
+        .check-enquete .texto-flag strong { font-size: 14px; color: #4a148c; }
+        .check-enquete .texto-flag small { font-size: 11.5px; color: #666; font-weight: 500; }
+        .check-enquete:has(input:checked) {
+            background: #6a1b9a;
+            border-color: #4a148c;
+        }
+        .check-enquete:has(input:checked) .texto-flag strong { color: #fff; }
+        .check-enquete:has(input:checked) .texto-flag small { color: #e1bee7; }
+
+        .campos-enquete {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed #ce93d8;
+        }
+        .campos-enquete label { color: #4a148c; }
+
+        .opcoes-lista-form { display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px; }
+        .opcao-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .opcao-item input[type="text"] {
+            flex: 1;
+            padding: 6px 10px;
+            border: 1px solid #ce93d8;
+            border-radius: 6px;
+            background: #fff;
+            font-size: 14px;
+        }
+        .opcao-item .btn-remover-opcao {
+            background: #fff;
+            border: 1px solid #c62828;
+            color: #c62828;
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 700;
+            line-height: 1;
+            padding: 0;
+            flex-shrink: 0;
+        }
+        .opcao-item .btn-remover-opcao:hover { background: #c62828; color: #fff; }
+
+        .check-multipla {
+            display: flex; align-items: center; gap: 8px;
+            cursor: pointer; user-select: none; margin: 10px 0;
+            font-size: 13px; color: #4a148c; font-weight: 600;
+        }
+        .check-multipla input { width: 16px; height: 16px; accent-color: #6a1b9a; margin: 0; cursor: pointer; }
+
+        .aviso-prazo {
+            font-size: 12px;
+            margin-top: 4px;
+            padding: 6px 10px;
+            border-radius: 6px;
+            display: none;
+        }
+        .aviso-prazo.erro {
+            display: block;
+            background: #ffebee;
+            color: #b71c1c;
+            border-left: 3px solid #c62828;
+        }
+        .aviso-prazo.ok {
+            display: block;
+            background: #e8f5e9;
+            color: #1b5e20;
+            border-left: 3px solid #2e7d32;
+        }
+
+        /* ============================================================
+           ENQUETE — card renderizado
+           ============================================================ */
+        .card-enquete {
+            background: #f3e5f5;
+            border-color: #ce93d8;
+            border-left-color: #6a1b9a;
+        }
+        .card-enquete.encerrada {
+            background: #ede7f6;
+            border-color: #b39ddb;
+            border-left-color: #4527a0;
+        }
+        .enq-titulo {
+            font-size: 16px;
+            font-weight: 700;
+            color: #4a148c;
+            margin: 8px 0;
+            line-height: 1.35;
+        }
+        .enq-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 12px;
+            color: #666;
+        }
+        .enq-meta .badge { font-weight: 700; }
+        .badge-enq-aberta { background: #c8e6c9; color: #1b5e20; }
+        .badge-enq-expirada { background: #ffe0b2; color: #e65100; }
+        .badge-enq-encerrada { background: #b39ddb; color: #311b92; }
+
+        .enq-votacao {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed #ce93d8;
+        }
+        .enq-votacao .opcao-voto {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            margin-bottom: 6px;
+            background: #fff;
+            border: 1.5px solid #ce93d8;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.15s;
+            user-select: none;
+        }
+        .enq-votacao .opcao-voto:hover { background: #f3e5f5; }
+        .enq-votacao .opcao-voto input {
+            width: 18px; height: 18px; accent-color: #6a1b9a;
+            cursor: pointer; margin: 0; flex-shrink: 0;
+        }
+        .enq-votacao .opcao-voto .opcao-texto { font-size: 14px; font-weight: 600; color: #333; }
+        .enq-votacao .opcao-voto.votada {
+            background: #e8f5e9;
+            border-color: #66bb6a;
+        }
+        .enq-votacao .opcao-voto.votada .opcao-texto { color: #1b5e20; }
+        .enq-votacao .opcao-voto.votada::after {
+            content: '✓ seu voto';
+            margin-left: auto;
+            font-size: 11.5px;
+            font-weight: 700;
+            color: #1b5e20;
+            background: #c8e6c9;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .votacao-acoes {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        .votacao-acoes .btn { flex: 1 1 auto; }
+
+        .meu-voto-info {
+            margin-top: 12px;
+            padding: 10px 12px;
+            background: #e8f5e9;
+            border-left: 4px solid #2e7d32;
+            border-radius: 6px;
+            font-size: 13.5px;
+            color: #1b5e20;
+        }
+        .meu-voto-info.abstencao {
+            background: #fff8e1;
+            border-left-color: #f57f17;
+            color: #e65100;
+        }
+        .meu-voto-info strong { display: block; margin-bottom: 3px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* Resultado / listas */
+        .enq-secao {
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px dashed #ce93d8;
+        }
+        .enq-secao-titulo {
+            font-size: 12.5px;
+            font-weight: 700;
+            color: #4a148c;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .resultado-item {
+            margin-bottom: 8px;
+        }
+        .resultado-item .res-linha {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13.5px;
+            margin-bottom: 3px;
+            font-weight: 600;
+            color: #333;
+        }
+        .resultado-item .res-barra {
+            height: 10px;
+            background: #e1bee7;
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+        .resultado-item .res-barra-inner {
+            height: 100%;
+            background: linear-gradient(90deg, #8e24aa 0%, #6a1b9a 100%);
+            border-radius: 6px;
+            transition: width 0.4s ease-out;
+        }
+        .resultado-item.vencedora .res-barra-inner {
+            background: linear-gradient(90deg, #43a047 0%, #2e7d32 100%);
+        }
+        .resultado-item .res-votos {
+            font-size: 12px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .votantes-lista {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .votante-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            font-size: 13px;
+            padding: 6px 10px;
+            background: #fff;
+            border-radius: 6px;
+            border-left: 3px solid #66bb6a;
+        }
+        .votante-item.abstencao { border-left-color: #f57f17; }
+        .votante-item .votante-nome { font-weight: 600; color: #1b5e20; }
+        .votante-item .votante-voto {
+            color: #333;
+            flex: 1;
+            line-height: 1.4;
+        }
+        .votante-item .votante-motivo {
+            font-size: 12px;
+            color: #666;
+            font-style: italic;
+            margin-top: 2px;
+        }
+        .nao-votaram-item {
+            display: inline-block;
+            padding: 4px 12px;
+            margin: 3px 4px 0 0;
+            background: #ffcdd2;
+            color: #b71c1c;
+            border-radius: 20px;
+            font-size: 12.5px;
+            font-weight: 600;
+        }
+
+        .encerrar-area {
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px dashed #ce93d8;
+            text-align: center;
+        }
+        .btn-encerrar {
+            background: #4527a0;
+            color: #fff;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 700;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-encerrar:hover { background: #311b92; }
+
+        .info-encerrada {
+            margin-top: 10px;
+            padding: 10px 12px;
+            background: #ede7f6;
+            border-left: 4px solid #4527a0;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #311b92;
+            line-height: 1.45;
+        }
+
+        /* Modal de aviso de encerrar */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -268,13 +526,15 @@
         .modal-overlay.active { display: flex; }
         .modal-box {
             background: #fff;
-            max-width: 560px;
+            max-width: 500px;
             width: 100%;
             padding: 24px;
             border-radius: 16px;
             box-shadow: 0 8px 30px rgba(0,0,0,0.25);
             border: 2px solid #a5d6a7;
             animation: modalIn 0.2s ease-out;
+            max-height: 90vh;
+            overflow-y: auto;
         }
         @keyframes modalIn {
             from { transform: scale(0.94); opacity: 0; }
@@ -309,11 +569,7 @@
             white-space: pre-wrap;
             word-break: break-word;
         }
-        .modal-box textarea:focus {
-            outline: none;
-            border-color: #2e7d32;
-            box-shadow: 0 0 0 3px rgba(46,125,50,0.15);
-        }
+        .modal-box textarea:focus { outline: none; border-color: #2e7d32; box-shadow: 0 0 0 3px rgba(46,125,50,0.15); }
         .modal-actions {
             display: flex;
             gap: 10px;
@@ -322,6 +578,22 @@
             flex-wrap: wrap;
         }
         .modal-actions .btn { padding: 10px 20px; }
+
+        .modal-aviso-encerrar .modal-box {
+            border-color: #6a1b9a;
+        }
+        .modal-aviso-encerrar h2 { color: #4a148c; }
+        .modal-aviso-encerrar .modal-sub { color: #6a1b9a; }
+        .modal-aviso-encerrar .aviso-lista {
+            background: #f3e5f5;
+            border-left: 4px solid #6a1b9a;
+            border-radius: 6px;
+            padding: 10px 14px;
+            font-size: 13.5px;
+            color: #4a148c;
+            line-height: 1.55;
+            margin: 10px 0;
+        }
 
         @media (max-width: 600px) {
             .container { padding: 14px; }
@@ -336,6 +608,8 @@
             .modal-box { padding: 18px; }
             .modal-actions { flex-direction: column; }
             .modal-actions .btn { width: 100%; }
+            .votacao-acoes { flex-direction: column; }
+            .votacao-acoes .btn { width: 100%; }
         }
     </style>
 </head>
@@ -360,6 +634,7 @@
     <div id="historicoContainer" class="historico-container"><p>Carregando...</p></div>
 </div>
 
+<!-- Modal de log de conclusão -->
 <div class="modal-overlay" id="modalConclusao">
     <div class="modal-box">
         <h2>✅ OS Concluída!</h2>
@@ -368,6 +643,25 @@
         <div class="modal-actions">
             <button type="button" class="btn btn-secondary" id="btnFecharModal">Fechar</button>
             <button type="button" class="btn btn-success" id="btnCopiarLog">📋 Copiar log</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de aviso para encerrar enquete -->
+<div class="modal-overlay modal-aviso-encerrar" id="modalAvisoEncerrar">
+    <div class="modal-box">
+        <h2>🔒 Encerrar enquete agora?</h2>
+        <p class="modal-sub">Leia com atenção antes de confirmar:</p>
+        <div class="aviso-lista">
+            • A partir da sua confirmação, <strong>ninguém mais poderá votar</strong> (nem alterar voto/abstenção).<br>
+            • O <strong>resumo completo</strong> da enquete ficará visível a todos que abrirem a OS.<br>
+            • Será registrado que <strong>você</strong> encerrou, com a data e hora.<br>
+            • Esta ação <strong>não pode ser desfeita</strong>.
+        </div>
+        <p class="modal-sub" style="font-size:12.5px;">Deseja realmente encerrar?</p>
+        <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" id="btnCancelarEncerrar">Cancelar</button>
+            <button type="button" class="btn" id="btnConfirmarEncerrar" style="background:#4527a0;">🔒 Encerrar enquete</button>
         </div>
     </div>
 </div>
@@ -400,12 +694,12 @@
 
     const GRUPO_ADMIN_TEXTO = 'Administração';
     const GRUPO_DIRETOR_TEXTO = 'Diretores';
+    const PRAZO_MAX_MS = 7 * 24 * 60 * 60 * 1000; // 1 semana
 
     function salvarUserMapNoCache(map) {
         try {
             sessionStorage.setItem(USER_CACHE_KEY, JSON.stringify({
-                dados: map,
-                expiraEm: Date.now() + USER_CACHE_TTL
+                dados: map, expiraEm: Date.now() + USER_CACHE_TTL
             }));
         } catch(e) {}
     }
@@ -415,8 +709,7 @@
             if (!raw) return null;
             const obj = JSON.parse(raw);
             if (!obj || !obj.expiraEm || obj.expiraEm < Date.now()) {
-                sessionStorage.removeItem(USER_CACHE_KEY);
-                return null;
+                sessionStorage.removeItem(USER_CACHE_KEY); return null;
             }
             return obj.dados || null;
         } catch(e) { return null; }
@@ -464,7 +757,11 @@
     let osId = null;
     let osData = null;
     let userMap = {};
+    let diretoresAtivos = []; // [{ uid, nome }]
     let editando = { campo: null, original: null };
+
+    // Form da enquete
+    let opcoesEnquete = ['', ''];
 
     const osNumero = document.getElementById('osNumero');
     const osTitulo = document.getElementById('osTitulo');
@@ -475,29 +772,29 @@
     const modalConclusao = document.getElementById('modalConclusao');
     const logConclusao = document.getElementById('logConclusao');
     const bannerRestrita = document.getElementById('bannerRestrita');
+    const modalAvisoEncerrar = document.getElementById('modalAvisoEncerrar');
+
+    let enqueteParaEncerrar = null; // { osId, itemIndex }
 
     function removerAcentos(str) { return str.normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
     function formatarDataHora(dataISO) {
         if (!dataISO) return '—';
         const d = new Date(dataISO);
         if (isNaN(d)) return '—';
-        const dia = String(d.getDate()).padStart(2, '0');
-        const mes = String(d.getMonth()+1).padStart(2, '0');
-        const ano = d.getFullYear();
-        const hora = String(d.getHours()).padStart(2, '0');
-        const min = String(d.getMinutes()).padStart(2, '0');
-        return `${dia}/${mes}/${ano} ${hora}:${min}`;
+        const pad = n => String(n).padStart(2, '0');
+        return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
     }
     function formatarDataHoraCurta(dataISO) {
         if (!dataISO) return '—';
         const d = new Date(dataISO);
         if (isNaN(d)) return '—';
-        const dia = String(d.getDate()).padStart(2, '0');
-        const mes = String(d.getMonth()+1).padStart(2, '0');
-        const ano = String(d.getFullYear()).slice(-2);
-        const hora = String(d.getHours()).padStart(2, '0');
-        const min = String(d.getMinutes()).padStart(2, '0');
-        return `${dia}/${mes}/${ano} ${hora}:${min}`;
+        const pad = n => String(n).padStart(2, '0');
+        return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${String(d.getFullYear()).slice(-2)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+    function toDatetimeLocalString(date) {
+        const d = new Date(date);
+        const pad = n => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
     }
 
     function getFuncao(uid) { return (uid && userMap[uid]) ? userMap[uid].funcao : null; }
@@ -551,12 +848,8 @@
         const nomeLimpo = limparSufixoFuncao(nome);
         const base = (nomeLimpo || '').toLowerCase();
 
-        if (alvo === 'group:admin') {
-            return { tipo: 'grupo', subtipo: 'admin', texto: GRUPO_ADMIN_TEXTO, cor: '#ffe082' };
-        }
-        if (alvo === 'group:diretor') {
-            return { tipo: 'grupo', subtipo: 'diretor', texto: GRUPO_DIRETOR_TEXTO, cor: '#a5d6a7' };
-        }
+        if (alvo === 'group:admin') return { tipo:'grupo', subtipo:'admin', texto: GRUPO_ADMIN_TEXTO, cor:'#ffe082' };
+        if (alvo === 'group:diretor') return { tipo:'grupo', subtipo:'diretor', texto: GRUPO_DIRETOR_TEXTO, cor:'#a5d6a7' };
 
         if (alvo && typeof alvo === 'string' && !alvo.startsWith('group:')) {
             const f = (userMap[alvo] && userMap[alvo].funcao) || funcao || detectarFuncao(nomeLimpo, alvo, null);
@@ -566,18 +859,18 @@
             else if (f === 'master') cor = '#ffcc80';
             let texto = nomeLimpo || '—';
             if (f && !texto.includes('(')) texto = `${texto} (${f})`;
-            return { tipo: 'pessoa', funcao: f, texto, cor };
+            return { tipo:'pessoa', funcao:f, texto, cor };
         }
 
         if (base === 'admin' || base === 'administrador' || base === 'administradores' ||
             base === 'administração' || base === 'administracao') {
-            return { tipo: 'grupo', subtipo: 'admin', texto: GRUPO_ADMIN_TEXTO, cor: '#ffe082' };
+            return { tipo:'grupo', subtipo:'admin', texto: GRUPO_ADMIN_TEXTO, cor:'#ffe082' };
         }
         if (base === 'diretor' || base === 'diretores' || base === 'diretoria') {
-            return { tipo: 'grupo', subtipo: 'diretor', texto: GRUPO_DIRETOR_TEXTO, cor: '#a5d6a7' };
+            return { tipo:'grupo', subtipo:'diretor', texto: GRUPO_DIRETOR_TEXTO, cor:'#a5d6a7' };
         }
         if (base === 'master' || base === 'masters') {
-            return { tipo: 'grupo', subtipo: 'master', texto: 'Masters', cor: '#ffcc80' };
+            return { tipo:'grupo', subtipo:'master', texto: 'Masters', cor:'#ffcc80' };
         }
 
         const f = funcao || detectarFuncao(nomeLimpo, alvo, null);
@@ -587,7 +880,7 @@
         else if (f === 'master') cor = '#ffcc80';
         let texto = nomeLimpo || '—';
         if (f && !texto.includes('(')) texto = `${texto} (${f})`;
-        return { tipo: 'pessoa', funcao: f, texto, cor };
+        return { tipo:'pessoa', funcao:f, texto, cor };
     }
 
     function getCategoriaDestino(direcionadoPara, direcionadoFuncao, direcionadoNome) {
@@ -648,7 +941,6 @@
                 direcionado_para_funcao: osData.direcionado_para_funcao_original || ''
             };
         }
-
         const abertura = (osData.historico || []).find(h => h.acao === 'abertura');
         if (abertura && abertura.direcionado_para) {
             return {
@@ -657,7 +949,6 @@
                 direcionado_para_funcao: abertura.direcionado_para_funcao || ''
             };
         }
-
         return {
             direcionado_para: osData.direcionado_para || '—',
             direcionado_para_nome: osData.direcionado_para_nome || '—',
@@ -672,11 +963,8 @@
         if (f === 'admin') classe = 'badge-admin';
         else if (f === 'diretor') classe = 'badge-diretor';
         else if (f === 'master') classe = 'badge-master';
-
         let texto = nomeLimpo || '—';
-        if (f && !texto.includes('(')) {
-            texto = `${texto} (${f})`;
-        }
+        if (f && !texto.includes('(')) texto = `${texto} (${f})`;
         return `<span class="badge ${classe}">${texto}</span>`;
     }
 
@@ -702,6 +990,12 @@
         return false;
     }
 
+    function ehDiretor() {
+        if (!currentUserData) return false;
+        if (isMaster()) return true; // master tem superpoder
+        return currentUserData.funcao === 'diretor';
+    }
+
     function ehDiretorOuMaster() {
         if (!currentUser) return false;
         if (currentUser.email === MASTER_EMAIL) return true;
@@ -721,15 +1015,11 @@
         if (s === 'concluida') return false;
         if (!currentUser) return false;
         if (isMaster()) return true;
-
         const funcaoUsuario = currentUserData?.funcao;
         if (!funcaoUsuario) return false;
-
         const funcaoAbertura = getFuncao(osData.aberto_por);
-
         if (funcaoUsuario === 'admin' && funcaoAbertura === 'admin') return true;
         if (funcaoUsuario === 'diretor' && funcaoAbertura === 'diretor') return true;
-
         return false;
     }
 
@@ -746,27 +1036,20 @@
 
     function getLabelCampo(campo) {
         const map = {
-            'titulo': 'título',
-            'descricao': 'descrição',
-            'tipo': 'tipo',
-            'prioridade': 'prioridade',
-            'quadra_reclamante': 'reclamante',
-            'lote_reclamante': 'reclamante',
-            'quadra_reclamada': 'reclamado',
-            'lote_reclamada': 'reclamado'
+            'titulo': 'título', 'descricao': 'descrição', 'tipo': 'tipo', 'prioridade': 'prioridade',
+            'quadra_reclamante': 'reclamante', 'lote_reclamante': 'reclamante',
+            'quadra_reclamada': 'reclamado', 'lote_reclamada': 'reclamado'
         };
         return map[campo] || campo;
     }
 
     function getEdicoesAgrupadas() {
         if (!osData.edicoes) return [];
-
         const todas = [];
         Object.keys(osData.edicoes).forEach(campo => {
             (osData.edicoes[campo] || []).forEach(e => {
                 todas.push({
-                    campo,
-                    data: e.data,
+                    campo, data: e.data,
                     valor_antigo: e.valor_antigo == null ? '' : String(e.valor_antigo),
                     valor_novo: e.valor_novo == null ? '' : String(e.valor_novo),
                     usuario_uid: e.usuario_uid || null,
@@ -775,22 +1058,17 @@
                 });
             });
         });
-
         const grupos = {};
         todas.forEach(e => {
             const chave = `${e.data}|${e.usuario_uid || e.usuario || ''}`;
             if (!grupos[chave]) {
                 grupos[chave] = {
-                    data: e.data,
-                    usuario_uid: e.usuario_uid,
-                    usuario: e.usuario,
-                    usuario_funcao: e.usuario_funcao,
-                    campos: []
+                    data: e.data, usuario_uid: e.usuario_uid, usuario: e.usuario,
+                    usuario_funcao: e.usuario_funcao, campos: []
                 };
             }
             grupos[chave].campos.push(e);
         });
-
         const lista = Object.values(grupos).map(g => {
             const porLabel = {};
             g.campos.forEach(c => {
@@ -802,15 +1080,10 @@
             g.mudancas = Object.keys(porLabel).map(label => {
                 const ant = porLabel[label].antigos.map(v => v || '').filter(Boolean).join(' ').trim();
                 const nov = porLabel[label].novos.map(v => v || '').filter(Boolean).join(' ').trim();
-                return {
-                    label,
-                    antigo: ant || '(vazio)',
-                    novo: nov || '(vazio)'
-                };
+                return { label, antigo: ant || '(vazio)', novo: nov || '(vazio)' };
             });
             return g;
         });
-
         lista.sort((a, b) => (a.data || '').localeCompare(b.data || ''));
         return lista;
     }
@@ -818,9 +1091,7 @@
     function renderEdicoesHtml() {
         const lista = getEdicoesAgrupadas();
         if (lista.length === 0) return '';
-        let html = `<div class="edicoes-bloco">
-            <div class="edicoes-titulo">📝 Edições realizadas</div>
-            <div class="edicoes-lista">`;
+        let html = `<div class="edicoes-bloco"><div class="edicoes-titulo">📝 Edições realizadas</div><div class="edicoes-lista">`;
         lista.forEach(g => {
             const nome = getNome(g.usuario_uid) || g.usuario || 'Anônimo';
             const funcao = getFuncao(g.usuario_uid) || g.usuario_funcao || null;
@@ -829,9 +1100,7 @@
             const mud = g.mudancas.map(m =>
                 `<span class="ed-campo">"${m.label}"</span> de <span class="ed-antigo">${m.antigo}</span> para <span class="ed-novo">${m.novo}</span>`
             ).join(', ');
-            html += `<div class="edicoes-item">
-                Edit em <span class="ed-data">${dataFmt}</span> por <span class="ed-user">${nomeComFuncao}</span>: ${mud}
-            </div>`;
+            html += `<div class="edicoes-item">Edit em <span class="ed-data">${dataFmt}</span> por <span class="ed-user">${nomeComFuncao}</span>: ${mud}</div>`;
         });
         html += `</div></div>`;
         return html;
@@ -845,6 +1114,14 @@
         (os.historico || []).forEach(h => {
             if (h.usuario_uid) uids.add(h.usuario_uid);
             if (h.direcionado_para && !h.direcionado_para.startsWith('group:')) uids.add(h.direcionado_para);
+            // enquetes: votantes + criador + encerrador
+            if (h.enquete) {
+                if (h.enquete.criador_uid) uids.add(h.enquete.criador_uid);
+                if (h.enquete.encerrada_por_uid) uids.add(h.enquete.encerrada_por_uid);
+                if (h.enquete.votos) {
+                    Object.keys(h.enquete.votos).forEach(uid => uids.add(uid));
+                }
+            }
         });
         if (os.edicoes) {
             Object.keys(os.edicoes).forEach(campo => {
@@ -885,6 +1162,17 @@
             }
         });
         return resultado;
+    }
+
+    async function carregarDiretoresAtivos() {
+        const snap = await db.collection('usuarios').where('status', '==', 'ativo').get();
+        const lista = [];
+        snap.forEach(doc => {
+            const d = doc.data();
+            if (d.funcao === 'diretor') lista.push({ uid: doc.id, nome: d.nome });
+        });
+        lista.sort((a,b) => a.nome.localeCompare(b.nome));
+        diretoresAtivos = lista;
     }
 
     async function prepararUserMap(os) {
@@ -932,19 +1220,14 @@
         historicoContainer.innerHTML = '<p>Carregando...</p>';
         db.collection('ordens_servico').doc(osId).get()
             .then(async (doc) => {
-                if (!doc.exists) {
-                    renderizarBloqueio();
-                    return;
-                }
+                if (!doc.exists) { renderizarBloqueio(); return; }
                 osData = { id: doc.id, ...doc.data() };
                 if (!osData.edicoes) osData.edicoes = {};
-
-                if (!podeVerOS(osData)) {
-                    renderizarBloqueio();
-                    return;
-                }
-
-                await prepararUserMap(osData);
+                if (!podeVerOS(osData)) { renderizarBloqueio(); return; }
+                await Promise.all([
+                    prepararUserMap(osData),
+                    carregarDiretoresAtivos()
+                ]);
                 renderizarDetalhe();
             })
             .catch(err => {
@@ -959,15 +1242,274 @@
         if (!s) return '';
         s = s.replace(/[\u0000-\u001F\u007F\s]/g, '');
         if (!/^https?:\/\//i.test(s)) {
-            if (/^[\w.-]+\.[a-z]{2,}/i.test(s)) {
-                s = 'https://' + s;
-            } else {
-                return '';
-            }
+            if (/^[\w.-]+\.[a-z]{2,}/i.test(s)) s = 'https://' + s;
+            else return '';
         }
         return s;
     }
 
+    // ============================================================
+    // ENQUETE — helpers
+    // ============================================================
+    function enqueteEstaAberta(enq) {
+        if (!enq) return false;
+        if (enq.status !== 'aberta') return false;
+        const prazo = enq.prazo ? new Date(enq.prazo).getTime() : 0;
+        return prazo > Date.now();
+    }
+
+    function enqueteFoiExpirada(enq) {
+        if (!enq) return false;
+        if (enq.status !== 'aberta') return false; // encerrada manualmente
+        const prazo = enq.prazo ? new Date(enq.prazo).getTime() : 0;
+        return prazo <= Date.now();
+    }
+
+    // Calcula quem ainda não votou (somente diretores ativos)
+    function getNaoVotaram(enq) {
+        const votos = enq.votos || {};
+        return diretoresAtivos.filter(d => !votos[d.uid]);
+    }
+
+    // Retorna lista de votantes (do que já votaram)
+    function getVotantes(enq) {
+        const votos = enq.votos || {};
+        const lista = [];
+        Object.keys(votos).forEach(uid => {
+            const v = votos[uid];
+            lista.push({ uid, ...v });
+        });
+        lista.sort((a,b) => (a.nome || '').localeCompare(b.nome || ''));
+        return lista;
+    }
+
+    // Calcula contagem por opção
+    function calcularContagem(enq) {
+        const contagem = new Array(enq.opcoes.length).fill(0);
+        const votos = enq.votos || {};
+        Object.keys(votos).forEach(uid => {
+            const v = votos[uid];
+            if (v.tipo !== 'voto' || !Array.isArray(v.opcoes)) return;
+            v.opcoes.forEach(idx => {
+                if (idx >= 0 && idx < contagem.length) contagem[idx]++;
+            });
+        });
+        return contagem;
+    }
+
+    // ============================================================
+    // ENQUETE — renderizar card
+    // ============================================================
+    function renderEnquete(item, itemIndex) {
+        const enq = item.enquete;
+        const aberta = enqueteEstaAberta(enq);
+        const expirada = enqueteFoiExpirada(enq);
+
+        const meuUid = currentUser ? currentUser.uid : null;
+        const meuVoto = (enq.votos && enq.votos[meuUid]) ? enq.votos[meuUid] : null;
+        const podeVotarAgora = aberta && ehDiretor();
+
+        const dataFormat = formatarDataHora(item.data);
+        const nomeAutor = getNome(item.usuario_uid) || item.usuario || 'Anônimo';
+        const autorBadge = getBadgePerfil(item.usuario_uid, nomeAutor);
+
+        // Estado da enquete
+        let statusBadge = '';
+        if (aberta) statusBadge = `<span class="badge badge-enq-aberta">🟢 ABERTA</span>`;
+        else if (expirada) statusBadge = `<span class="badge badge-enq-expirada">⏰ PRAZO ENCERRADO</span>`;
+        else statusBadge = `<span class="badge badge-enq-encerrada">🔒 ENCERRADA</span>`;
+
+        let html = `<div class="card card-enquete ${aberta ? '' : 'encerrada'}">`;
+
+        // Header do card
+        html += `<div class="card-header">
+            <span class="usuario">📊 Enquete criada por ${autorBadge}</span>
+            <span class="header-right">
+                <span class="tempo">${dataFormat}</span>
+            </span>
+        </div>`;
+
+        html += `<div class="card-body">`;
+
+        // Descrição da ação (mensagem)
+        if (item.mensagem) {
+            html += `<div style="font-size:13.5px; color:#555; margin-bottom:6px;">${item.mensagem}</div>`;
+        }
+
+        // Pergunta
+        html += `<div class="enq-titulo">${enq.pergunta || '(sem pergunta)'}</div>`;
+
+        // Meta (badge + prazo + tipo)
+        html += `<div class="enq-meta">
+            ${statusBadge}
+            <span>🗓️ Prazo: <strong>${formatarDataHora(enq.prazo)}</strong></span>
+            <span>${enq.multipla ? '☑️ Múltipla escolha' : '🔘 Escolha única'}</span>
+        </div>`;
+
+        // Encerrada?
+        if (item.enquete.encerrada_por_nome) {
+            const nomeEnc = item.enquete.encerrada_por_nome;
+            const dataEnc = formatarDataHora(item.enquete.encerrada_em);
+            html += `<div class="info-encerrada">
+                🔒 Encerrada por <strong>${nomeEnc}</strong> em <strong>${dataEnc}</strong>.
+            </div>`;
+        } else if (expirada) {
+            html += `<div class="info-encerrada" style="background:#fff3e0; border-left-color:#e65100; color:#e65100;">
+                ⏰ Encerrada automaticamente ao fim do prazo (<strong>${formatarDataHora(enq.prazo)}</strong>).
+            </div>`;
+        }
+
+        // ============================================================
+        // MODO VOTAÇÃO (aberta + diretor)
+        // ============================================================
+        if (aberta && podeVotarAgora) {
+            html += `<div class="enq-votacao">`;
+            html += `<div style="font-size:12.5px; font-weight:700; color:#4a148c; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.4px;">Seu voto:</div>`;
+
+            const meuVotoOpcoes = (meuVoto && meuVoto.tipo === 'voto' && Array.isArray(meuVoto.opcoes)) ? meuVoto.opcoes : [];
+            const tipoInput = enq.multipla ? 'checkbox' : 'radio';
+
+            enq.opcoes.forEach((op, idx) => {
+                const votada = meuVotoOpcoes.includes(idx);
+                const inputId = `enq_${itemIndex}_op_${idx}`;
+                html += `
+                    <label class="opcao-voto ${votada ? 'votada' : ''}" for="${inputId}">
+                        <input type="${tipoInput}" name="enq_${itemIndex}_voto" id="${inputId}" data-opcao-idx="${idx}" ${votada ? 'checked' : ''}>
+                        <span class="opcao-texto">${op}</span>
+                    </label>
+                `;
+            });
+
+            html += `<div class="votacao-acoes">
+                <button type="button" class="btn btn-success" data-acao="confirmar-voto" data-item-index="${itemIndex}">
+                    ${meuVoto ? '💾 Salvar novo voto' : '✅ Confirmar voto'}
+                </button>
+                <button type="button" class="btn btn-warning" data-acao="abster" data-item-index="${itemIndex}">
+                    🚫 Abster-se
+                </button>
+            </div>`;
+
+            // Mostra voto atual (se houver)
+            if (meuVoto) {
+                if (meuVoto.tipo === 'abstencao') {
+                    html += `<div class="meu-voto-info abstencao">
+                        <strong>Você se absteve</strong>
+                        Motivo: ${meuVoto.motivo || '(não informado)'}<br>
+                        <span style="font-size:12px;">Se votar, sua abstenção será excluída.</span>
+                    </div>`;
+                } else {
+                    const textos = (meuVoto.opcoes || []).map(i => enq.opcoes[i]).filter(Boolean);
+                    html += `<div class="meu-voto-info">
+                        <strong>Seu voto atual</strong>
+                        ${textos.join(' + ') || '(sem opção)'}
+                    </div>`;
+                }
+            }
+
+            html += `</div>`;
+        }
+        // ============================================================
+        // MODO VISUALIZAÇÃO (encerrada OU não-diretor em aberta)
+        // ============================================================
+        else {
+            if (aberta && !ehDiretor()) {
+                html += `<div style="font-size:13px; color:#6a1b9a; padding:10px 12px; background:#f3e5f5; border-radius:6px; margin-top:10px;">
+                    ℹ️ Apenas <strong>diretores</strong> e <strong>master</strong> podem votar nesta enquete.
+                </div>`;
+            }
+        }
+
+        // ============================================================
+        // RESULTADO — sempre visível quando encerrada OU quando é a enquete do próprio diretor
+        // ============================================================
+        const mostrarResultado = !aberta || ehDiretor(); // diretor vê contagem mesmo aberta
+        if (mostrarResultado) {
+            const contagem = calcularContagem(enq);
+            const totalVotos = contagem.reduce((a,b) => a+b, 0);
+            const maxVotos = Math.max(...contagem, 0);
+
+            html += `<div class="enq-secao">
+                <div class="enq-secao-titulo">📊 Resultado${aberta ? ' parcial' : ''} (${totalVotos} voto${totalVotos === 1 ? '' : 's'})</div>`;
+            enq.opcoes.forEach((op, idx) => {
+                const v = contagem[idx];
+                const pct = totalVotos > 0 ? Math.round((v / totalVotos) * 100) : 0;
+                const vencedora = !aberta && maxVotos > 0 && v === maxVotos;
+                html += `
+                    <div class="resultado-item ${vencedora ? 'vencedora' : ''}">
+                        <div class="res-linha">
+                            <span>${op}</span>
+                            <span class="res-votos">${v} voto${v === 1 ? '' : 's'} · ${pct}%</span>
+                        </div>
+                        <div class="res-barra">
+                            <div class="res-barra-inner" style="width: ${pct}%;"></div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += `</div>`;
+
+            // Quem votou o quê
+            const votantes = getVotantes(enq);
+            if (votantes.length > 0) {
+                html += `<div class="enq-secao">
+                    <div class="enq-secao-titulo">🗳️ Votos registrados (${votantes.length})</div>
+                    <div class="votantes-lista">`;
+                votantes.forEach(v => {
+                    const nome = v.nome || getNome(v.uid) || v.uid;
+                    if (v.tipo === 'abstencao') {
+                        html += `<div class="votante-item abstencao">
+                            <span class="votante-nome">${nome}</span>
+                            <div class="votante-voto">
+                                🚫 Absteve-se
+                                <div class="votante-motivo">Motivo: ${v.motivo || '(não informado)'}</div>
+                            </div>
+                        </div>`;
+                    } else {
+                        const textos = (v.opcoes || []).map(i => enq.opcoes[i]).filter(Boolean);
+                        html += `<div class="votante-item">
+                            <span class="votante-nome">${nome}</span>
+                            <span class="votante-voto">votou em: ${textos.join(' + ') || '—'}</span>
+                        </div>`;
+                    }
+                });
+                html += `</div></div>`;
+            }
+
+            // Não votaram
+            const naoVotaram = getNaoVotaram(enq);
+            if (naoVotaram.length > 0) {
+                html += `<div class="enq-secao">
+                    <div class="enq-secao-titulo">⏳ Não votaram ainda (${naoVotaram.length})</div>
+                    <div>`;
+                naoVotaram.forEach(d => {
+                    html += `<span class="nao-votaram-item">${d.nome}</span>`;
+                });
+                html += `</div></div>`;
+            } else {
+                html += `<div class="enq-secao">
+                    <div class="enq-secao-titulo">✅ Todos os diretores votaram</div>
+                </div>`;
+            }
+        }
+
+        // ============================================================
+        // BOTÃO ENCERRAR — só diretor/master, só se aberta
+        // ============================================================
+        if (aberta && ehDiretor()) {
+            html += `<div class="encerrar-area">
+                <button type="button" class="btn-encerrar" data-acao="abrir-modal-encerrar" data-item-index="${itemIndex}">
+                    🔒 Encerrar enquete agora
+                </button>
+            </div>`;
+        }
+
+        html += `</div></div>`; // card-body + card
+        return html;
+    }
+
+    // ============================================================
+    // RENDER PRINCIPAL
+    // ============================================================
     function renderizarDetalhe() {
         if (!osData) return;
         osNumero.textContent = osData.numero || '---';
@@ -999,7 +1541,6 @@
         if (tipoCap !== '—') tipoCap = tipoCap.charAt(0).toUpperCase() + tipoCap.slice(1);
 
         const prioLabel = getValorExibicao('prioridade', osData.prioridade) || osData.prioridade;
-
         const dirOriginalData = getDirecionamentoOriginal();
         const dirBadgeOriginal = getBadgeDirecionado(dirOriginalData);
 
@@ -1049,8 +1590,8 @@
         });
 
         infoHTML += renderEdicoesHtml();
-
         osInfoContainer.innerHTML = infoHTML;
+
         const fAbertura = getFuncao(osData.aberto_por);
         const cor = fAbertura === 'admin' ? '#ffe082' :
                     fAbertura === 'diretor' ? '#a5d6a7' :
@@ -1068,9 +1609,17 @@
 
         historico.sort((a, b) => (a.data || '').localeCompare(b.data || ''));
 
-        historico.forEach((item) => {
+        historico.forEach((item, idx) => {
             if (item.acao === 'abertura') return;
             if (item.acao === 'edicao') return;
+
+            // ============================================================
+            // ENQUETE — renderiza card especial
+            // ============================================================
+            if (item.acao === 'enquete' && item.enquete) {
+                html += renderEnquete(item, idx);
+                return;
+            }
 
             const uid = item.usuario_uid;
             const nome = getNome(uid) || item.usuario || 'Anônimo';
@@ -1101,11 +1650,8 @@
             if (dataAnterior !== null) {
                 const diffH = Math.floor((dataItem - dataAnterior) / (1000 * 60 * 60));
                 const texto = formatarTempoDecorrido(diffH);
-                if (cardIndex === 0) {
-                    tempoDecorrido = ` (${texto} após abertura)`;
-                } else {
-                    tempoDecorrido = ` (${texto} após resposta anterior)`;
-                }
+                if (cardIndex === 0) tempoDecorrido = ` (${texto} após abertura)`;
+                else tempoDecorrido = ` (${texto} após resposta anterior)`;
             }
             dataAnterior = dataItem;
             cardIndex++;
@@ -1139,6 +1685,9 @@
             `;
         });
 
+        // ============================================================
+        // CARD "ADICIONAR AÇÃO" / CONCLUÍDA
+        // ============================================================
         if (statusConcluida) {
             html += `<div class="card card-ultimo card-concluida">`;
             html += `<div class="card-header"><span class="usuario" style="font-size:15px;">✅ OS Concluída</span></div>`;
@@ -1149,6 +1698,9 @@
             }
             html += `</div></div>`;
         } else {
+            // Mostrar enquete form só para diretor/master
+            const mostrarFormEnquete = ehDiretor();
+
             html += `<div class="card card-ultimo">`;
             html += `<div class="card-header"><span class="usuario" style="font-size:15px;">➕ Adicionar Ação</span></div>`;
             html += `<div class="card-body">`;
@@ -1168,6 +1720,49 @@
                         <select id="acaoDirecionar"><option value="">Manter destino atual</option></select>
                         ${osData.restrita === true ? `<div class="campo-help help-restrita">🔒 Em OS restrita, o direcionamento é limitado a diretores e grupo Diretores — administradores foram removidos.</div>` : ''}
                     </div>
+            `;
+
+            if (mostrarFormEnquete) {
+                html += `
+                    <div class="grupo-enquete">
+                        <label class="check-enquete" for="chkAbrirEnquete">
+                            <input type="checkbox" id="chkAbrirEnquete">
+                            <span class="icone">📊</span>
+                            <span class="texto-flag">
+                                <strong>Abrir enquete nesta ação</strong>
+                                <small>Diretores poderão votar nas opções abaixo dentro do prazo (máx. 1 semana).</small>
+                            </span>
+                        </label>
+
+                        <div class="campos-enquete" id="camposEnquete" style="display:none;">
+                            <div class="form-group">
+                                <label for="enqPergunta">Pergunta da enquete *</label>
+                                <input type="text" id="enqPergunta" placeholder="Ex: Aprovar o orçamento da reforma do portão?">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Opções *</label>
+                                <div class="opcoes-lista-form" id="listaOpcoesForm"></div>
+                                <button type="button" class="btn btn-sm btn-secondary" id="btnAddOpcao">➕ Adicionar opção</button>
+                            </div>
+
+                            <label class="check-multipla" for="enqMultipla">
+                                <input type="checkbox" id="enqMultipla">
+                                <span>Permitir escolher mais de uma opção</span>
+                            </label>
+
+                            <div class="form-group">
+                                <label for="enqPrazo">Prazo máximo para resposta *</label>
+                                <input type="datetime-local" id="enqPrazo">
+                                <div class="campo-help">Máximo: 1 semana a partir de agora.</div>
+                                <div class="aviso-prazo" id="avisoPrazo"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            html += `
                     <div class="acoes-rodape">
                         <button type="submit" class="btn btn-success">➕ Adicionar Ação</button>
             `;
@@ -1179,6 +1774,7 @@
 
         historicoContainer.innerHTML = html;
 
+        // Handlers
         document.getElementById('btnConcluir')?.addEventListener('click', concluirOS);
         document.getElementById('btnReabrir')?.addEventListener('click', reabrirOS);
 
@@ -1186,6 +1782,28 @@
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 apagarAcao(btn.dataset.data);
+            });
+        });
+
+        // ============================================================
+        // HANDLERS DE ENQUETE
+        // ============================================================
+        historicoContainer.querySelectorAll('[data-acao="confirmar-voto"]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const idx = parseInt(btn.dataset.itemIndex, 10);
+                confirmarVoto(idx);
+            });
+        });
+        historicoContainer.querySelectorAll('[data-acao="abster"]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const idx = parseInt(btn.dataset.itemIndex, 10);
+                absterNaEnquete(idx);
+            });
+        });
+        historicoContainer.querySelectorAll('[data-acao="abrir-modal-encerrar"]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const idx = parseInt(btn.dataset.itemIndex, 10);
+                abrirModalEncerrar(idx);
             });
         });
 
@@ -1201,12 +1819,26 @@
                 if (linkRaw) {
                     link = sanitizarUrl(linkRaw);
                     if (!link) {
-                        mostrarMensagemAcao('O link informado não é válido. Cole uma URL completa (ex: https://drive.google.com/...).', 'error');
+                        mostrarMensagemAcao('O link informado não é válido.', 'error');
                         return;
                     }
                 }
-                adicionarAcao(desc, dir, link);
+
+                // Verifica se enquete está ativa
+                const chkEnq = document.getElementById('chkAbrirEnquete');
+                const abrirEnquete = chkEnq && chkEnq.checked;
+
+                let dadosEnquete = null;
+                if (abrirEnquete) {
+                    dadosEnquete = validarEnqueteForm();
+                    if (!dadosEnquete) return; // erro já mostrado
+                }
+
+                adicionarAcao(desc, dir, link, dadosEnquete);
             });
+
+            // Setup do form de enquete
+            setupFormEnquete();
         }
 
         document.querySelectorAll('.btn-edit').forEach(btn => {
@@ -1216,11 +1848,346 @@
         });
     }
 
-    async function apagarAcao(dataISO) {
-        if (!isMaster()) {
-            alert('Apenas o master pode apagar ações.');
+    // ============================================================
+    // FORM ENQUETE — setup
+    // ============================================================
+    function setupFormEnquete() {
+        const chk = document.getElementById('chkAbrirEnquete');
+        const campos = document.getElementById('camposEnquete');
+        const btnAdd = document.getElementById('btnAddOpcao');
+        const inputPrazo = document.getElementById('enqPrazo');
+        const avisoPrazo = document.getElementById('avisoPrazo');
+
+        if (!chk || !campos) return;
+
+        // Inicializa opções
+        opcoesEnquete = ['', ''];
+        renderOpcoesForm();
+
+        // Data máxima = agora + 7 dias
+        const agora = new Date();
+        const max = new Date(agora.getTime() + PRAZO_MAX_MS);
+        inputPrazo.min = toDatetimeLocalString(agora);
+        inputPrazo.max = toDatetimeLocalString(max);
+
+        // Mostrar/esconder campos
+        chk.addEventListener('change', () => {
+            campos.style.display = chk.checked ? 'block' : 'none';
+            if (chk.checked) {
+                // sugere data 1 dia à frente por padrão
+                if (!inputPrazo.value) {
+                    const sugestao = new Date(agora.getTime() + 24 * 60 * 60 * 1000);
+                    inputPrazo.value = toDatetimeLocalString(sugestao);
+                }
+                validarPrazo();
+            }
+        });
+
+        btnAdd.addEventListener('click', () => {
+            if (opcoesEnquete.length >= 10) {
+                alert('Máximo de 10 opções.');
+                return;
+            }
+            opcoesEnquete.push('');
+            renderOpcoesForm();
+        });
+
+        inputPrazo.addEventListener('input', validarPrazo);
+
+        function validarPrazo() {
+            const val = inputPrazo.value;
+            if (!val) {
+                avisoPrazo.className = 'aviso-prazo';
+                avisoPrazo.textContent = '';
+                return false;
+            }
+            const d = new Date(val);
+            const agora = new Date();
+            const max = new Date(agora.getTime() + PRAZO_MAX_MS);
+
+            if (d <= agora) {
+                avisoPrazo.className = 'aviso-prazo erro';
+                avisoPrazo.textContent = '⚠️ O prazo deve ser no futuro.';
+                return false;
+            }
+            if (d > max) {
+                avisoPrazo.className = 'aviso-prazo erro';
+                avisoPrazo.textContent = '⚠️ O prazo máximo é de 1 semana a partir de agora.';
+                return false;
+            }
+            const dias = Math.ceil((d - agora) / (24 * 60 * 60 * 1000));
+            avisoPrazo.className = 'aviso-prazo ok';
+            avisoPrazo.textContent = `✓ Prazo válido — encerra em ${dias} dia${dias === 1 ? '' : 's'}.`;
+            return true;
+        }
+    }
+
+    function renderOpcoesForm() {
+        const container = document.getElementById('listaOpcoesForm');
+        if (!container) return;
+        container.innerHTML = '';
+        opcoesEnquete.forEach((val, idx) => {
+            const wrap = document.createElement('div');
+            wrap.className = 'opcao-item';
+            wrap.innerHTML = `
+                <input type="text" data-op-idx="${idx}" placeholder="Opção ${idx+1}" value="${val.replace(/"/g, '&quot;')}">
+                <button type="button" class="btn-remover-opcao" data-remover-op="${idx}" title="Remover">✕</button>
+            `;
+            container.appendChild(wrap);
+        });
+
+        // Handlers
+        container.querySelectorAll('input[data-op-idx]').forEach(inp => {
+            inp.addEventListener('input', (e) => {
+                opcoesEnquete[parseInt(e.target.dataset.opIdx, 10)] = e.target.value;
+            });
+        });
+        container.querySelectorAll('[data-remover-op]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (opcoesEnquete.length <= 2) {
+                    alert('A enquete precisa de pelo menos 2 opções.');
+                    return;
+                }
+                opcoesEnquete.splice(parseInt(btn.dataset.removerOp, 10), 1);
+                renderOpcoesForm();
+            });
+        });
+    }
+
+    function validarEnqueteForm() {
+        const pergunta = (document.getElementById('enqPergunta').value || '').trim();
+        const multipla = document.getElementById('enqMultipla').checked;
+        const prazoStr = document.getElementById('enqPrazo').value;
+
+        if (!pergunta) {
+            mostrarMensagemAcao('Preencha a pergunta da enquete.', 'error');
+            return null;
+        }
+
+        // Limpa opções vazias das pontas, valida
+        const opcoes = opcoesEnquete.map(o => (o || '').trim()).filter(Boolean);
+        if (opcoes.length < 2) {
+            mostrarMensagemAcao('A enquete precisa de pelo menos 2 opções preenchidas.', 'error');
+            return null;
+        }
+
+        if (!prazoStr) {
+            mostrarMensagemAcao('Defina o prazo da enquete.', 'error');
+            return null;
+        }
+
+        const prazo = new Date(prazoStr);
+        const agora = new Date();
+        const max = new Date(agora.getTime() + PRAZO_MAX_MS);
+
+        if (prazo <= agora) {
+            mostrarMensagemAcao('O prazo deve ser no futuro.', 'error');
+            return null;
+        }
+        if (prazo > max) {
+            mostrarMensagemAcao('O prazo máximo é de 1 semana a partir de agora.', 'error');
+            return null;
+        }
+
+        return {
+            pergunta,
+            opcoes,
+            multipla,
+            prazoISO: prazo.toISOString()
+        };
+    }
+
+    // ============================================================
+    // VOTAR
+    // ============================================================
+    async function confirmarVoto(itemIndex) {
+        if (!ehDiretor()) {
+            alert('Apenas diretores e master podem votar.');
             return;
         }
+
+        const item = (osData.historico || [])[itemIndex];
+        if (!item || !item.enquete) return;
+        const enq = item.enquete;
+
+        if (!enqueteEstaAberta(enq)) {
+            alert('Esta enquete não está mais aberta para votação.');
+            carregarOS();
+            return;
+        }
+
+        // Coleta opções marcadas
+        const inputs = historicoContainer.querySelectorAll(`input[name="enq_${itemIndex}_voto"]:checked`);
+        const indices = Array.from(inputs).map(inp => parseInt(inp.dataset.opcaoIdx, 10));
+
+        if (indices.length === 0) {
+            alert('Selecione pelo menos uma opção.');
+            return;
+        }
+        if (!enq.multipla && indices.length > 1) {
+            alert('Esta enquete permite apenas uma opção.');
+            return;
+        }
+
+        // Se estava abstendo, confirma a troca
+        const meuUid = currentUser.uid;
+        const meuVotoAtual = enq.votos && enq.votos[meuUid];
+        if (meuVotoAtual && meuVotoAtual.tipo === 'abstencao') {
+            const ok = confirm('Ao votar, sua abstenção anterior será excluída. Continuar?');
+            if (!ok) return;
+        }
+
+        try {
+            await db.runTransaction(async (transaction) => {
+                const docRef = db.collection('ordens_servico').doc(osId);
+                const doc = await transaction.get(docRef);
+                if (!doc.exists) throw new Error('OS não encontrada.');
+                const data = doc.data();
+                const hist = data.historico || [];
+                const it = hist[itemIndex];
+                if (!it || !it.enquete) throw new Error('Enquete não encontrada.');
+                const eq = it.enquete;
+
+                if (eq.status !== 'aberta') throw new Error('Enquete já foi encerrada.');
+                if (new Date(eq.prazo).getTime() <= Date.now()) throw new Error('Prazo já expirou.');
+
+                if (!eq.votos) eq.votos = {};
+                eq.votos[meuUid] = {
+                    nome: currentUserData?.nome || currentUser.email,
+                    tipo: 'voto',
+                    opcoes: indices,
+                    motivo: null,
+                    votado_em: new Date().toISOString()
+                };
+
+                transaction.update(docRef, { historico: hist, atualizado_em: new Date().toISOString() });
+            });
+            carregarOS();
+        } catch (err) {
+            console.error(err);
+            alert('Erro ao votar: ' + err.message);
+        }
+    }
+
+    async function absterNaEnquete(itemIndex) {
+        if (!ehDiretor()) {
+            alert('Apenas diretores e master podem votar.');
+            return;
+        }
+
+        const item = (osData.historico || [])[itemIndex];
+        if (!item || !item.enquete) return;
+        const enq = item.enquete;
+
+        if (!enqueteEstaAberta(enq)) {
+            alert('Esta enquete não está mais aberta.');
+            carregarOS();
+            return;
+        }
+
+        const motivo = prompt('Motivo da abstenção (obrigatório):');
+        if (motivo === null) return; // cancelou
+        const motivoLimpo = motivo.trim();
+        if (!motivoLimpo) {
+            alert('O motivo da abstenção é obrigatório.');
+            return;
+        }
+
+        try {
+            await db.runTransaction(async (transaction) => {
+                const docRef = db.collection('ordens_servico').doc(osId);
+                const doc = await transaction.get(docRef);
+                if (!doc.exists) throw new Error('OS não encontrada.');
+                const data = doc.data();
+                const hist = data.historico || [];
+                const it = hist[itemIndex];
+                if (!it || !it.enquete) throw new Error('Enquete não encontrada.');
+                const eq = it.enquete;
+
+                if (eq.status !== 'aberta') throw new Error('Enquete já foi encerrada.');
+                if (new Date(eq.prazo).getTime() <= Date.now()) throw new Error('Prazo já expirou.');
+
+                if (!eq.votos) eq.votos = {};
+                eq.votos[currentUser.uid] = {
+                    nome: currentUserData?.nome || currentUser.email,
+                    tipo: 'abstencao',
+                    opcoes: null,
+                    motivo: motivoLimpo,
+                    votado_em: new Date().toISOString()
+                };
+
+                transaction.update(docRef, { historico: hist, atualizado_em: new Date().toISOString() });
+            });
+            carregarOS();
+        } catch (err) {
+            console.error(err);
+            alert('Erro ao abster-se: ' + err.message);
+        }
+    }
+
+    // ============================================================
+    // ENCERRAR ENQUETE
+    // ============================================================
+    function abrirModalEncerrar(itemIndex) {
+        if (!ehDiretor()) {
+            alert('Apenas diretores e master podem encerrar enquetes.');
+            return;
+        }
+        enqueteParaEncerrar = itemIndex;
+        modalAvisoEncerrar.classList.add('active');
+    }
+
+    document.getElementById('btnCancelarEncerrar')?.addEventListener('click', () => {
+        modalAvisoEncerrar.classList.remove('active');
+        enqueteParaEncerrar = null;
+    });
+
+    document.getElementById('btnConfirmarEncerrar')?.addEventListener('click', async () => {
+        if (enqueteParaEncerrar === null) return;
+        const itemIndex = enqueteParaEncerrar;
+        modalAvisoEncerrar.classList.remove('active');
+        enqueteParaEncerrar = null;
+
+        try {
+            await db.runTransaction(async (transaction) => {
+                const docRef = db.collection('ordens_servico').doc(osId);
+                const doc = await transaction.get(docRef);
+                if (!doc.exists) throw new Error('OS não encontrada.');
+                const data = doc.data();
+                const hist = data.historico || [];
+                const it = hist[itemIndex];
+                if (!it || !it.enquete) throw new Error('Enquete não encontrada.');
+                const eq = it.enquete;
+
+                if (eq.status === 'encerrada') throw new Error('Enquete já está encerrada.');
+
+                eq.status = 'encerrada';
+                eq.encerrada_em = new Date().toISOString();
+                eq.encerrada_por_uid = currentUser.uid;
+                eq.encerrada_por_nome = currentUserData?.nome || currentUser.email;
+
+                transaction.update(docRef, { historico: hist, atualizado_em: new Date().toISOString() });
+            });
+            carregarOS();
+        } catch (err) {
+            console.error(err);
+            alert('Erro ao encerrar enquete: ' + err.message);
+        }
+    });
+
+    // Fecha modal clicando fora
+    modalAvisoEncerrar?.addEventListener('click', (e) => {
+        if (e.target === modalAvisoEncerrar) {
+            modalAvisoEncerrar.classList.remove('active');
+            enqueteParaEncerrar = null;
+        }
+    });
+
+    // ============================================================
+    // ADICIONAR AÇÃO / APAGAR / EDIÇÃO / CONCLUSÃO
+    // ============================================================
+    async function apagarAcao(dataISO) {
+        if (!isMaster()) { alert('Apenas o master pode apagar ações.'); return; }
         if (!confirm('Apagar esta ação? Esta operação não pode ser desfeita.')) return;
 
         const docRef = db.collection('ordens_servico').doc(osId);
@@ -1442,7 +2409,6 @@
             const u = userMap[uid];
             if (u.funcao === 'admin') admins.push({ uid, nome: u.nome });
             else if (u.funcao === 'diretor') diretores.push({ uid, nome: u.nome });
-            // master nunca é destino
         });
         admins.sort((a,b) => a.nome.localeCompare(b.nome));
         diretores.sort((a,b) => a.nome.localeCompare(b.nome));
@@ -1461,7 +2427,7 @@
         });
     }
 
-    async function adicionarAcao(descricao, direcionarPara, linkAnexos) {
+    async function adicionarAcao(descricao, direcionarPara, linkAnexos, dadosEnquete) {
         const agora = new Date().toISOString();
         const docRef = db.collection('ordens_servico').doc(osId);
 
@@ -1478,15 +2444,32 @@
                 const historico = dataAtual.historico || [];
 
                 const novaAcao = {
-                    data: agora, acao: 'ação',
+                    data: agora,
+                    acao: dadosEnquete ? 'enquete' : 'ação',
                     usuario_uid: currentUser.uid,
                     usuario: currentUserData?.nome || 'Usuário',
                     usuario_funcao: currentUserData?.funcao || (isMaster() ? 'master' : null),
                     mensagem: descricao
                 };
 
-                if (linkAnexos) {
-                    novaAcao.link_anexos = linkAnexos;
+                if (linkAnexos) novaAcao.link_anexos = linkAnexos;
+
+                // Se é enquete, monta o objeto
+                if (dadosEnquete) {
+                    novaAcao.enquete = {
+                        id: 'enq_' + Date.now(),
+                        pergunta: dadosEnquete.pergunta,
+                        opcoes: dadosEnquete.opcoes,
+                        multipla: dadosEnquete.multipla,
+                        prazo: dadosEnquete.prazoISO,
+                        criador_uid: currentUser.uid,
+                        criador_nome: currentUserData?.nome || currentUser.email,
+                        status: 'aberta',
+                        encerrada_em: null,
+                        encerrada_por_uid: null,
+                        encerrada_por_nome: null,
+                        votos: {}
+                    };
                 }
 
                 let mudouCategoria = false;
@@ -1505,13 +2488,9 @@
                     }
 
                     if (dataAtual.restrita === true) {
-                        if (direcionarPara === 'group:admin') {
-                            throw new Error('OS restrita não pode ser direcionada para a Administração.');
-                        }
+                        if (direcionarPara === 'group:admin') throw new Error('OS restrita não pode ser direcionada para a Administração.');
                         const destFuncao = novaAcao.direcionado_para_funcao;
-                        if (destFuncao === 'admin') {
-                            throw new Error('OS restrita não pode ser direcionada para um administrador.');
-                        }
+                        if (destFuncao === 'admin') throw new Error('OS restrita não pode ser direcionada para um administrador.');
                     }
 
                     if (novaAcao.direcionado_para_funcao === 'master') {
@@ -1538,9 +2517,7 @@
                     upd.direcionado_para = direcionarPara;
                     upd.direcionado_para_nome = novaAcao.direcionado_para_nome;
                     upd.direcionado_para_funcao = novaAcao.direcionado_para_funcao || '';
-                    if (mudouCategoria) {
-                        upd.direcionado_em = agora;
-                    }
+                    if (mudouCategoria) upd.direcionado_em = agora;
                 }
                 transaction.update(docRef, upd);
                 return { historico, upd, mudouCategoria };
@@ -1560,7 +2537,7 @@
             document.getElementById('acaoDescricao').value = '';
             document.getElementById('acaoLink').value = '';
             document.getElementById('acaoDirecionar').value = '';
-            mostrarMensagemAcao('✅ Ação adicionada com sucesso!', 'success');
+            mostrarMensagemAcao(dadosEnquete ? '✅ Enquete criada com sucesso!' : '✅ Ação adicionada com sucesso!', 'success');
             renderizarDetalhe();
             setTimeout(esconderMensagemAcao, 3000);
         } catch (err) {
@@ -1584,7 +2561,6 @@
     async function concluirOS() {
         const descricaoEl = document.getElementById('acaoDescricao');
         const descricao = descricaoEl ? descricaoEl.value.trim() : '';
-
         if (!confirm('Deseja concluir esta OS?')) return;
 
         const agora = new Date().toISOString();
@@ -1594,10 +2570,7 @@
                 const doc = await transaction.get(docRef);
                 if (!doc.exists) throw new Error('OS não encontrada.');
                 const dataAtual = doc.data();
-
-                if (dataAtual.restrita === true && !ehDiretorOuMaster()) {
-                    throw new Error('Acesso negado.');
-                }
+                if (dataAtual.restrita === true && !ehDiretorOuMaster()) throw new Error('Acesso negado.');
 
                 const historico = dataAtual.historico || [];
                 historico.push({
@@ -1613,7 +2586,6 @@
             osData.status = 'concluida';
             osData.historico = resultado;
             osData.atualizado_em = agora;
-
             mostrarModalConclusao();
             renderizarDetalhe();
         } catch (err) { alert('Erro: ' + err.message); }
@@ -1637,8 +2609,12 @@
         if (e.target === modalConclusao) fecharModalConclusao();
     });
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && modalConclusao.classList.contains('active')) {
-            fecharModalConclusao();
+        if (e.key === 'Escape') {
+            if (modalConclusao.classList.contains('active')) fecharModalConclusao();
+            if (modalAvisoEncerrar.classList.contains('active')) {
+                modalAvisoEncerrar.classList.remove('active');
+                enqueteParaEncerrar = null;
+            }
         }
     });
     document.getElementById('btnCopiarLog')?.addEventListener('click', async () => {
@@ -1659,10 +2635,7 @@
             const original = btn.textContent;
             btn.textContent = '✅ Copiado!';
             btn.disabled = true;
-            setTimeout(() => {
-                btn.textContent = original;
-                btn.disabled = false;
-            }, 2000);
+            setTimeout(() => { btn.textContent = original; btn.disabled = false; }, 2000);
         } catch (e) {
             alert('Não foi possível copiar automaticamente. Selecione o texto e use Ctrl+C.');
         }
@@ -1677,10 +2650,7 @@
                 const doc = await transaction.get(docRef);
                 if (!doc.exists) throw new Error('OS não encontrada.');
                 const dataAtual = doc.data();
-
-                if (dataAtual.restrita === true && !ehDiretorOuMaster()) {
-                    throw new Error('Acesso negado.');
-                }
+                if (dataAtual.restrita === true && !ehDiretorOuMaster()) throw new Error('Acesso negado.');
 
                 const historico = dataAtual.historico || [];
                 historico.push({
@@ -1725,11 +2695,9 @@
                     } else {
                         currentUserData = { nome: user.displayName || 'Usuário', funcao: 'tecnico' };
                     }
-
                     let f = currentUserData.funcao || 'tecnico';
                     if (user.email === MASTER_EMAIL) f = 'master';
                     atualizarHeader(currentUserData.nome || user.displayName || user.email, f);
-
                     carregarOS();
                 })
                 .catch(() => {

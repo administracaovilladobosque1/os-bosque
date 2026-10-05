@@ -72,9 +72,6 @@
             font-weight: 700;
         }
 
-        /* ============================================================
-           NOTA DE RESTRITAS — substitui os chips de personagens
-           ============================================================ */
         .nota-restritas {
             background: #212121;
             color: #ffd54f;
@@ -473,9 +470,6 @@
         return `${getBaseUrl()}os-detalhe.html?id=${encodeURIComponent(osId)}`;
     }
 
-    // ============================================================
-    // PERMISSÃO
-    // ============================================================
     function ehDiretorOuMaster() {
         if (!currentUser) return false;
         if (currentUser.email === MASTER_EMAIL) return true;
@@ -603,6 +597,24 @@
         return (ultima.mensagem || '').trim();
     }
 
+    // ============================================================
+    // ENQUETE ABERTA — detecta se a OS tem enquete aguardando voto
+    // ============================================================
+    function temEnqueteAberta(os) {
+        const hist = os.historico || [];
+        const agora = Date.now();
+        for (let i = hist.length - 1; i >= 0; i--) {
+            const h = hist[i];
+            if (h.acao === 'enquete' && h.enquete) {
+                const enq = h.enquete;
+                if (enq.status === 'aberta' && new Date(enq.prazo).getTime() > agora) {
+                    return enq;
+                }
+            }
+        }
+        return null;
+    }
+
     function getResponsavelTexto(os) {
         const c = classificarDestino(os.direcionado_para, os.direcionado_para_nome, os.direcionado_para_funcao);
         if (c.tipo === 'grupo') {
@@ -661,7 +673,7 @@
         allDocs.forEach(os => {
             const s = (os.status || '').toLowerCase();
             if (s !== 'aberta' && s !== 'em_andamento') return;
-            if (isRestrita(os)) return; // ← exclui restritas
+            if (isRestrita(os)) return;
             const alvo = os.direcionado_para;
             if (!alvo || alvo.startsWith('group:')) return;
             if (mapa[alvo]) return;
@@ -695,9 +707,6 @@
         }
     }
 
-    // ============================================================
-    // CONTADORES — excluem restritas (exceto no modo restritas)
-    // ============================================================
     function contarPorRole(role, incluirRestritas) {
         const catEsperada = role === 'admin' ? 'admin' : 'diretoria';
         sincronizarSel(role);
@@ -722,7 +731,6 @@
         const tipo = tipoLogSelect.value;
         personagensFiltroEl.innerHTML = '';
 
-        // MODO RESTRITAS — não mostra chips de personagens
         if (tipo === 'restritas') {
             personagensFiltroEl.innerHTML = `
                 <div class="nota-restritas">
@@ -904,9 +912,6 @@
         return sel[role].has(alvo);
     }
 
-    // ============================================================
-    // CABEÇALHOS
-    // ============================================================
     function cabecalhoAdmin(listaOS) {
         const linha = '▬▬▬▬▬▬▬▬▬▬';
         const qtdAbertas = listaOS.length;
@@ -965,6 +970,17 @@
         linhas.push(`*#OS ${os.numero || '—'} - ${os.titulo || 'Sem título'}*`);
         const pend = getUltimoCardMensagem(os);
         linhas.push(`Pendência: ${pend || '(sem descrição)'}`);
+
+        // ↓↓↓ Linha da enquete aberta ↓↓↓
+        const enqAberta = temEnqueteAberta(os);
+        if (enqAberta) {
+            const prazo = new Date(enqAberta.prazo);
+            const pad = n => String(n).padStart(2, '0');
+            const prazoFmt = `${pad(prazo.getDate())}/${pad(prazo.getMonth()+1)} ${pad(prazo.getHours())}:${pad(prazo.getMinutes())}`;
+            linhas.push(`📊 *Enquete aberta — diretores devem votar* (prazo: ${prazoFmt})`);
+        }
+        // ↑↑↑ Linha da enquete aberta ↑↑↑
+
         linhas.push(`Responsável: ${getResponsavelTexto(os)}`);
         linhas.push(atrasada ? `Status: 🔴 *ATRASADA*` : `Status: 🟢 *Em dia*`);
         const abertaHa = tempoDecorrido(os.criado_em);
@@ -982,9 +998,6 @@
         });
     }
 
-    // ============================================================
-    // GERAR TEXTO PRINCIPAL
-    // ============================================================
     function gerarTextoLog() {
         const tipo = tipoLogSelect.value;
 
@@ -995,9 +1008,6 @@
             return true;
         });
 
-        // ============================================================
-        // MODO RESTRITAS — só restritas, sem segregação por categoria
-        // ============================================================
         if (tipo === 'restritas') {
             const restritas = ordenarPendentes(pendentesBase.filter(isRestrita));
             const total = restritas.length;
@@ -1037,9 +1047,6 @@
             };
         }
 
-        // ============================================================
-        // DEMAIS MODOS — excluem restritas
-        // ============================================================
         const pendentesNormais = pendentesBase.filter(d => !isRestrita(d));
 
         const linhas = [];
@@ -1158,7 +1165,6 @@
 
         textoGerado.value = r.texto;
 
-        // Aplica/tira estilos de "modo restritas"
         if (modoRestritas) {
             containerPrincipal.classList.add('modo-restritas');
             pageTitle.textContent = '🔒 Log de Pendências Restritas';
@@ -1324,9 +1330,6 @@
                 currentUserData = { nome, funcao };
                 atualizarHeader(nome, funcao);
 
-                // ============================================================
-                // Só diretor/master veem a opção "Apenas OS Restritas"
-                // ============================================================
                 if (!ehDiretorOuMaster()) {
                     if (optRestritas && optRestritas.parentNode) {
                         optRestritas.parentNode.removeChild(optRestritas);
