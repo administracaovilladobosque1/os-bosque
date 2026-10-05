@@ -192,9 +192,6 @@
         }
         .edit-field textarea { resize: vertical; min-height: 60px; width: 100%; min-width: 220px; }
 
-        /* ============================================================
-           ENQUETE — form (adicionar ação)
-           ============================================================ */
         .grupo-enquete {
             border: 2px dashed #6a1b9a;
             border-radius: 10px;
@@ -294,9 +291,6 @@
             border-left: 3px solid #2e7d32;
         }
 
-        /* ============================================================
-           ENQUETE — card renderizado
-           ============================================================ */
         .card-enquete {
             background: #f3e5f5;
             border-color: #ce93d8;
@@ -392,7 +386,6 @@
         }
         .meu-voto-info strong { display: block; margin-bottom: 3px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
 
-        /* Resultado / listas */
         .enq-secao {
             margin-top: 14px;
             padding-top: 12px;
@@ -512,7 +505,6 @@
             line-height: 1.45;
         }
 
-        /* Modal de aviso de encerrar */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -634,7 +626,6 @@
     <div id="historicoContainer" class="historico-container"><p>Carregando...</p></div>
 </div>
 
-<!-- Modal de log de conclusão -->
 <div class="modal-overlay" id="modalConclusao">
     <div class="modal-box">
         <h2>✅ OS Concluída!</h2>
@@ -647,7 +638,6 @@
     </div>
 </div>
 
-<!-- Modal de aviso para encerrar enquete -->
 <div class="modal-overlay modal-aviso-encerrar" id="modalAvisoEncerrar">
     <div class="modal-box">
         <h2>🔒 Encerrar enquete agora?</h2>
@@ -694,7 +684,7 @@
 
     const GRUPO_ADMIN_TEXTO = 'Administração';
     const GRUPO_DIRETOR_TEXTO = 'Diretores';
-    const PRAZO_MAX_MS = 7 * 24 * 60 * 60 * 1000; // 1 semana
+    const PRAZO_MAX_MS = 7 * 24 * 60 * 60 * 1000;
 
     function salvarUserMapNoCache(map) {
         try {
@@ -757,10 +747,9 @@
     let osId = null;
     let osData = null;
     let userMap = {};
-    let diretoresAtivos = []; // [{ uid, nome }]
+    let diretoresAtivos = [];
     let editando = { campo: null, original: null };
 
-    // Form da enquete
     let opcoesEnquete = ['', ''];
 
     const osNumero = document.getElementById('osNumero');
@@ -774,7 +763,7 @@
     const bannerRestrita = document.getElementById('bannerRestrita');
     const modalAvisoEncerrar = document.getElementById('modalAvisoEncerrar');
 
-    let enqueteParaEncerrar = null; // { osId, itemIndex }
+    let enqueteParaEncerrar = null;
 
     function removerAcentos(str) { return str.normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
     function formatarDataHora(dataISO) {
@@ -990,10 +979,30 @@
         return false;
     }
 
-    function ehDiretor() {
+    // ============================================================
+    // PERMISSÕES DE ENQUETE
+    // ============================================================
+
+    // Quem pode VOTAR: apenas diretor (nem master, nem admin)
+    function podeVotar() {
         if (!currentUserData) return false;
-        if (isMaster()) return true; // master tem superpoder
         return currentUserData.funcao === 'diretor';
+    }
+
+    // Quem pode CRIAR enquete: diretor ou master
+    function podeCriarEnquete() {
+        if (!currentUser) return false;
+        if (currentUser.email === MASTER_EMAIL) return true;
+        const f = currentUserData?.funcao;
+        return f === 'diretor' || f === 'master';
+    }
+
+    // Quem pode ENCERRAR enquete: diretor ou master
+    function podeEncerrarEnquete() {
+        if (!currentUser) return false;
+        if (currentUser.email === MASTER_EMAIL) return true;
+        const f = currentUserData?.funcao;
+        return f === 'diretor' || f === 'master';
     }
 
     function ehDiretorOuMaster() {
@@ -1114,7 +1123,6 @@
         (os.historico || []).forEach(h => {
             if (h.usuario_uid) uids.add(h.usuario_uid);
             if (h.direcionado_para && !h.direcionado_para.startsWith('group:')) uids.add(h.direcionado_para);
-            // enquetes: votantes + criador + encerrador
             if (h.enquete) {
                 if (h.enquete.criador_uid) uids.add(h.enquete.criador_uid);
                 if (h.enquete.encerrada_por_uid) uids.add(h.enquete.encerrada_por_uid);
@@ -1260,18 +1268,16 @@
 
     function enqueteFoiExpirada(enq) {
         if (!enq) return false;
-        if (enq.status !== 'aberta') return false; // encerrada manualmente
+        if (enq.status !== 'aberta') return false;
         const prazo = enq.prazo ? new Date(enq.prazo).getTime() : 0;
         return prazo <= Date.now();
     }
 
-    // Calcula quem ainda não votou (somente diretores ativos)
     function getNaoVotaram(enq) {
         const votos = enq.votos || {};
         return diretoresAtivos.filter(d => !votos[d.uid]);
     }
 
-    // Retorna lista de votantes (do que já votaram)
     function getVotantes(enq) {
         const votos = enq.votos || {};
         const lista = [];
@@ -1283,7 +1289,6 @@
         return lista;
     }
 
-    // Calcula contagem por opção
     function calcularContagem(enq) {
         const contagem = new Array(enq.opcoes.length).fill(0);
         const votos = enq.votos || {};
@@ -1307,13 +1312,13 @@
 
         const meuUid = currentUser ? currentUser.uid : null;
         const meuVoto = (enq.votos && enq.votos[meuUid]) ? enq.votos[meuUid] : null;
-        const podeVotarAgora = aberta && ehDiretor();
+        const podeVotarAgora = aberta && podeVotar();
+        const podeEncerrar = aberta && podeEncerrarEnquete();
 
         const dataFormat = formatarDataHora(item.data);
         const nomeAutor = getNome(item.usuario_uid) || item.usuario || 'Anônimo';
         const autorBadge = getBadgePerfil(item.usuario_uid, nomeAutor);
 
-        // Estado da enquete
         let statusBadge = '';
         if (aberta) statusBadge = `<span class="badge badge-enq-aberta">🟢 ABERTA</span>`;
         else if (expirada) statusBadge = `<span class="badge badge-enq-expirada">⏰ PRAZO ENCERRADO</span>`;
@@ -1321,7 +1326,6 @@
 
         let html = `<div class="card card-enquete ${aberta ? '' : 'encerrada'}">`;
 
-        // Header do card
         html += `<div class="card-header">
             <span class="usuario">📊 Enquete criada por ${autorBadge}</span>
             <span class="header-right">
@@ -1331,22 +1335,18 @@
 
         html += `<div class="card-body">`;
 
-        // Descrição da ação (mensagem)
         if (item.mensagem) {
             html += `<div style="font-size:13.5px; color:#555; margin-bottom:6px;">${item.mensagem}</div>`;
         }
 
-        // Pergunta
         html += `<div class="enq-titulo">${enq.pergunta || '(sem pergunta)'}</div>`;
 
-        // Meta (badge + prazo + tipo)
         html += `<div class="enq-meta">
             ${statusBadge}
             <span>🗓️ Prazo: <strong>${formatarDataHora(enq.prazo)}</strong></span>
             <span>${enq.multipla ? '☑️ Múltipla escolha' : '🔘 Escolha única'}</span>
         </div>`;
 
-        // Encerrada?
         if (item.enquete.encerrada_por_nome) {
             const nomeEnc = item.enquete.encerrada_por_nome;
             const dataEnc = formatarDataHora(item.enquete.encerrada_em);
@@ -1389,7 +1389,6 @@
                 </button>
             </div>`;
 
-            // Mostra voto atual (se houver)
             if (meuVoto) {
                 if (meuVoto.tipo === 'abstencao') {
                     html += `<div class="meu-voto-info abstencao">
@@ -1409,20 +1408,28 @@
             html += `</div>`;
         }
         // ============================================================
-        // MODO VISUALIZAÇÃO (encerrada OU não-diretor em aberta)
+        // MODO VISUALIZAÇÃO (encerrada OU usuário sem permissão de voto)
         // ============================================================
         else {
-            if (aberta && !ehDiretor()) {
+            if (aberta && !podeVotar()) {
+                let msg = '';
+                if (isMaster()) {
+                    msg = 'ℹ️ Apenas <strong>diretores</strong> votam nas enquetes. Como master, você pode criar e encerrar, mas não vota.';
+                } else if (currentUserData && currentUserData.funcao === 'admin') {
+                    msg = 'ℹ️ Apenas <strong>diretores</strong> podem votar nesta enquete.';
+                } else {
+                    msg = 'ℹ️ Apenas <strong>diretores</strong> podem votar nesta enquete.';
+                }
                 html += `<div style="font-size:13px; color:#6a1b9a; padding:10px 12px; background:#f3e5f5; border-radius:6px; margin-top:10px;">
-                    ℹ️ Apenas <strong>diretores</strong> e <strong>master</strong> podem votar nesta enquete.
+                    ${msg}
                 </div>`;
             }
         }
 
         // ============================================================
-        // RESULTADO — sempre visível quando encerrada OU quando é a enquete do próprio diretor
+        // RESULTADO — sempre visível quando encerrada OU para quem pode encerrar
         // ============================================================
-        const mostrarResultado = !aberta || ehDiretor(); // diretor vê contagem mesmo aberta
+        const mostrarResultado = !aberta || podeEncerrarEnquete();
         if (mostrarResultado) {
             const contagem = calcularContagem(enq);
             const totalVotos = contagem.reduce((a,b) => a+b, 0);
@@ -1448,7 +1455,6 @@
             });
             html += `</div>`;
 
-            // Quem votou o quê
             const votantes = getVotantes(enq);
             if (votantes.length > 0) {
                 html += `<div class="enq-secao">
@@ -1475,7 +1481,6 @@
                 html += `</div></div>`;
             }
 
-            // Não votaram
             const naoVotaram = getNaoVotaram(enq);
             if (naoVotaram.length > 0) {
                 html += `<div class="enq-secao">
@@ -1493,9 +1498,9 @@
         }
 
         // ============================================================
-        // BOTÃO ENCERRAR — só diretor/master, só se aberta
+        // BOTÃO ENCERRAR — diretor ou master, só se aberta
         // ============================================================
-        if (aberta && ehDiretor()) {
+        if (podeEncerrar) {
             html += `<div class="encerrar-area">
                 <button type="button" class="btn-encerrar" data-acao="abrir-modal-encerrar" data-item-index="${itemIndex}">
                     🔒 Encerrar enquete agora
@@ -1503,7 +1508,7 @@
             </div>`;
         }
 
-        html += `</div></div>`; // card-body + card
+        html += `</div></div>`;
         return html;
     }
 
@@ -1613,9 +1618,6 @@
             if (item.acao === 'abertura') return;
             if (item.acao === 'edicao') return;
 
-            // ============================================================
-            // ENQUETE — renderiza card especial
-            // ============================================================
             if (item.acao === 'enquete' && item.enquete) {
                 html += renderEnquete(item, idx);
                 return;
@@ -1685,9 +1687,6 @@
             `;
         });
 
-        // ============================================================
-        // CARD "ADICIONAR AÇÃO" / CONCLUÍDA
-        // ============================================================
         if (statusConcluida) {
             html += `<div class="card card-ultimo card-concluida">`;
             html += `<div class="card-header"><span class="usuario" style="font-size:15px;">✅ OS Concluída</span></div>`;
@@ -1698,8 +1697,7 @@
             }
             html += `</div></div>`;
         } else {
-            // Mostrar enquete form só para diretor/master
-            const mostrarFormEnquete = ehDiretor();
+            const mostrarFormEnquete = podeCriarEnquete();
 
             html += `<div class="card card-ultimo">`;
             html += `<div class="card-header"><span class="usuario" style="font-size:15px;">➕ Adicionar Ação</span></div>`;
@@ -1730,7 +1728,7 @@
                             <span class="icone">📊</span>
                             <span class="texto-flag">
                                 <strong>Abrir enquete nesta ação</strong>
-                                <small>Diretores poderão votar nas opções abaixo dentro do prazo (máx. 1 semana).</small>
+                                <small>Somente diretores poderão votar. Prazo máximo: 1 semana.</small>
                             </span>
                         </label>
 
@@ -1774,7 +1772,6 @@
 
         historicoContainer.innerHTML = html;
 
-        // Handlers
         document.getElementById('btnConcluir')?.addEventListener('click', concluirOS);
         document.getElementById('btnReabrir')?.addEventListener('click', reabrirOS);
 
@@ -1785,9 +1782,6 @@
             });
         });
 
-        // ============================================================
-        // HANDLERS DE ENQUETE
-        // ============================================================
         historicoContainer.querySelectorAll('[data-acao="confirmar-voto"]').forEach(btn => {
             btn.addEventListener('click', () => {
                 const idx = parseInt(btn.dataset.itemIndex, 10);
@@ -1824,20 +1818,18 @@
                     }
                 }
 
-                // Verifica se enquete está ativa
                 const chkEnq = document.getElementById('chkAbrirEnquete');
                 const abrirEnquete = chkEnq && chkEnq.checked;
 
                 let dadosEnquete = null;
                 if (abrirEnquete) {
                     dadosEnquete = validarEnqueteForm();
-                    if (!dadosEnquete) return; // erro já mostrado
+                    if (!dadosEnquete) return;
                 }
 
                 adicionarAcao(desc, dir, link, dadosEnquete);
             });
 
-            // Setup do form de enquete
             setupFormEnquete();
         }
 
@@ -1848,9 +1840,6 @@
         });
     }
 
-    // ============================================================
-    // FORM ENQUETE — setup
-    // ============================================================
     function setupFormEnquete() {
         const chk = document.getElementById('chkAbrirEnquete');
         const campos = document.getElementById('camposEnquete');
@@ -1860,21 +1849,17 @@
 
         if (!chk || !campos) return;
 
-        // Inicializa opções
         opcoesEnquete = ['', ''];
         renderOpcoesForm();
 
-        // Data máxima = agora + 7 dias
         const agora = new Date();
         const max = new Date(agora.getTime() + PRAZO_MAX_MS);
         inputPrazo.min = toDatetimeLocalString(agora);
         inputPrazo.max = toDatetimeLocalString(max);
 
-        // Mostrar/esconder campos
         chk.addEventListener('change', () => {
             campos.style.display = chk.checked ? 'block' : 'none';
             if (chk.checked) {
-                // sugere data 1 dia à frente por padrão
                 if (!inputPrazo.value) {
                     const sugestao = new Date(agora.getTime() + 24 * 60 * 60 * 1000);
                     inputPrazo.value = toDatetimeLocalString(sugestao);
@@ -1936,7 +1921,6 @@
             container.appendChild(wrap);
         });
 
-        // Handlers
         container.querySelectorAll('input[data-op-idx]').forEach(inp => {
             inp.addEventListener('input', (e) => {
                 opcoesEnquete[parseInt(e.target.dataset.opIdx, 10)] = e.target.value;
@@ -1964,7 +1948,6 @@
             return null;
         }
 
-        // Limpa opções vazias das pontas, valida
         const opcoes = opcoesEnquete.map(o => (o || '').trim()).filter(Boolean);
         if (opcoes.length < 2) {
             mostrarMensagemAcao('A enquete precisa de pelo menos 2 opções preenchidas.', 'error');
@@ -1998,11 +1981,11 @@
     }
 
     // ============================================================
-    // VOTAR
+    // VOTAR — apenas diretor
     // ============================================================
     async function confirmarVoto(itemIndex) {
-        if (!ehDiretor()) {
-            alert('Apenas diretores e master podem votar.');
+        if (!podeVotar()) {
+            alert('Apenas diretores podem votar nesta enquete.');
             return;
         }
 
@@ -2016,7 +1999,6 @@
             return;
         }
 
-        // Coleta opções marcadas
         const inputs = historicoContainer.querySelectorAll(`input[name="enq_${itemIndex}_voto"]:checked`);
         const indices = Array.from(inputs).map(inp => parseInt(inp.dataset.opcaoIdx, 10));
 
@@ -2029,7 +2011,6 @@
             return;
         }
 
-        // Se estava abstendo, confirma a troca
         const meuUid = currentUser.uid;
         const meuVotoAtual = enq.votos && enq.votos[meuUid];
         if (meuVotoAtual && meuVotoAtual.tipo === 'abstencao') {
@@ -2070,8 +2051,8 @@
     }
 
     async function absterNaEnquete(itemIndex) {
-        if (!ehDiretor()) {
-            alert('Apenas diretores e master podem votar.');
+        if (!podeVotar()) {
+            alert('Apenas diretores podem votar nesta enquete.');
             return;
         }
 
@@ -2086,7 +2067,7 @@
         }
 
         const motivo = prompt('Motivo da abstenção (obrigatório):');
-        if (motivo === null) return; // cancelou
+        if (motivo === null) return;
         const motivoLimpo = motivo.trim();
         if (!motivoLimpo) {
             alert('O motivo da abstenção é obrigatório.');
@@ -2129,7 +2110,7 @@
     // ENCERRAR ENQUETE
     // ============================================================
     function abrirModalEncerrar(itemIndex) {
-        if (!ehDiretor()) {
+        if (!podeEncerrarEnquete()) {
             alert('Apenas diretores e master podem encerrar enquetes.');
             return;
         }
@@ -2175,7 +2156,6 @@
         }
     });
 
-    // Fecha modal clicando fora
     modalAvisoEncerrar?.addEventListener('click', (e) => {
         if (e.target === modalAvisoEncerrar) {
             modalAvisoEncerrar.classList.remove('active');
@@ -2184,7 +2164,7 @@
     });
 
     // ============================================================
-    // ADICIONAR AÇÃO / APAGAR / EDIÇÃO / CONCLUSÃO
+    // APAGAR / EDIÇÃO / CONCLUSÃO
     // ============================================================
     async function apagarAcao(dataISO) {
         if (!isMaster()) { alert('Apenas o master pode apagar ações.'); return; }
@@ -2441,6 +2421,10 @@
                     throw new Error('Acesso negado.');
                 }
 
+                if (dadosEnquete && !podeCriarEnquete()) {
+                    throw new Error('Apenas diretores e master podem criar enquetes.');
+                }
+
                 const historico = dataAtual.historico || [];
 
                 const novaAcao = {
@@ -2454,7 +2438,6 @@
 
                 if (linkAnexos) novaAcao.link_anexos = linkAnexos;
 
-                // Se é enquete, monta o objeto
                 if (dadosEnquete) {
                     novaAcao.enquete = {
                         id: 'enq_' + Date.now(),
