@@ -10,7 +10,11 @@
     <style>
         * { margin:0; padding:0; box-sizing:border-box; font-family: 'Calibri', 'Segoe UI', Tahoma, sans-serif; }
         body { background: #e8f5e9; padding: 16px 12px; display: flex; justify-content: center; min-height: 100vh; }
-        .container { background: #fff; max-width: 780px; width: 100%; padding: 20px; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,80,0,0.12); border: 1px solid #a5d6a7; }
+        .container { background: #fff; max-width: 780px; width: 100%; padding: 20px; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,80,0,0.12); border: 1px solid #a5d6a7; transition: border-color 0.2s, box-shadow 0.2s; }
+        .container.modo-restritas {
+            border-color: #212121;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+        }
 
         .user-header {
             margin-bottom: 14px;
@@ -37,6 +41,12 @@
         .uh-badge.tecnico { background: #ced4da; }
 
         .page-title { font-size: 24px; color: #1b5e20; background: #c8e6c9; display: inline-block; padding: 4px 18px; border-radius: 30px; margin-bottom: 12px; }
+        .container.modo-restritas .page-title {
+            background: #212121;
+            color: #ffd54f;
+            border: 2px solid #ffd54f;
+        }
+
         .btn { padding: 10px 16px; background: #2e7d32; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s; text-decoration: none; display: inline-block; }
         .btn:hover { background: #1b5e20; }
         .btn-success { background: #388e3c; }
@@ -56,6 +66,31 @@
             font-family: inherit;
         }
         select:focus { outline: none; border-color: #2e7d32; box-shadow: 0 0 0 2px rgba(46,125,50,0.15); }
+        select option[value="restritas"] {
+            background: #212121;
+            color: #ffd54f;
+            font-weight: 700;
+        }
+
+        /* ============================================================
+           NOTA DE RESTRITAS — substitui os chips de personagens
+           ============================================================ */
+        .nota-restritas {
+            background: #212121;
+            color: #ffd54f;
+            border: 2px solid #000;
+            border-left: 6px solid #ffd54f;
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13.5px;
+            font-weight: 600;
+            line-height: 1.45;
+        }
+        .nota-restritas .icone-lock { font-size: 22px; flex-shrink: 0; }
 
         .personagens-filtro { margin-bottom: 14px; }
         .personagens-bloco {
@@ -169,6 +204,17 @@
             gap: 16px;
             flex-wrap: wrap;
         }
+        .info-resumo.modo-restritas {
+            background: linear-gradient(135deg, #212121 0%, #2a2a2a 100%);
+            border-color: #000;
+            border-left-color: #ffd54f;
+        }
+        .info-resumo.modo-restritas .stat-numero { color: #ffd54f; }
+        .info-resumo.modo-restritas .stat-label { color: #b0b0b0; }
+        .info-resumo.modo-restritas .info-stat-divisor { background: #444; }
+        .info-resumo.modo-restritas .info-desc { color: #ffd54f; }
+        .info-resumo.modo-restritas .info-desc-sub { color: #999; }
+
         .info-stat {
             display: flex;
             flex-direction: column;
@@ -191,6 +237,8 @@
         }
         .info-stat.info-stat-atraso .stat-numero { color: #c62828; }
         .info-stat.info-stat-atraso .stat-label { color: #c62828; }
+        .info-resumo.modo-restritas .info-stat.info-stat-atraso .stat-numero { color: #ff6b6b; }
+        .info-resumo.modo-restritas .info-stat.info-stat-atraso .stat-label { color: #ff6b6b; }
         .info-stat.info-stat-atraso.tem-atraso .stat-numero {
             animation: pulseAtraso 2s infinite;
         }
@@ -234,6 +282,11 @@
             word-break: break-word;
         }
         textarea#textoGerado:focus { outline: none; border-color: #2e7d32; box-shadow: 0 0 0 3px rgba(46,125,50,0.15); }
+        textarea#textoGerado.modo-restritas {
+            background: #1e1e1e;
+            border-color: #ffd54f;
+            color: #ffd54f;
+        }
 
         .acoes { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
         .acoes .btn { flex: 1 1 auto; text-align: center; }
@@ -256,13 +309,13 @@
     </style>
 </head>
 <body>
-<div class="container">
+<div class="container" id="containerPrincipal">
     <div class="user-header" id="userHeader">
         <span class="uh-label">Logado como:</span>
         <span class="uh-badge tecnico" id="userHeaderBadge">—</span>
     </div>
 
-    <h1 class="page-title">📢 Log de Pendências</h1>
+    <h1 class="page-title" id="pageTitle">📢 Log de Pendências</h1>
     <div><a href="index.html" class="btn btn-voltar">← Voltar</a></div>
 
     <div class="form-group">
@@ -271,6 +324,7 @@
             <option value="admin">🏛️ Administração</option>
             <option value="diretor">⚖️ Diretoria</option>
             <option value="todas">📋 TODAS (admin + diretoria)</option>
+            <option value="restritas" id="optRestritas">🔒 Apenas OS Restritas</option>
         </select>
     </div>
 
@@ -390,6 +444,7 @@
     }
 
     const tipoLogSelect = document.getElementById('tipoLog');
+    const optRestritas = document.getElementById('optRestritas');
     const personagensFiltroEl = document.getElementById('personagensFiltro');
     const textoGerado = document.getElementById('textoGerado');
     const btnCopiar = document.getElementById('btnCopiar');
@@ -401,6 +456,9 @@
     const contadorSub = document.getElementById('contadorSub');
     const statAtraso = document.getElementById('statAtraso');
     const userHeaderBadge = document.getElementById('userHeaderBadge');
+    const containerPrincipal = document.getElementById('containerPrincipal');
+    const pageTitle = document.getElementById('pageTitle');
+    const infoResumo = document.getElementById('infoResumo');
 
     let userMap = {};
     let allDocs = [];
@@ -415,6 +473,9 @@
         return `${getBaseUrl()}os-detalhe.html?id=${encodeURIComponent(osId)}`;
     }
 
+    // ============================================================
+    // PERMISSÃO
+    // ============================================================
     function ehDiretorOuMaster() {
         if (!currentUser) return false;
         if (currentUser.email === MASTER_EMAIL) return true;
@@ -425,6 +486,9 @@
         if (!os) return false;
         if (os.restrita !== true) return true;
         return ehDiretorOuMaster();
+    }
+    function isRestrita(os) {
+        return os && os.restrita === true;
     }
 
     function limparSufixoFuncao(nome) {
@@ -597,6 +661,7 @@
         allDocs.forEach(os => {
             const s = (os.status || '').toLowerCase();
             if (s !== 'aberta' && s !== 'em_andamento') return;
+            if (isRestrita(os)) return; // ← exclui restritas
             const alvo = os.direcionado_para;
             if (!alvo || alvo.startsWith('group:')) return;
             if (mapa[alvo]) return;
@@ -630,7 +695,10 @@
         }
     }
 
-    function contarPorRole(role) {
+    // ============================================================
+    // CONTADORES — excluem restritas (exceto no modo restritas)
+    // ============================================================
+    function contarPorRole(role, incluirRestritas) {
         const catEsperada = role === 'admin' ? 'admin' : 'diretoria';
         sincronizarSel(role);
         let abertas = 0, atrasadas = 0, emDia = 0;
@@ -638,6 +706,7 @@
             const s = (os.status || '').toLowerCase();
             if (s !== 'aberta' && s !== 'em_andamento') return;
             if (!podeVerOS(os)) return;
+            if (!incluirRestritas && isRestrita(os)) return;
             if (getPendenteCategoria(os) !== catEsperada) return;
             const alvo = os.direcionado_para;
             if (!alvo) return;
@@ -652,6 +721,18 @@
     function renderPersonagensFiltro() {
         const tipo = tipoLogSelect.value;
         personagensFiltroEl.innerHTML = '';
+
+        // MODO RESTRITAS — não mostra chips de personagens
+        if (tipo === 'restritas') {
+            personagensFiltroEl.innerHTML = `
+                <div class="nota-restritas">
+                    <span class="icone-lock">🔒</span>
+                    <span>Exibindo <strong>somente as OS restritas</strong> à diretoria. Este log deve ser tratado com sigilo — não compartilhe fora do grupo de diretores.</span>
+                </div>
+            `;
+            atualizarTela();
+            return;
+        }
 
         const roles = [];
         if (tipo === 'todas') roles.push('admin', 'diretor');
@@ -672,7 +753,7 @@
         const allKeys = getAllKeys(role);
         const todosMarcados = allKeys.length > 0 && allKeys.every(k => sel[role].has(k));
 
-        const contagens = contarPorRole(role);
+        const contagens = contarPorRole(role, false);
 
         const bloco = document.createElement('div');
         bloco.className = 'personagens-bloco bloco-' + role;
@@ -782,7 +863,7 @@
         ['admin', 'diretor'].forEach(role => {
             const blocoEl = personagensFiltroEl.querySelector('.bloco-' + role);
             if (!blocoEl) return;
-            const contagens = contarPorRole(role);
+            const contagens = contarPorRole(role, false);
             const wrap = blocoEl.querySelector('.mini-contadores');
             if (!wrap) return;
             const badgeAbertas = contagens.abertas > 0
@@ -823,6 +904,9 @@
         return sel[role].has(alvo);
     }
 
+    // ============================================================
+    // CABEÇALHOS
+    // ============================================================
     function cabecalhoAdmin(listaOS) {
         const linha = '▬▬▬▬▬▬▬▬▬▬';
         const qtdAbertas = listaOS.length;
@@ -855,11 +939,27 @@
         return linhas;
     }
 
+    function cabecalhoRestritas(listaOS) {
+        const linha = '██████████';
+        const qtdAbertas = listaOS.length;
+        const qtdAtrasadas = listaOS.filter(isAtrasada).length;
+        const atraso = qtdAtrasadas > 0 ? ` · ⚠️ ${qtdAtrasadas} atrasada${qtdAtrasadas === 1 ? '' : 's'}` : ' · ✓ sem atraso';
+        const detentores = getDetentoresTexto(listaOS);
+        const linhas = [
+            linha,
+            `🔒  *RESTRITAS — PENDÊNCIAS*`,
+            `📊 ${qtdAbertas} aberta${qtdAbertas === 1 ? '' : 's'}${atraso}`
+        ];
+        if (detentores) linhas.push(`👥 ${detentores}`);
+        linhas.push(linha);
+        return linhas;
+    }
+
     function linhaSeparadorOS() {
         return '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
     }
 
-    function gerarBlocoOS(os) {
+    function gerarBlocoOS(os, contexto) {
         const linhas = [];
         const atrasada = isAtrasada(os);
         linhas.push(`*#OS ${os.numero || '—'} - ${os.titulo || 'Sem título'}*`);
@@ -882,6 +982,9 @@
         });
     }
 
+    // ============================================================
+    // GERAR TEXTO PRINCIPAL
+    // ============================================================
     function gerarTextoLog() {
         const tipo = tipoLogSelect.value;
 
@@ -892,12 +995,59 @@
             return true;
         });
 
+        // ============================================================
+        // MODO RESTRITAS — só restritas, sem segregação por categoria
+        // ============================================================
+        if (tipo === 'restritas') {
+            const restritas = ordenarPendentes(pendentesBase.filter(isRestrita));
+            const total = restritas.length;
+            const totalAtrasadas = restritas.filter(isAtrasada).length;
+
+            const linhas = [];
+            linhas.push(...cabecalhoRestritas(restritas));
+            linhas.push(`_Atualizado em ${formatarDataHoraAgora()}_`);
+            linhas.push('');
+
+            if (restritas.length === 0) {
+                linhas.push('✅ Nenhuma OS restrita pendente.');
+                return {
+                    texto: linhas.join('\n'),
+                    total: 0,
+                    atrasadas: 0,
+                    emDia: 0,
+                    titulo: 'RESTRITAS'
+                };
+            }
+
+            restritas.forEach((os, i) => {
+                linhas.push(linhaSeparadorOS());
+                linhas.push(...gerarBlocoOS(os, 'restritas'));
+                if (i < restritas.length - 1) linhas.push('');
+            });
+
+            linhas.push(linhaSeparadorOS());
+            linhas.push(`_Total: ${total} OS restrita${total === 1 ? '' : 's'} · ${total - totalAtrasadas} em dia · ${totalAtrasadas} atrasada${totalAtrasadas === 1 ? '' : 's'}_`);
+
+            return {
+                texto: linhas.join('\n'),
+                total,
+                atrasadas: totalAtrasadas,
+                emDia: total - totalAtrasadas,
+                titulo: 'RESTRITAS'
+            };
+        }
+
+        // ============================================================
+        // DEMAIS MODOS — excluem restritas
+        // ============================================================
+        const pendentesNormais = pendentesBase.filter(d => !isRestrita(d));
+
         const linhas = [];
 
         if (tipo === 'todas') {
-            const adminList = ordenarPendentes(pendentesBase.filter(d =>
+            const adminList = ordenarPendentes(pendentesNormais.filter(d =>
                 getPendenteCategoria(d) === 'admin' && matchSelecao(d, 'admin')));
-            const dirList = ordenarPendentes(pendentesBase.filter(d =>
+            const dirList = ordenarPendentes(pendentesNormais.filter(d =>
                 getPendenteCategoria(d) === 'diretoria' && matchSelecao(d, 'diretor')));
 
             const adminAtrasadas = adminList.filter(isAtrasada).length;
@@ -924,7 +1074,7 @@
             } else {
                 adminList.forEach((os, i) => {
                     if (i > 0) linhas.push('');
-                    linhas.push(...gerarBlocoOS(os));
+                    linhas.push(...gerarBlocoOS(os, 'admin'));
                 });
             }
 
@@ -937,7 +1087,7 @@
             } else {
                 dirList.forEach((os, i) => {
                     if (i > 0) linhas.push('');
-                    linhas.push(...gerarBlocoOS(os));
+                    linhas.push(...gerarBlocoOS(os, 'diretor'));
                 });
             }
 
@@ -945,13 +1095,21 @@
             linhas.push(linhaSeparadorOS());
             linhas.push(`_Total: ${total} pendência(s) — 🏛️ ${adminList.length} admin · ⚖️ ${dirList.length} diretoria_`);
 
-            return { texto: linhas.join('\n'), total, atrasadas: totalAtrasadas, emDia: total - totalAtrasadas, titulo: 'TODAS', admin: adminList.length, diretor: dirList.length };
+            return {
+                texto: linhas.join('\n'),
+                total,
+                atrasadas: totalAtrasadas,
+                emDia: total - totalAtrasadas,
+                titulo: 'TODAS',
+                admin: adminList.length,
+                diretor: dirList.length
+            };
         }
 
         const role = tipo;
         const cat = tipo === 'admin' ? 'admin' : 'diretoria';
 
-        const pendentes = ordenarPendentes(pendentesBase.filter(d =>
+        const pendentes = ordenarPendentes(pendentesNormais.filter(d =>
             getPendenteCategoria(d) === cat && matchSelecao(d, role)));
 
         const qtdAtrasadas = pendentes.filter(isAtrasada).length;
@@ -967,24 +1125,51 @@
 
         if (pendentes.length === 0) {
             linhas.push('✅ Nenhuma pendência no momento.');
-            return { texto: linhas.join('\n'), total: 0, atrasadas: 0, emDia: 0, titulo: tipo === 'admin' ? 'ADMINISTRAÇÃO' : 'DIRETORIA' };
+            return {
+                texto: linhas.join('\n'),
+                total: 0,
+                atrasadas: 0,
+                emDia: 0,
+                titulo: tipo === 'admin' ? 'ADMINISTRAÇÃO' : 'DIRETORIA'
+            };
         }
 
         pendentes.forEach((os, i) => {
             linhas.push(linhaSeparadorOS());
-            linhas.push(...gerarBlocoOS(os));
+            linhas.push(...gerarBlocoOS(os, tipo));
             if (i < pendentes.length - 1) linhas.push('');
         });
 
         linhas.push(linhaSeparadorOS());
         linhas.push(`_Total: ${pendentes.length} pendência(s) · ${qtdEmDia} em dia · ${qtdAtrasadas} atrasada(s)_`);
 
-        return { texto: linhas.join('\n'), total: pendentes.length, atrasadas: qtdAtrasadas, emDia: qtdEmDia, titulo: tipo === 'admin' ? 'ADMINISTRAÇÃO' : 'DIRETORIA' };
+        return {
+            texto: linhas.join('\n'),
+            total: pendentes.length,
+            atrasadas: qtdAtrasadas,
+            emDia: qtdEmDia,
+            titulo: tipo === 'admin' ? 'ADMINISTRAÇÃO' : 'DIRETORIA'
+        };
     }
 
     function atualizarTela() {
         const r = gerarTextoLog();
+        const modoRestritas = (r.titulo === 'RESTRITAS');
+
         textoGerado.value = r.texto;
+
+        // Aplica/tira estilos de "modo restritas"
+        if (modoRestritas) {
+            containerPrincipal.classList.add('modo-restritas');
+            pageTitle.textContent = '🔒 Log de Pendências Restritas';
+            infoResumo.classList.add('modo-restritas');
+            textoGerado.classList.add('modo-restritas');
+        } else {
+            containerPrincipal.classList.remove('modo-restritas');
+            pageTitle.textContent = '📢 Log de Pendências';
+            infoResumo.classList.remove('modo-restritas');
+            textoGerado.classList.remove('modo-restritas');
+        }
 
         contadorAbertas.textContent = r.total;
         contadorAtrasadas.textContent = r.atrasadas;
@@ -994,8 +1179,10 @@
             contadorLabel.innerHTML = `Para TODAS as áreas <span class="info-desc-sub" id="contadorSub">${r.emDia} em dia · ${r.atrasadas} atrasada${r.atrasadas === 1 ? '' : 's'}</span>`;
         } else if (r.titulo === 'ADMINISTRAÇÃO') {
             contadorLabel.innerHTML = `Para ADMINISTRAÇÃO <span class="info-desc-sub" id="contadorSub">${r.emDia} em dia · ${r.atrasadas} atrasada${r.atrasadas === 1 ? '' : 's'}</span>`;
-        } else {
+        } else if (r.titulo === 'DIRETORIA') {
             contadorLabel.innerHTML = `Para DIRETORIA <span class="info-desc-sub" id="contadorSub">${r.emDia} em dia · ${r.atrasadas} atrasada${r.atrasadas === 1 ? '' : 's'}</span>`;
+        } else if (r.titulo === 'RESTRITAS') {
+            contadorLabel.innerHTML = `🔒 Apenas OS RESTRITAS <span class="info-desc-sub" id="contadorSub">${r.emDia} em dia · ${r.atrasadas} atrasada${r.atrasadas === 1 ? '' : 's'}</span>`;
         }
 
         if (r.atrasadas > 0) statAtraso.classList.add('tem-atraso');
@@ -1136,12 +1323,29 @@
                 if (user.email === MASTER_EMAIL) funcao = 'master';
                 currentUserData = { nome, funcao };
                 atualizarHeader(nome, funcao);
+
+                // ============================================================
+                // Só diretor/master veem a opção "Apenas OS Restritas"
+                // ============================================================
+                if (!ehDiretorOuMaster()) {
+                    if (optRestritas && optRestritas.parentNode) {
+                        optRestritas.parentNode.removeChild(optRestritas);
+                    }
+                }
+
                 carregarTudo();
             })
             .catch(() => {
                 const funcao = user.email === MASTER_EMAIL ? 'master' : 'tecnico';
                 currentUserData = { nome: user.displayName || user.email, funcao };
                 atualizarHeader(user.displayName || user.email, funcao);
+
+                if (!ehDiretorOuMaster()) {
+                    if (optRestritas && optRestritas.parentNode) {
+                        optRestritas.parentNode.removeChild(optRestritas);
+                    }
+                }
+
                 carregarTudo();
             });
     });
