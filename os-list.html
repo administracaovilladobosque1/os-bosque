@@ -365,9 +365,6 @@
     const TIMEOUT_KEY = 'vb_lastActivity';
     const TIMEOUT_CHECK_INTERVAL = 30 * 1000;
 
-    const USER_CACHE_KEY = 'vb_userMapCache';
-    const USER_CACHE_TTL = 10 * 60 * 1000;
-
     const OS_CACHE_KEY = 'vb_osCache';
     const OS_CACHE_TTL = 2 * 60 * 1000;
     const OS_CACHE_MAX = 400;
@@ -399,27 +396,6 @@
 
     const GRUPO_ADMIN_TEXTO = 'Administração';
     const GRUPO_DIRETOR_TEXTO = 'Diretores';
-
-    function salvarUserMapNoCache(map) {
-        try {
-            sessionStorage.setItem(USER_CACHE_KEY, JSON.stringify({
-                dados: map,
-                expiraEm: Date.now() + USER_CACHE_TTL
-            }));
-        } catch(e) {}
-    }
-    function lerUserMapDoCache() {
-        try {
-            const raw = sessionStorage.getItem(USER_CACHE_KEY);
-            if (!raw) return null;
-            const obj = JSON.parse(raw);
-            if (!obj || !obj.expiraEm || obj.expiraEm < Date.now()) {
-                sessionStorage.removeItem(USER_CACHE_KEY);
-                return null;
-            }
-            return obj.dados || null;
-        } catch(e) { return null; }
-    }
 
     function registrarAtividade() { try { localStorage.setItem(TIMEOUT_KEY, Date.now().toString()); } catch(e) {} }
     function fazerLogoutTimeout() {
@@ -600,7 +576,11 @@
             if (f === 'admin') cor = '#ffe082';
             else if (f === 'diretor') cor = '#a5d6a7';
             else if (f === 'master') cor = '#ffcc80';
-            let texto = nomeLimpo || '—';
+            // ← Prefere o nome ATUAL do userMap; snapshot só como fallback
+            const nomeAtual = (userMap[alvo] && userMap[alvo].nome)
+                ? limparSufixoFuncao(userMap[alvo].nome)
+                : nomeLimpo;
+            let texto = nomeAtual || '—';
             if (f && !texto.includes('(')) texto = `${texto} (${f})`;
             return { tipo: 'pessoa', funcao: f, texto, cor };
         }
@@ -621,13 +601,24 @@
         if (f === 'admin') cor = '#ffe082';
         else if (f === 'diretor') cor = '#a5d6a7';
         else if (f === 'master') cor = '#ffcc80';
-        let texto = nomeLimpo || '—';
+        // ← Mesmo ajuste no fallback
+        const nomeAtual = (alvo && userMap[alvo] && userMap[alvo].nome)
+            ? limparSufixoFuncao(userMap[alvo].nome)
+            : nomeLimpo;
+        let texto = nomeAtual || '—';
         if (f && !texto.includes('(')) texto = `${texto} (${f})`;
         return { tipo: 'pessoa', funcao: f, texto, cor };
     }
 
     function getNomeComFuncao(nome, uid, funcaoDireta) {
         const nomeLimpo = limparSufixoFuncao(nome);
+        // Se o uid está no userMap, prefere o nome atual
+        if (uid && userMap[uid] && userMap[uid].nome) {
+            const atual = limparSufixoFuncao(userMap[uid].nome);
+            if (!atual) return '—';
+            const classe = classificarDestino(uid, atual, funcaoDireta);
+            return classe.texto;
+        }
         if (!nomeLimpo) return '—';
         const classe = classificarDestino(uid, nomeLimpo, funcaoDireta);
         return classe.texto;
@@ -1166,12 +1157,8 @@
         });
     }
 
+    // Sempre busca fresh do Firestore (cache removido).
     function carregarUserMapSeNecessario() {
-        const cache = lerUserMapDoCache();
-        if (cache) {
-            userMap = cache;
-            return Promise.resolve();
-        }
         return db.collection('usuarios').where('status', '==', 'ativo').get()
             .then(snap => {
                 userMap = {};
@@ -1179,11 +1166,11 @@
                     const d = doc.data();
                     userMap[doc.id] = { nome: d.nome, funcao: d.funcao };
                 });
-                salvarUserMapNoCache(userMap);
             });
     }
 
     function carregarOSComCache() {
+        // O cache de OS (2 min) continua — só o cache de userMap foi removido.
         const cacheDocs = lerOSCache();
         if (cacheDocs && cacheDocs.length > 0) {
             renderizarDocs(cacheDocs);

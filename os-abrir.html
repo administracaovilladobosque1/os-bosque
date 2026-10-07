@@ -253,32 +253,8 @@
     const TIMEOUT_KEY = 'vb_lastActivity';
     const TIMEOUT_CHECK_INTERVAL = 30 * 1000;
 
-    const USER_CACHE_KEY = 'vb_userMapCache';
-    const USER_CACHE_TTL = 10 * 60 * 1000;
-
     const GRUPO_ADMIN_TEXTO = 'Administração';
     const GRUPO_DIRETOR_TEXTO = 'Diretores';
-
-    function salvarUserMapNoCache(map) {
-        try {
-            sessionStorage.setItem(USER_CACHE_KEY, JSON.stringify({
-                dados: map,
-                expiraEm: Date.now() + USER_CACHE_TTL
-            }));
-        } catch(e) {}
-    }
-    function lerUserMapDoCache() {
-        try {
-            const raw = sessionStorage.getItem(USER_CACHE_KEY);
-            if (!raw) return null;
-            const obj = JSON.parse(raw);
-            if (!obj || !obj.expiraEm || obj.expiraEm < Date.now()) {
-                sessionStorage.removeItem(USER_CACHE_KEY);
-                return null;
-            }
-            return obj.dados || null;
-        } catch(e) { return null; }
-    }
 
     function registrarAtividade() { try { localStorage.setItem(TIMEOUT_KEY, Date.now().toString()); } catch(e) {} }
     function fazerLogoutTimeout() {
@@ -428,15 +404,9 @@
 
     osRestritaCheck.addEventListener('change', reconstruirSelectPersonagens);
 
+    // Sempre busca fresh do Firestore (cache removido).
     function carregarPersonagens() {
         direcionadoSelect.innerHTML = '<option value="">Carregando...</option>';
-
-        const cache = lerUserMapDoCache();
-        if (cache) {
-            montarSelectPersonagens(cache);
-            return;
-        }
-
         db.collection('usuarios').where('status', '==', 'ativo').get()
             .then(snapshot => {
                 const map = {};
@@ -444,7 +414,6 @@
                     const d = doc.data();
                     map[doc.id] = { nome: d.nome, funcao: d.funcao };
                 });
-                salvarUserMapNoCache(map);
                 montarSelectPersonagens(map);
             })
             .catch(err => {

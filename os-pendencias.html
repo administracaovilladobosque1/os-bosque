@@ -376,32 +376,10 @@
     const TIMEOUT_KEY = 'vb_lastActivity';
     const TIMEOUT_CHECK_INTERVAL = 30 * 1000;
 
-    const USER_CACHE_KEY = 'vb_userMapCache';
-    const USER_CACHE_TTL = 10 * 60 * 1000;
-
     const SLA_HORAS = { 'emergencial': 24, 'urgente': 72, 'normal': 168 };
 
     let currentUser = null;
     let currentUserData = null;
-
-    function salvarUserMapNoCache(map) {
-        try {
-            sessionStorage.setItem(USER_CACHE_KEY, JSON.stringify({
-                dados: map, expiraEm: Date.now() + USER_CACHE_TTL
-            }));
-        } catch(e) {}
-    }
-    function lerUserMapDoCache() {
-        try {
-            const raw = sessionStorage.getItem(USER_CACHE_KEY);
-            if (!raw) return null;
-            const obj = JSON.parse(raw);
-            if (!obj || !obj.expiraEm || obj.expiraEm < Date.now()) {
-                sessionStorage.removeItem(USER_CACHE_KEY); return null;
-            }
-            return obj.dados || null;
-        } catch(e) { return null; }
-    }
 
     function registrarAtividade() { try { localStorage.setItem(TIMEOUT_KEY, Date.now().toString()); } catch(e) {} }
     function fazerLogoutTimeout() {
@@ -514,7 +492,11 @@
             if (f === 'admin') cor = '#ffe082';
             else if (f === 'diretor') cor = '#a5d6a7';
             else if (f === 'master') cor = '#ffcc80';
-            let texto = nomeLimpo || '—';
+            // ← Prefere o nome ATUAL do userMap; snapshot só como fallback
+            const nomeAtual = (userMap[alvo] && userMap[alvo].nome)
+                ? limparSufixoFuncao(userMap[alvo].nome)
+                : nomeLimpo;
+            let texto = nomeAtual || '—';
             if (f && !texto.includes('(')) texto = `${texto} (${f})`;
             return { tipo:'pessoa', funcao:f, texto, cor };
         }
@@ -535,7 +517,11 @@
         if (f === 'admin') cor = '#ffe082';
         else if (f === 'diretor') cor = '#a5d6a7';
         else if (f === 'master') cor = '#ffcc80';
-        let texto = nomeLimpo || '—';
+        // ← Mesmo ajuste no fallback
+        const nomeAtual = (alvo && userMap[alvo] && userMap[alvo].nome)
+            ? limparSufixoFuncao(userMap[alvo].nome)
+            : nomeLimpo;
+        let texto = nomeAtual || '—';
         if (f && !texto.includes('(')) texto = `${texto} (${f})`;
         return { tipo:'pessoa', funcao:f, texto, cor };
     }
@@ -639,9 +625,12 @@
             if (c.subtipo === 'master') return 'Master';
             return c.texto;
         }
+        // ← Prefere o nome ATUAL do userMap; snapshot só como fallback
+        if (userMap[alvo] && userMap[alvo].nome) {
+            return limparSufixoFuncao(userMap[alvo].nome);
+        }
         const nomeLimpo = limparSufixoFuncao(os.direcionado_para_nome);
         if (nomeLimpo) return nomeLimpo;
-        if (userMap[alvo] && userMap[alvo].nome) return userMap[alvo].nome;
         return alvo;
     }
 
@@ -1249,54 +1238,40 @@
 
     async function carregarTudo() {
         try {
-            const cache = lerUserMapDoCache();
-            const promises = [];
-
-            if (cache) {
-                userMap = cache;
-                promises.push(Promise.resolve());
-            } else {
-                promises.push(
-                    db.collection('usuarios').where('status', '==', 'ativo').get()
-                        .then(snap => {
-                            userMap = {};
-                            snap.forEach(doc => {
-                                const d = doc.data();
-                                userMap[doc.id] = { nome: d.nome, funcao: d.funcao };
-                            });
-                            salvarUserMapNoCache(userMap);
-                        })
-                );
-            }
-
-            promises.push(
+            // Sempre busca userMap fresh (cache removido)
+            const [userSnap, docs] = await Promise.all([
+                db.collection('usuarios').where('status', '==', 'ativo').get(),
                 db.collection('ordens_servico')
                     .where('status', 'in', ['aberta', 'em_andamento'])
                     .get()
                     .then(snap => {
-                        const docs = [];
-                        snap.forEach(doc => docs.push({ id: doc.id, ...doc.data() }));
-                        return docs;
+                        const arr = [];
+                        snap.forEach(doc => arr.push({ id: doc.id, ...doc.data() }));
+                        return arr;
                     })
                     .catch(err => {
                         console.warn('Query filtrada falhou. Caindo para query completa.', err.message);
                         return db.collection('ordens_servico').get().then(snap => {
-                            const docs = [];
+                            const arr = [];
                             snap.forEach(doc => {
                                 const data = doc.data();
                                 const s = (data.status || '').toLowerCase();
                                 if (s === 'aberta' || s === 'em_andamento') {
-                                    docs.push({ id: doc.id, ...data });
+                                    arr.push({ id: doc.id, ...data });
                                 }
                             });
-                            return docs;
+                            return arr;
                         });
                     })
-            );
+            ]);
 
-            const [, docs] = await Promise.all(promises);
+            userMap = {};
+            userSnap.forEach(doc => {
+                const d = doc.data();
+                userMap[doc.id] = { nome: d.nome, funcao: d.funcao };
+            });
+
             allDocs = docs;
-
             renderPersonagensFiltro();
         } catch (err) {
             console.error(err);

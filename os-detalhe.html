@@ -679,31 +679,9 @@
     const TIMEOUT_KEY = 'vb_lastActivity';
     const TIMEOUT_CHECK_INTERVAL = 30 * 1000;
 
-    const USER_CACHE_KEY = 'vb_userMapCache';
-    const USER_CACHE_TTL = 10 * 60 * 1000;
-
     const GRUPO_ADMIN_TEXTO = 'Administração';
     const GRUPO_DIRETOR_TEXTO = 'Diretores';
     const PRAZO_MAX_MS = 7 * 24 * 60 * 60 * 1000;
-
-    function salvarUserMapNoCache(map) {
-        try {
-            sessionStorage.setItem(USER_CACHE_KEY, JSON.stringify({
-                dados: map, expiraEm: Date.now() + USER_CACHE_TTL
-            }));
-        } catch(e) {}
-    }
-    function lerUserMapDoCache() {
-        try {
-            const raw = sessionStorage.getItem(USER_CACHE_KEY);
-            if (!raw) return null;
-            const obj = JSON.parse(raw);
-            if (!obj || !obj.expiraEm || obj.expiraEm < Date.now()) {
-                sessionStorage.removeItem(USER_CACHE_KEY); return null;
-            }
-            return obj.dados || null;
-        } catch(e) { return null; }
-    }
 
     function registrarAtividade() { try { localStorage.setItem(TIMEOUT_KEY, Date.now().toString()); } catch(e) {} }
     function fazerLogoutTimeout() {
@@ -846,7 +824,11 @@
             if (f === 'admin') cor = '#ffe082';
             else if (f === 'diretor') cor = '#a5d6a7';
             else if (f === 'master') cor = '#ffcc80';
-            let texto = nomeLimpo || '—';
+            // ← Prefere o nome ATUAL do userMap; snapshot só como fallback (ex: user deletado)
+            const nomeAtual = (userMap[alvo] && userMap[alvo].nome)
+                ? limparSufixoFuncao(userMap[alvo].nome)
+                : nomeLimpo;
+            let texto = nomeAtual || '—';
             if (f && !texto.includes('(')) texto = `${texto} (${f})`;
             return { tipo:'pessoa', funcao:f, texto, cor };
         }
@@ -867,7 +849,11 @@
         if (f === 'admin') cor = '#ffe082';
         else if (f === 'diretor') cor = '#a5d6a7';
         else if (f === 'master') cor = '#ffcc80';
-        let texto = nomeLimpo || '—';
+        // ← Mesmo ajuste no fallback final
+        const nomeAtual = (alvo && userMap[alvo] && userMap[alvo].nome)
+            ? limparSufixoFuncao(userMap[alvo].nome)
+            : nomeLimpo;
+        let texto = nomeAtual || '—';
         if (f && !texto.includes('(')) texto = `${texto} (${f})`;
         return { tipo:'pessoa', funcao:f, texto, cor };
     }
@@ -946,13 +932,17 @@
     }
 
     function getBadgePerfil(uid, nome) {
-        const nomeLimpo = limparSufixoFuncao(nome);
-        const f = detectarFuncao(nomeLimpo, uid, null);
+        const nomeSnapshot = limparSufixoFuncao(nome);
+        // ← Prefere nome ATUAL do userMap; snapshot só como fallback
+        const nomeAtual = (uid && userMap[uid] && userMap[uid].nome)
+            ? limparSufixoFuncao(userMap[uid].nome)
+            : nomeSnapshot;
+        const f = detectarFuncao(nomeAtual, uid, null);
         let classe = 'badge-grupo';
         if (f === 'admin') classe = 'badge-admin';
         else if (f === 'diretor') classe = 'badge-diretor';
         else if (f === 'master') classe = 'badge-master';
-        let texto = nomeLimpo || '—';
+        let texto = nomeAtual || '—';
         if (f && !texto.includes('(')) texto = `${texto} (${f})`;
         return `<span class="badge ${classe}">${texto}</span>`;
     }
@@ -1184,27 +1174,13 @@
     }
 
     async function prepararUserMap(os) {
-        const cache = lerUserMapDoCache();
+        // Sempre busca fresh do Firestore (cache removido).
         const uidsDaOS = extrairUidsDaOS(os);
-
-        if (cache) {
-            const faltando = uidsDaOS.filter(uid => !cache[uid]);
-            if (faltando.length === 0) {
-                userMap = cache;
-                return;
-            }
-            const novos = await buscarUsuariosPorUids(faltando);
-            userMap = { ...cache, ...novos };
-            salvarUserMapNoCache(userMap);
-            return;
-        }
-
         const [relevantes, adminsDiretores] = await Promise.all([
             buscarUsuariosPorUids(uidsDaOS),
             buscarAdminsEDiretores()
         ]);
         userMap = { ...relevantes, ...adminsDiretores };
-        salvarUserMapNoCache(userMap);
     }
 
     function renderizarBloqueio() {
@@ -1348,7 +1324,8 @@
         </div>`;
 
         if (item.enquete.encerrada_por_nome) {
-            const nomeEnc = item.enquete.encerrada_por_nome;
+            // ← Prefere o nome ATUAL via userMap; snapshot só como fallback
+            const nomeEnc = getNome(item.enquete.encerrada_por_uid) || item.enquete.encerrada_por_nome;
             const dataEnc = formatarDataHora(item.enquete.encerrada_em);
             html += `<div class="info-encerrada">
                 🔒 Encerrada por <strong>${nomeEnc}</strong> em <strong>${dataEnc}</strong>.
@@ -1461,7 +1438,8 @@
                     <div class="enq-secao-titulo">🗳️ Votos registrados (${votantes.length})</div>
                     <div class="votantes-lista">`;
                 votantes.forEach(v => {
-                    const nome = v.nome || getNome(v.uid) || v.uid;
+                    // ← Prefere nome ATUAL via userMap; snapshot só como fallback
+                    const nome = getNome(v.uid) || v.nome || v.uid;
                     if (v.tipo === 'abstencao') {
                         html += `<div class="votante-item abstencao">
                             <span class="votante-nome">${nome}</span>
