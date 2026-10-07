@@ -1169,12 +1169,15 @@
             });
     }
 
-    function carregarOSComCache() {
+        function carregarOSComCache() {
         // O cache de OS (2 min) continua — só o cache de userMap foi removido.
         const cacheDocs = lerOSCache();
         if (cacheDocs && cacheDocs.length > 0) {
-            renderizarDocs(cacheDocs);
-            return carregarUserMapSeNecessario();
+            // ← Espera o userMap ANTES de renderizar, senão classificarDestino
+            // cai no nome antigo do snapshot (direcionado_para_nome).
+            return carregarUserMapSeNecessario().then(() => {
+                renderizarDocs(cacheDocs);
+            });
         }
         listaDiv.innerHTML = '<p class="empty-message">Carregando ordens de serviço...</p>';
         return Promise.all([carregarUserMapSeNecessario(), fetchFromFirestore()])
